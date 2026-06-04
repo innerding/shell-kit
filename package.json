@@ -1,0 +1,22 @@
+{
+  "name": "shell-kit",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Geteilte Shell-Bausteine — die EINZIGE Quelle der Wahrheit fuers Shell-Paket. app/ reist per Rep, launcher/ bleibt our-side. Konsumiert per git-Tag von Editor (Shell-Studio) und Runtime.",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./app": { "types": "./dist/app/index.d.ts", "import": "./dist/app/index.js" }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "@types/react": "^18.3.3",
+    "react": "^18.3.1"
+  }
+}
