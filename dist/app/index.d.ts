@@ -1,1 +1,4 @@
 export { default as ComfortSliders } from './ComfortSliders';
+export * from './geometry';
+export * from './decorations';
+export * from './render';
