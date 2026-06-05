@@ -75,8 +75,9 @@ export function renderClusterPois(map, layer, members, ghostByCluster) {
                 });
             }
         }
-        // Ankündigung: blasser Hexagon-Ring über sich nähernde Paare (>= SWALLOW, < ANNOUNCE).
-        if (hexGeo) {
+        // Ankündigung: blasser Hexagon-Ring — nur wenn KEIN Ghost vorhanden.
+        // Mit Ghost ist der Ring redundant (Ghost übernimmt die Cluster-Darstellung).
+        if (hexGeo && !ghost) {
             for (let i = 0; i < ents.length; i++) {
                 for (let j = i + 1; j < ents.length; j++) {
                     const d = Math.hypot(ents[i].x - ents[j].x, ents[i].y - ents[j].y);
