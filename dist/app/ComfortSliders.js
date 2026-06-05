@@ -45,10 +45,14 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
                     transition: 'left 0.22s ease',
                     pointerEvents: 'none',
                 }, children: [_jsx("div", { style: {
-                            position: 'absolute', top: '-50%', height: '200%', left: 1, right: 1,
-                            borderRadius: 3, background: GRADIENT,
-                            transform: `translateY(${(Math.min(1, Math.max(0, systemLoad)) - 0.5) * 100}%)`,
-                            transition: 'transform 0.3s ease',
+                            position: 'absolute',
+                            top: `-${(1 - linePos) * 200}%`, // Fenster-Anker: linePos-Farbe am linePos-Strich
+                            height: '300%',
+                            left: 1, right: 1,
+                            borderRadius: 3,
+                            background: GRADIENT,
+                            transform: `translateY(${(Math.min(1, Math.max(0, systemLoad)) - linePos) * 100}%)`,
+                            transition: 'transform 0.4s ease',
                         } }), maxValue < 0.99 && (_jsx("div", { style: {
                             position: 'absolute', left: 0, right: 0,
                             bottom: `${maxValue * 100}%`,

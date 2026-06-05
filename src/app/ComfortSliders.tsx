@@ -67,15 +67,21 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
           pointerEvents: 'none',
         }}
       >
-        {/* SCHAUGLAS (Destillat): der Gradient-Balken BEWEGT sich mit der Live-Netz-Last
-            (systemLoad) — der weiße Schieber (Comfort) bleibt stehen. So sieht der User die
-            Welt sich gegen seine ruhende Comfort-Geste verschieben (Bauplan: Schauglas bewegt
-            sich, nicht der Schieber). Höhe 200%, vertikal um systemLoad verschoben. */}
+        {/* SCHAUGLAS — 3 Bewegungen:
+            1. Gradient scrollt mit systemLoad (translateY ~ systemLoad)
+            2. Fenster liegt am Schieber: `top` ist durch linePos verankert,
+               sodass der Schieber immer seine Farbe im Fenster sieht
+            3. Schieber bewegt sich nur auf User-Interaktion (linePos = value)
+            Gradient-Höhe 3×, damit genug Scroll-Spielraum in beide Richtungen. */}
         <div style={{
-          position: 'absolute', top: '-50%', height: '200%', left: 1, right: 1,
-          borderRadius: 3, background: GRADIENT,
-          transform: `translateY(${(Math.min(1, Math.max(0, systemLoad)) - 0.5) * 100}%)`,
-          transition: 'transform 0.3s ease',
+          position: 'absolute',
+          top: `-${(1 - linePos) * 200}%`,   // Fenster-Anker: linePos-Farbe am linePos-Strich
+          height: '300%',
+          left: 1, right: 1,
+          borderRadius: 3,
+          background: GRADIENT,
+          transform: `translateY(${(Math.min(1, Math.max(0, systemLoad)) - linePos) * 100}%)`,
+          transition: 'transform 0.4s ease',
         }} />
 
         {maxValue < 0.99 && (
