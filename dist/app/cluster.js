@@ -57,11 +57,7 @@ export function renderClusterPois(map, layer, members, ghostByCluster) {
             const latlng = map.layerPointToLatLng(L.point(e.x, e.y));
             if (e.members.length >= 2) {
                 const size = Math.min(GHOST_MAX, GHOST_MIN + (e.members.length - 2) * 5);
-                // Ghost vorhanden → visuell wie normales Member (kein Hexagon-Ring des ClusterPOI).
-                // Ghost-Text bleibt für den Tooltip. Ohne Ghost: leerer Platzhalter.
-                const svg = ghost
-                    ? (e.members[0]?.renderSvg(size) ?? '')
-                    : '';
+                const svg = ghost ? ghost.renderSvg(size) : '';
                 const names = e.members.map((m) => m.text).join(' · ');
                 placeMarker(layer, latlng, markerHtml(svg, size), size, {
                     z: 1000,
@@ -79,9 +75,8 @@ export function renderClusterPois(map, layer, members, ghostByCluster) {
                 });
             }
         }
-        // Ankündigung: blasser Hexagon-Ring — nur wenn KEIN Ghost vorhanden.
-        // Mit Ghost ist der Ring redundant (Ghost übernimmt die Cluster-Darstellung).
-        if (hexGeo && !ghost) {
+        // Ankündigung: blasser Hexagon-Ring über sich nähernde Paare (>= SWALLOW, < ANNOUNCE).
+        if (hexGeo) {
             for (let i = 0; i < ents.length; i++) {
                 for (let j = i + 1; j < ents.length; j++) {
                     const d = Math.hypot(ents[i].x - ents[j].x, ents[i].y - ents[j].y);
