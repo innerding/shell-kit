@@ -1,7 +1,6 @@
 interface Props {
     movementValue: number;
     movementLoad: number;
-    movementLoads?: number[];
     stayValue: number;
     stayLoad: number;
     stayMaxValue: number;
@@ -9,5 +8,5 @@ interface Props {
     onStayChange: (v: number) => void;
     step2Active?: boolean;
 }
-export default function ComfortSliders({ movementValue, movementLoad, movementLoads, stayValue, stayLoad, stayMaxValue, onMovementChange, onStayChange, step2Active }: Props): import("react").JSX.Element;
+export default function ComfortSliders({ movementValue, movementLoad, stayValue, stayLoad, stayMaxValue, onMovementChange, onStayChange, step2Active }: Props): import("react").JSX.Element;
 export {};
