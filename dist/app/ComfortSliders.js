@@ -14,12 +14,29 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
     const trackRef = useRef(null);
     const dragging = useRef(false);
     const collapseTimer = useRef(null);
+    // Eingefrorener Gradient-Stand: gesetzt beim Expand, gelöscht beim Collapse.
+    // collapsed = System bewegt das Fenster (3 Bewegungen aktiv).
+    // expanded  = Fenster eingefroren, nur User-Schieber bewegt sich.
+    const frozenGrad = useRef(null);
     const linePos = Math.min(value, maxValue);
+    const load = Math.min(1, Math.max(0, systemLoad));
+    const gradTop = `-${(1 - linePos) * 200}%`;
+    const gradTransform = `translateY(${(load - linePos) * 100}%)`;
+    // Expand: Gradient-Stand einfrieren; Collapse: freigeben.
+    const handleExpandChange = useCallback((exp) => {
+        if (exp && !frozenGrad.current) {
+            frozenGrad.current = { top: gradTop, transform: gradTransform };
+        }
+        else if (!exp) {
+            frozenGrad.current = null;
+        }
+        onExpandChange(exp);
+    }, [gradTop, gradTransform, onExpandChange]);
     const scheduleCollapse = useCallback(() => {
         if (collapseTimer.current)
             clearTimeout(collapseTimer.current);
-        collapseTimer.current = setTimeout(() => onExpandChange(false), 2800);
-    }, [onExpandChange]);
+        collapseTimer.current = setTimeout(() => handleExpandChange(false), 2800);
+    }, [handleExpandChange]);
     const readPosition = useCallback((clientY) => {
         const track = trackRef.current;
         if (!track)
@@ -46,13 +63,13 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
                     pointerEvents: 'none',
                 }, children: [_jsx("div", { style: {
                             position: 'absolute',
-                            top: `-${(1 - linePos) * 200}%`, // Fenster-Anker: linePos-Farbe am linePos-Strich
+                            top: frozenGrad.current?.top ?? gradTop,
                             height: '300%',
                             left: 1, right: 1,
                             borderRadius: 3,
                             background: GRADIENT,
-                            transform: `translateY(${(Math.min(1, Math.max(0, systemLoad)) - linePos) * 100}%)`,
-                            transition: 'transform 0.4s ease',
+                            transform: frozenGrad.current?.transform ?? gradTransform,
+                            transition: expanded ? 'none' : 'top 0.4s ease, transform 0.4s ease',
                         } }), maxValue < 0.99 && (_jsx("div", { style: {
                             position: 'absolute', left: 0, right: 0,
                             bottom: `${maxValue * 100}%`,
@@ -91,7 +108,7 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
                             fontSize: 11, fontWeight: 700,
                             color: 'rgba(0,0,0,0.80)',
                             letterSpacing: '0.02em',
-                        }, children: labels.bottom })] })), !expanded && (_jsx("div", { onPointerDown: () => { onExpandChange(true); scheduleCollapse(); }, style: {
+                        }, children: labels.bottom })] })), !expanded && (_jsx("div", { onPointerDown: () => { handleExpandChange(true); scheduleCollapse(); }, style: {
                     position: 'absolute', inset: 0,
                     cursor: 'pointer',
                     touchAction: 'none',
@@ -106,7 +123,7 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
                     width: L_GAP_EXP + STRIP_W + RIGHT_GAP, // 48px
                     cursor: 'ns-resize',
                     touchAction: 'none',
-                } })), expanded && (_jsx("div", { onPointerDown: () => { onExpandChange(false); }, style: {
+                } })), expanded && (_jsx("div", { onPointerDown: () => { handleExpandChange(false); }, style: {
                     position: 'absolute',
                     right: 0, top: 0, bottom: 0,
                     width: COL_W,

@@ -27,13 +27,31 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Eingefrorener Gradient-Stand: gesetzt beim Expand, gelöscht beim Collapse.
+  // collapsed = System bewegt das Fenster (3 Bewegungen aktiv).
+  // expanded  = Fenster eingefroren, nur User-Schieber bewegt sich.
+  const frozenGrad = useRef<{ top: string; transform: string } | null>(null);
 
   const linePos = Math.min(value, maxValue);
+  const load = Math.min(1, Math.max(0, systemLoad));
+
+  const gradTop = `-${(1 - linePos) * 200}%`;
+  const gradTransform = `translateY(${(load - linePos) * 100}%)`;
+
+  // Expand: Gradient-Stand einfrieren; Collapse: freigeben.
+  const handleExpandChange = useCallback((exp: boolean) => {
+    if (exp && !frozenGrad.current) {
+      frozenGrad.current = { top: gradTop, transform: gradTransform };
+    } else if (!exp) {
+      frozenGrad.current = null;
+    }
+    onExpandChange(exp);
+  }, [gradTop, gradTransform, onExpandChange]);
 
   const scheduleCollapse = useCallback(() => {
     if (collapseTimer.current) clearTimeout(collapseTimer.current);
-    collapseTimer.current = setTimeout(() => onExpandChange(false), 2800);
-  }, [onExpandChange]);
+    collapseTimer.current = setTimeout(() => handleExpandChange(false), 2800);
+  }, [handleExpandChange]);
 
   const readPosition = useCallback((clientY: number) => {
     const track = trackRef.current;
@@ -67,21 +85,17 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
           pointerEvents: 'none',
         }}
       >
-        {/* SCHAUGLAS — 3 Bewegungen:
-            1. Gradient scrollt mit systemLoad (translateY ~ systemLoad)
-            2. Fenster liegt am Schieber: `top` ist durch linePos verankert,
-               sodass der Schieber immer seine Farbe im Fenster sieht
-            3. Schieber bewegt sich nur auf User-Interaktion (linePos = value)
-            Gradient-Höhe 3×, damit genug Scroll-Spielraum in beide Richtungen. */}
+        {/* SCHAUGLAS — collapsed: System bewegt Fenster (3 Bewegungen).
+                       expanded: Fenster eingefroren, nur Schieber beweglich. */}
         <div style={{
           position: 'absolute',
-          top: `-${(1 - linePos) * 200}%`,   // Fenster-Anker: linePos-Farbe am linePos-Strich
+          top: frozenGrad.current?.top ?? gradTop,
           height: '300%',
           left: 1, right: 1,
           borderRadius: 3,
           background: GRADIENT,
-          transform: `translateY(${(Math.min(1, Math.max(0, systemLoad)) - linePos) * 100}%)`,
-          transition: 'transform 0.4s ease',
+          transform: frozenGrad.current?.transform ?? gradTransform,
+          transition: expanded ? 'none' : 'top 0.4s ease, transform 0.4s ease',
         }} />
 
         {maxValue < 0.99 && (
@@ -141,7 +155,7 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
       {/* Expand hitbox — collapsed only, full 36px container */}
       {!expanded && (
         <div
-          onPointerDown={() => { onExpandChange(true); scheduleCollapse(); }}
+          onPointerDown={() => { handleExpandChange(true); scheduleCollapse(); }}
           style={{
             position: 'absolute', inset: 0,
             cursor: 'pointer',
@@ -173,7 +187,7 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
       {/* Collapse hitbox — expanded only, 36px from right (screen edge) */}
       {expanded && (
         <div
-          onPointerDown={() => { onExpandChange(false); }}
+          onPointerDown={() => { handleExpandChange(false); }}
           style={{
             position: 'absolute',
             right: 0, top: 0, bottom: 0,
