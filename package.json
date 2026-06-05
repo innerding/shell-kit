@@ -1,6 +1,6 @@
 {
   "name": "shell-kit",
-  "version": "0.27.0",
+  "version": "0.28.0",
   "type": "module",
   "description": "Geteilte Shell-Bausteine — die EINZIGE Quelle der Wahrheit fuers Shell-Paket. app/ reist per Rep, launcher/ bleibt our-side. Konsumiert per git-Tag von Editor (Shell-Studio) und Runtime.",
   "exports": {

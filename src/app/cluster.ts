@@ -82,7 +82,11 @@ export function renderClusterPois(
       const latlng = map.layerPointToLatLng(L.point(e.x, e.y));
       if (e.members.length >= 2) {
         const size = Math.min(GHOST_MAX, GHOST_MIN + (e.members.length - 2) * 5);
-        const svg = ghost ? ghost.renderSvg(size) : '';
+        // Ghost vorhanden → visuell wie normales Member (kein Hexagon-Ring des ClusterPOI).
+        // Ghost-Text bleibt für den Tooltip. Ohne Ghost: leerer Platzhalter.
+        const svg = ghost
+          ? (e.members[0]?.renderSvg(size) ?? '')
+          : '';
         const names = e.members.map((m) => m.text).join(' · ');
         placeMarker(layer, latlng, markerHtml(svg, size), size, {
           z: 1000,
