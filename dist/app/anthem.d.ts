@@ -32,14 +32,3 @@ export interface ClassifyParams {
 export declare function classifyStretches(stretches: StretchLoad[], params?: ClassifyParams): ClassifiedStretch[];
 export declare function dayPhase(simMin: number): number;
 export declare function produceAnthemLoads(net: SegmentedNet, simMin: number, norm?: NormalizeParams): number[];
-export declare const ANTHEM_PERIOD_MIN = 5;
-export declare function nextAtFor(tMin: number): number;
-export interface AnthemSnapshot {
-    kind: 'anthem_snapshot_v1';
-    repId: string;
-    t: string;
-    tMin: number;
-    nextAtMin: number;
-    loads: number[];
-}
-export declare function produceAnthemSnapshot(net: SegmentedNet, repId: string, tMin: number, norm?: NormalizeParams): AnthemSnapshot;

@@ -5,4 +5,3 @@ export * from './decorations'; // Deco-Typen
 export * from './render'; // Render-Kern: Container/Composite + RenderAssets + mergeOverlapping
 export * from './colorist'; // Colorist: Last → Farbe (PALETTES/colorize/shapeLoad/heatColor)
 export * from './anthem'; // Anthem: Last-Mathematik (simSegmentLoads/normalizeLoads/dayPhase/produceAnthemLoads)
-export * from './colorMesh'; // Colour-Mesh: buildColorMesh (Strecken + Last → eingefärbte Segmente)

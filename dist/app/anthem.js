@@ -101,22 +101,6 @@ export function produceAnthemLoads(net, simMin, norm = {}) {
     const phase = dayPhase(simMin);
     return base.map((l) => clamp01(l * (0.35 + 0.65 * phase)));
 }
-// ── Anthem-Snapshot: die minimale, koordinatenlose Last-Kodierung ────────────
-// Der Snapshot ist ALLES, was ins Gerät reist: `loads` (0..1, je Origin-Net-
-// Segment-INDEX, ~1 Byte/Segment im Wire-Format) + Metadaten. KEINE Geometrie —
-// die hat das Gerät schon (Origin-Mesh). Die Shell mappt Index → Segment.
-// Im MVP lokal simuliert; in Produktion liefert ihn der Worker im 5-Min-Takt.
-export const ANTHEM_PERIOD_MIN = 5;
-export function nextAtFor(tMin) {
-    return Math.floor(tMin / ANTHEM_PERIOD_MIN) * ANTHEM_PERIOD_MIN + ANTHEM_PERIOD_MIN;
-}
-function clockLabel(min) {
-    const h = Math.floor(min / 60), m = Math.round(min % 60);
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}
-// Erzeugt den Snapshot (= was Anthem ausspielt). Last gerundet auf 2 Stellen
-// (Wire quantisiert später auf ~1 Byte/Segment). Eine Quelle für Editor + Runtime.
-export function produceAnthemSnapshot(net, repId, tMin, norm = {}) {
-    const loads = produceAnthemLoads(net, tMin, norm).map((l) => Math.round(clamp01(l) * 100) / 100);
-    return { kind: 'anthem_snapshot_v1', repId, t: clockLabel(tMin), tMin, nextAtMin: nextAtFor(tMin), loads };
-}
+// Hinweis: Snapshot-Encoding (produceAnthemSnapshot/AnthemSnapshot) lebt NICHT hier —
+// der Worker produziert den Snapshot (Editor-`anthemEncoder`), das Gerät HOLT ihn.
+// shell-kit liefert nur die geteilte Last-Mathematik (oben). Siehe aufraeum_inventar K1.1.
