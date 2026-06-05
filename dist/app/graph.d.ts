@@ -1,4 +1,9 @@
 import type { SegmentedNet } from './anthem';
+/**
+ * Liegt ein Punkt (lat, lng) innerhalb von thresholdM Metern einer
+ * ausgedimmten Strecke? Für POI-Dimming: wenn ja, POI ebenfalls dimmen.
+ */
+export declare function isNearDimmedStretch(lat: number, lng: number, net: SegmentedNet, dimmedStretchIds: Set<string>, thresholdM?: number): boolean;
 /** Endknoten-Koordinate → anliegende Strecken-IDs. */
 export declare function buildNodeStretchMap(net: SegmentedNet): Map<string, string[]>;
 /**

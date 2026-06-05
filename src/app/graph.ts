@@ -14,10 +14,37 @@ import type { SegmentedNet } from './anthem';
 
 const R_EARTH = 6371000; // m
 
+function distM(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R_EARTH * Math.asin(Math.sqrt(a));
+}
+
 // Knoten-Schlüssel aus [lat, lng] — 5 Dezimalstellen ≈ 1 m Genauigkeit,
 // passend zur netResample-Rundung (6 Stellen, Matching mit 5 ist robuster).
 function nodeKey([lat, lng]: [number, number]): string {
   return `${lat.toFixed(5)},${lng.toFixed(5)}`;
+}
+
+/**
+ * Liegt ein Punkt (lat, lng) innerhalb von thresholdM Metern einer
+ * ausgedimmten Strecke? Für POI-Dimming: wenn ja, POI ebenfalls dimmen.
+ */
+export function isNearDimmedStretch(
+  lat: number, lng: number,
+  net: SegmentedNet,
+  dimmedStretchIds: Set<string>,
+  thresholdM = 25,
+): boolean {
+  for (const s of net.stretches) {
+    if (!dimmedStretchIds.has(s.id)) continue;
+    for (const p of s.points as [number, number][]) {
+      if (distM(lat, lng, p[0], p[1]) <= thresholdM) return true;
+    }
+  }
+  return false;
 }
 
 /** Endknoten-Koordinate → anliegende Strecken-IDs. */
