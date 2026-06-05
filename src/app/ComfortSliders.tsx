@@ -14,7 +14,6 @@ const LABEL_W   = RIGHT_GAP + SPACER + COL_W;
 
 interface StripProps {
   value: number;
-  systemLoad: number;
   maxValue: number;
   onChange: (v: number) => void;
   expanded: boolean;
@@ -82,16 +81,14 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labe
 
 interface Props {
   movementValue: number;
-  movementLoad: number;
   stayValue: number;
-  stayLoad: number;
   stayMaxValue: number;
   onMovementChange: (v: number) => void;
   onStayChange: (v: number) => void;
   step2Active?: boolean;
 }
 
-export default function ComfortSliders({ movementValue, movementLoad, stayValue, stayLoad, stayMaxValue, onMovementChange, onStayChange, step2Active = false }: Props) {
+export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false }: Props) {
   const [movExpanded, setMovExpanded] = useState(false);
   const [stayVisible, setStayVisible] = useState(false);
   const [stayExpanded, setStayExpanded] = useState(false);
@@ -111,9 +108,9 @@ export default function ComfortSliders({ movementValue, movementLoad, stayValue,
 
   return (
     <div style={{ position: 'absolute', right: 0, top: 62, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, zIndex: 600 }}>
-      <SliderStrip value={movementValue} systemLoad={movementLoad} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={handleMovExpandChange} labels={{ top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }} />
+      <SliderStrip value={movementValue} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={handleMovExpandChange} labels={{ top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }} />
       {step2Active && stayVisible && (
-        <SliderStrip value={stayValue} systemLoad={stayLoad} maxValue={stayMaxValue} onChange={onStayChange} expanded={stayExpanded} onExpandChange={setStayExpanded} labels={{ top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }} />
+        <SliderStrip value={stayValue} maxValue={stayMaxValue} onChange={onStayChange} expanded={stayExpanded} onExpandChange={setStayExpanded} labels={{ top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }} />
       )}
     </div>
   );
