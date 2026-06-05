@@ -10,7 +10,7 @@ const COL_W = 36; // collapse hitbox width (= expand hitbox width)
 const W_COL = L_GAP_COL + STRIP_W + RIGHT_GAP; // 36px
 const W_EXP = L_GAP_EXP + STRIP_W + RIGHT_GAP + SPACER + COL_W; // 90px
 const LABEL_W = RIGHT_GAP + SPACER + COL_W; // 54px — between strip right edge and screen
-function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labels }) {
+function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpandChange, labels }) {
     const trackRef = useRef(null);
     const dragging = useRef(false);
     const collapseTimer = useRef(null);
@@ -44,7 +44,13 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labe
                     overflow: 'hidden',
                     transition: 'left 0.22s ease',
                     pointerEvents: 'none',
-                }, children: [_jsx("div", { style: { position: 'absolute', top: 0, bottom: 0, left: 1, right: 1, borderRadius: 3, background: GRADIENT } }), maxValue < 0.99 && (_jsx("div", { style: {
+                }, children: [_jsx("div", { style: { position: 'absolute', top: 0, bottom: 0, left: 1, right: 1, borderRadius: 3, background: GRADIENT } }), _jsx("div", { style: {
+                            position: 'absolute', left: -3, right: -3,
+                            bottom: `${Math.min(1, Math.max(0, systemLoad)) * 100}%`,
+                            height: 0,
+                            borderTop: '2px dotted rgba(15,18,28,0.7)',
+                            zIndex: 1,
+                        } }), maxValue < 0.99 && (_jsx("div", { style: {
                             position: 'absolute', left: 0, right: 0,
                             bottom: `${maxValue * 100}%`,
                             height: 1,

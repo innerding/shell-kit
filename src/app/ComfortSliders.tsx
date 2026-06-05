@@ -23,7 +23,7 @@ interface StripProps {
   labels: { top: string; middle: string; bottom: string };
 }
 
-function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labels }: StripProps) {
+function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpandChange, labels }: StripProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,6 +68,16 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labe
         }}
       >
         <div style={{ position: 'absolute', top: 0, bottom: 0, left: 1, right: 1, borderRadius: 3, background: GRADIENT }} />
+
+        {/* systemLoad — Live-Last des Netzes (Schauglas-Lesung): wo das Netz GERADE
+            steht. Über der weißen Comfort-Linie = außerhalb des Comforts. */}
+        <div style={{
+          position: 'absolute', left: -3, right: -3,
+          bottom: `${Math.min(1, Math.max(0, systemLoad)) * 100}%`,
+          height: 0,
+          borderTop: '2px dotted rgba(15,18,28,0.7)',
+          zIndex: 1,
+        }} />
 
         {maxValue < 0.99 && (
           <div style={{
