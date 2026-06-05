@@ -106,7 +106,13 @@ export function pruneDeadEnds(initialDimmed, net, nodeStretchMap, protectedNodes
             for (const key of [startKey, endKey]) {
                 if (protectedNodes.has(key))
                     continue;
-                const active = (nodeStretchMap.get(key) ?? []).filter(id => id !== s.id && !dimmed.has(id));
+                const all = nodeStretchMap.get(key) ?? [];
+                // Nur prunen wenn der Knoten im ORIGINAL-Graph Grad ≥ 2 hatte
+                // (d.h. er ist durch BCK-Dimmen zur Sackgasse geworden, war es nicht schon).
+                // Pre-existente Grad-1-Knoten (echte Wegenden) werden nie gepruned.
+                if (all.length < 2)
+                    continue;
+                const active = all.filter(id => id !== s.id && !dimmed.has(id));
                 if (active.length === 0) {
                     dimmed.add(s.id);
                     changed = true;
