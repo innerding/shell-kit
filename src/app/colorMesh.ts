@@ -8,6 +8,8 @@
 //
 // Größen-Hebel (project_colour_mesh): Geometrie statisch (1×), Last volatil (alle 5 Min).
 // Hier nur die Render-Mechanik; die Last reicht der Konsument herein (Anthem oder Sim).
+// Die Farbe kommt aus dem einen Colorist (palette/spectrum/bias).
+import { colorize, type ColorizeParams } from './colorist';
 
 export interface MeshStretch {
   id: string;
@@ -24,13 +26,6 @@ export interface MeshSegment {
 
 /** Last je Segment: (Strecken-ID, Segment-Index, Segmentanzahl) → 0..1. */
 export type LoadLookup = (stretchId: string, segIndex: number, segCount: number) => number;
-
-/** Ampel-Rampe: 0 = frei (grün) → 0.5 = gelb → 1 = voll (rot). */
-export function loadColor(load: number): string {
-  const t = Math.max(0, Math.min(1, load));
-  const hue = 120 * (1 - t);
-  return `hsl(${Math.round(hue)}, 78%, 46%)`;
-}
 
 function lerp(a: [number, number], b: [number, number], t: number): [number, number] {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
@@ -73,7 +68,7 @@ function splitPolyline(pts: [number, number][], n: number): [number, number][][]
 export function buildColorMesh(
   stretches: MeshStretch[],
   load: LoadLookup,
-  opts: { segmentsPerStretch?: number } = {},
+  opts: { segmentsPerStretch?: number; colour?: ColorizeParams } = {},
 ): MeshSegment[] {
   const n = Math.max(1, opts.segmentsPerStretch ?? 5);
   const out: MeshSegment[] = [];
@@ -82,7 +77,7 @@ export function buildColorMesh(
     const chunks = splitPolyline(s.points, n);
     chunks.forEach((points, index) => {
       const l = Math.max(0, Math.min(1, load(s.id, index, chunks.length)));
-      out.push({ stretchId: s.id, index, points, load: l, color: loadColor(l) });
+      out.push({ stretchId: s.id, index, points, load: l, color: colorize(l, opts.colour) });
     });
   }
   return out;

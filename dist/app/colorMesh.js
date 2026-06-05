@@ -8,12 +8,8 @@
 //
 // Größen-Hebel (project_colour_mesh): Geometrie statisch (1×), Last volatil (alle 5 Min).
 // Hier nur die Render-Mechanik; die Last reicht der Konsument herein (Anthem oder Sim).
-/** Ampel-Rampe: 0 = frei (grün) → 0.5 = gelb → 1 = voll (rot). */
-export function loadColor(load) {
-    const t = Math.max(0, Math.min(1, load));
-    const hue = 120 * (1 - t);
-    return `hsl(${Math.round(hue)}, 78%, 46%)`;
-}
+// Die Farbe kommt aus dem einen Colorist (palette/spectrum/bias).
+import { colorize } from './colorist';
 function lerp(a, b, t) {
     return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 }
@@ -61,7 +57,7 @@ export function buildColorMesh(stretches, load, opts = {}) {
         const chunks = splitPolyline(s.points, n);
         chunks.forEach((points, index) => {
             const l = Math.max(0, Math.min(1, load(s.id, index, chunks.length)));
-            out.push({ stretchId: s.id, index, points, load: l, color: loadColor(l) });
+            out.push({ stretchId: s.id, index, points, load: l, color: colorize(l, opts.colour) });
         });
     }
     return out;
