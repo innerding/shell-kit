@@ -44,12 +44,11 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
                     overflow: 'hidden',
                     transition: 'left 0.22s ease',
                     pointerEvents: 'none',
-                }, children: [_jsx("div", { style: { position: 'absolute', top: 0, bottom: 0, left: 1, right: 1, borderRadius: 3, background: GRADIENT } }), _jsx("div", { style: {
-                            position: 'absolute', left: -3, right: -3,
-                            bottom: `${Math.min(1, Math.max(0, systemLoad)) * 100}%`,
-                            height: 0,
-                            borderTop: '2px dotted rgba(15,18,28,0.7)',
-                            zIndex: 1,
+                }, children: [_jsx("div", { style: {
+                            position: 'absolute', top: '-50%', height: '200%', left: 1, right: 1,
+                            borderRadius: 3, background: GRADIENT,
+                            transform: `translateY(${(Math.min(1, Math.max(0, systemLoad)) - 0.5) * 100}%)`,
+                            transition: 'transform 0.3s ease',
                         } }), maxValue < 0.99 && (_jsx("div", { style: {
                             position: 'absolute', left: 0, right: 0,
                             bottom: `${maxValue * 100}%`,

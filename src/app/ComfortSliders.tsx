@@ -67,16 +67,15 @@ function SliderStrip({ value, systemLoad, maxValue, onChange, expanded, onExpand
           pointerEvents: 'none',
         }}
       >
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 1, right: 1, borderRadius: 3, background: GRADIENT }} />
-
-        {/* systemLoad — Live-Last des Netzes (Schauglas-Lesung): wo das Netz GERADE
-            steht. Über der weißen Comfort-Linie = außerhalb des Comforts. */}
+        {/* SCHAUGLAS (Destillat): der Gradient-Balken BEWEGT sich mit der Live-Netz-Last
+            (systemLoad) — der weiße Schieber (Comfort) bleibt stehen. So sieht der User die
+            Welt sich gegen seine ruhende Comfort-Geste verschieben (Bauplan: Schauglas bewegt
+            sich, nicht der Schieber). Höhe 200%, vertikal um systemLoad verschoben. */}
         <div style={{
-          position: 'absolute', left: -3, right: -3,
-          bottom: `${Math.min(1, Math.max(0, systemLoad)) * 100}%`,
-          height: 0,
-          borderTop: '2px dotted rgba(15,18,28,0.7)',
-          zIndex: 1,
+          position: 'absolute', top: '-50%', height: '200%', left: 1, right: 1,
+          borderRadius: 3, background: GRADIENT,
+          transform: `translateY(${(Math.min(1, Math.max(0, systemLoad)) - 0.5) * 100}%)`,
+          transition: 'transform 0.3s ease',
         }} />
 
         {maxValue < 0.99 && (
