@@ -21,7 +21,7 @@ export function renderColorMesh(layer, net, loads, opts = {}) {
                 color: dimmed ? '#7a8699' : colorize(load, opts.colour),
                 weight: dimmed ? 2 : weight,
                 opacity: dimmed ? 0.12 : 1,
-                lineCap: 'butt', // überall butt → kein Crossing-Blend, kein Überstand
+                lineCap: 'round',
             }).addTo(layer);
         }
     }
