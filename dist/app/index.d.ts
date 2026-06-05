@@ -3,4 +3,5 @@ export * from './geometry';
 export * from './decorations';
 export * from './render';
 export * from './colorist';
+export * from './anthem';
 export * from './colorMesh';
