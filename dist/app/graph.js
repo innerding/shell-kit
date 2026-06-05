@@ -37,6 +37,46 @@ export function isNearDimmedStretch(lat, lng, net, dimmedStretchIds, thresholdM 
     }
     return false;
 }
+/**
+ * Berechnet alle pre-existenten Sackgassen des Netzes (statisch, einmal beim
+ * Bundle-Laden). Startet mit Strecken die einen Grad-1-Endknoten haben, kaskadiert
+ * dann: Strecken die dadurch ihrerseits zur Sackgasse werden, ebenfalls markiert.
+ * Unabhängig von BCK/BAK — reine Netz-Topologie.
+ */
+export function computeStaticDeadEnds(net, nodeStretchMap) {
+    const dead = new Set();
+    // Initial: alle Strecken mit mindestens einem Grad-1-Endknoten.
+    for (const s of net.stretches) {
+        if (s.points.length < 2)
+            continue;
+        const sk = nodeKey(s.points[0]);
+        const ek = nodeKey(s.points[s.points.length - 1]);
+        if ((nodeStretchMap.get(sk)?.length ?? 0) <= 1 ||
+            (nodeStretchMap.get(ek)?.length ?? 0) <= 1) {
+            dead.add(s.id);
+        }
+    }
+    // Kaskade: neu entstandene Sackgassen (ohne Grad-Schutz — kein BCK hier).
+    let changed = true;
+    while (changed) {
+        changed = false;
+        for (const s of net.stretches) {
+            if (dead.has(s.id) || s.points.length < 2)
+                continue;
+            const sk = nodeKey(s.points[0]);
+            const ek = nodeKey(s.points[s.points.length - 1]);
+            for (const key of [sk, ek]) {
+                const active = (nodeStretchMap.get(key) ?? []).filter(id => id !== s.id && !dead.has(id));
+                if (active.length === 0) {
+                    dead.add(s.id);
+                    changed = true;
+                    break;
+                }
+            }
+        }
+    }
+    return dead;
+}
 /** Endknoten-Koordinate → anliegende Strecken-IDs. */
 export function buildNodeStretchMap(net) {
     const map = new Map();

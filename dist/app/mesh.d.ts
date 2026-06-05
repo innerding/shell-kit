@@ -5,4 +5,6 @@ export declare function renderColorMesh(layer: L.LayerGroup, net: SegmentedNet, 
     colour?: ColorizeParams;
     weight?: number;
     dimmedStretchIds?: Set<string>;
+    /** Statische Sackgassen — komplett unsichtbar (nicht gerendert). */
+    hiddenStretchIds?: Set<string>;
 }): void;

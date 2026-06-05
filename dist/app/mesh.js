@@ -16,11 +16,12 @@ export function renderColorMesh(layer, net, loads, opts = {}) {
     let idx = 0;
     for (const s of net.stretches) {
         const segCount = s.points.length - 1;
-        const dimmed = opts.dimmedStretchIds?.has(s.id) ?? false;
+        const hidden = opts.hiddenStretchIds?.has(s.id) ?? false;
+        const dimmed = !hidden && (opts.dimmedStretchIds?.has(s.id) ?? false);
         for (let i = 0; i < segCount; i++) {
             idx++;
-            if (dimmed)
-                continue;
+            if (hidden)
+                continue; // statische Sackgasse — gar nicht rendern
             L.polyline([s.points[i], s.points[i + 1]], { color: '#ffffff', weight: weight + 2, opacity: 1, lineCap: 'round' }).addTo(layer);
         }
     }

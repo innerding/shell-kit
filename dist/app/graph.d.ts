@@ -4,6 +4,13 @@ import type { SegmentedNet } from './anthem';
  * ausgedimmten Strecke? Für POI-Dimming: wenn ja, POI ebenfalls dimmen.
  */
 export declare function isNearDimmedStretch(lat: number, lng: number, net: SegmentedNet, dimmedStretchIds: Set<string>, thresholdM?: number): boolean;
+/**
+ * Berechnet alle pre-existenten Sackgassen des Netzes (statisch, einmal beim
+ * Bundle-Laden). Startet mit Strecken die einen Grad-1-Endknoten haben, kaskadiert
+ * dann: Strecken die dadurch ihrerseits zur Sackgasse werden, ebenfalls markiert.
+ * Unabhängig von BCK/BAK — reine Netz-Topologie.
+ */
+export declare function computeStaticDeadEnds(net: SegmentedNet, nodeStretchMap: Map<string, string[]>): Set<string>;
 /** Endknoten-Koordinate → anliegende Strecken-IDs. */
 export declare function buildNodeStretchMap(net: SegmentedNet): Map<string, string[]>;
 /**
