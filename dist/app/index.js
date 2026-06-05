@@ -4,3 +4,4 @@ export * from './geometry'; // Geometrie-Vokabular (Formen) + geometryOf
 export * from './decorations'; // Deco-Typen
 export * from './render'; // Render-Kern: Container/Composite + RenderAssets + mergeOverlapping
 export * from './cluster'; // Cluster-Render-Mechanik (Leaflet): renderClusterPois
+export * from './colorMesh'; // Colour-Mesh: buildColorMesh + loadColor (Last → Farbe)
