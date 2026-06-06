@@ -1,4 +1,5 @@
 export { default as ComfortSliders } from './ComfortSliders';
+export { default as RouteComfortBanner } from './RouteComfortBanner';
 export * from './geometry';
 export * from './decorations';
 export * from './render';
@@ -6,3 +7,4 @@ export * from './colorist';
 export * from './anthem';
 export * from './scale';
 export * from './graph';
+export * from './bak';

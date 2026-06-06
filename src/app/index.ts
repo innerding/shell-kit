@@ -1,5 +1,6 @@
 // shell-kit/app — die per-Rep-Shell (reist im Shell-Paket).
 export { default as ComfortSliders } from './ComfortSliders';
+export { default as RouteComfortBanner } from './RouteComfortBanner';  // bak-test-Banner
 export * from './geometry';     // Geometrie-Vokabular (Formen) + geometryOf
 export * from './decorations';  // Deco-Typen
 export * from './render';       // Render-Kern: Container/Composite + RenderAssets + mergeOverlapping
@@ -7,3 +8,4 @@ export * from './colorist';     // Colorist: Last → Farbe (PALETTES/colorize/s
 export * from './anthem';       // Anthem: Last-Mathematik (simSegmentLoads/normalizeLoads/dayPhase/produceAnthemLoads)
 export * from './scale';        // Skalen-Modell: colorAt/posForLoad/loadForPos (eine Quelle für alle Schieber)
 export * from './graph';        // Netz-Graph: buildNodeStretchMap/buildProtectedNodes/pruneDeadEnds
+export * from './bak';          // BAK: solveRoute/routeBreachesComfort/toggleWaypoint (bak-test)
