@@ -11,6 +11,11 @@ const COL_W     = 36;
 const W_COL     = L_GAP_COL + STRIP_W + RIGHT_GAP;
 const W_EXP     = L_GAP_EXP + STRIP_W + RIGHT_GAP + SPACER + COL_W;
 const LABEL_W   = RIGHT_GAP + SPACER + COL_W;
+const EDGE_GAP  = 4;   // px Abstand des Schiebers zu Ober-/Unterkante (läuft nie raus)
+
+// Schieber-/Marker-Position mit Rand-Gap: bottom-Wert, der bei value 0..1
+// zwischen EDGE_GAP und (Höhe − EDGE_GAP) bleibt.
+const insetBottom = (v: number) => `calc(${EDGE_GAP}px + ${Math.max(0, Math.min(1, v))} * (100% - ${EDGE_GAP * 2}px))`;
 
 interface StripProps {
   value: number;
@@ -48,9 +53,9 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labe
       <div ref={trackRef} style={{ position: 'absolute', left: expanded ? L_GAP_EXP : L_GAP_COL, top: 0, bottom: 0, width: STRIP_W, overflow: 'hidden', transition: 'left 0.22s ease', pointerEvents: 'none' }}>
         <div style={{ position: 'absolute', inset: 0, borderRadius: 3, background: GRADIENT }} />
         {maxValue < 0.99 && (
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: `${maxValue * 100}%`, height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' }} />
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: insetBottom(maxValue), height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' }} />
         )}
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: `${linePos * 100}%`, height: expanded ? 3 : 2, background: '#fff', boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 2 }} />
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: insetBottom(linePos), height: expanded ? 3 : 2, background: '#fff', boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 2 }} />
       </div>
 
       {expanded && (
