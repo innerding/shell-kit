@@ -11,9 +11,10 @@ const W_COL = L_GAP_COL + STRIP_W + RIGHT_GAP;
 const W_EXP = L_GAP_EXP + STRIP_W + RIGHT_GAP + SPACER + COL_W;
 const LABEL_W = RIGHT_GAP + SPACER + COL_W;
 const EDGE_GAP = 4; // px Abstand des Schiebers zu Ober-/Unterkante (läuft nie raus)
+const TOP_EXTRA = 1; // oben 1px mehr (Schieber ist bottom-verankert, wächst nach oben)
 // Schieber-/Marker-Position mit Rand-Gap: bottom-Wert, der bei value 0..1
-// zwischen EDGE_GAP und (Höhe − EDGE_GAP) bleibt.
-const insetBottom = (v) => `calc(${EDGE_GAP}px + ${Math.max(0, Math.min(1, v))} * (100% - ${EDGE_GAP * 2}px))`;
+// zwischen EDGE_GAP und (Höhe − EDGE_GAP − TOP_EXTRA) bleibt.
+const insetBottom = (v) => `calc(${EDGE_GAP}px + ${Math.max(0, Math.min(1, v))} * (100% - ${EDGE_GAP * 2 + TOP_EXTRA}px))`;
 function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labels }) {
     const trackRef = useRef(null);
     const dragging = useRef(false);
