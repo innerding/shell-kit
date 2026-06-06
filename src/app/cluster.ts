@@ -78,25 +78,34 @@ export function renderClusterPois(
     }), SWALLOW);
     const ghost = ghostByCluster.get(clusterName);
 
-    for (const e of ents) {
+    // Pro manuellem Cluster nur EIN Ghost: alle ≥2-Entities (Ghost-würdig) werden zu
+    // einem zusammengefasst. Größe = Summe aller verschluckten Mitglieder, Position =
+    // die größte (dichteste) Gruppe. Einzeln-isolierte Mitglieder bleiben Icons.
+    const ghostEnts = ents.filter((e) => e.members.length >= 2);
+    const singleEnts = ents.filter((e) => e.members.length < 2);
+
+    if (ghostEnts.length > 0) {
+      const total = ghostEnts.reduce((s, e) => s + e.members.length, 0);
+      const anchor = ghostEnts.reduce((a, b) => (b.members.length > a.members.length ? b : a));
+      const latlng = map.layerPointToLatLng(L.point(anchor.x, anchor.y));
+      const size = Math.min(GHOST_MAX, GHOST_MIN + (total - 2) * 5);
+      const svg = ghost ? ghost.renderSvg(size) : '';
+      const names = ghostEnts.flatMap((e) => e.members.map((m) => m.text)).join(' · ');
+      placeMarker(layer, latlng, markerHtml(svg, size), size, {
+        z: 1000,
+        tooltip: `<strong>${ghost?.text ?? clusterName}</strong><br/>` +
+          `<span style="color:#718096">${total} POIs</span><br/><em>${names}</em>`,
+      });
+    }
+
+    for (const e of singleEnts) {
       const latlng = map.layerPointToLatLng(L.point(e.x, e.y));
-      if (e.members.length >= 2) {
-        const size = Math.min(GHOST_MAX, GHOST_MIN + (e.members.length - 2) * 5);
-        const svg = ghost ? ghost.renderSvg(size) : '';
-        const names = e.members.map((m) => m.text).join(' · ');
-        placeMarker(layer, latlng, markerHtml(svg, size), size, {
-          z: 1000,
-          tooltip: `<strong>${ghost?.text ?? clusterName}</strong><br/>` +
-            `<span style="color:#718096">${e.members.length} POIs</span><br/><em>${names}</em>`,
-        });
-      } else {
-        const m = e.members[0];
-        const svg = m.renderSvg(ICON);
-        if (!svg) continue;
-        placeMarker(layer, latlng, markerHtml(svg, ICON), ICON, {
-          tooltip: `<strong>${m.text}</strong><br/><span style="color:#718096">${m.subcategory}</span>`,
-        });
-      }
+      const m = e.members[0];
+      const svg = m.renderSvg(ICON);
+      if (!svg) continue;
+      placeMarker(layer, latlng, markerHtml(svg, ICON), ICON, {
+        tooltip: `<strong>${m.text}</strong><br/><span style="color:#718096">${m.subcategory}</span>`,
+      });
     }
 
     // Ankündigung: blasser Hexagon-Ring über sich nähernde Paare (>= SWALLOW, < ANNOUNCE).
