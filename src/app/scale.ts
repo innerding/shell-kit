@@ -31,6 +31,9 @@ export interface ScaleSpec {
   spreizung: { mitte: number; oben: number; unten: number };
   /** Wrap (nur Comfort-Anzeige): staucht die Enden. 0..1 je Ende. */
   verjuengung: { unten: number; oben: number };
+  /** Felder-/Grenzen-Modell: N−1 innere Feldgrenzen (Load 0..1). Wenn gesetzt
+   *  (Länge = stops−1), bestimmt es die Farbe (statt spreizung). */
+  borders?: number[];
 }
 
 // ── Farben ──────────────────────────────────────────────────────────────────
@@ -107,8 +110,37 @@ function unwrap(disp: number, vj: ScaleSpec['verjuengung']): number {
 
 // ── Öffentliche API ──────────────────────────────────────────────────────────
 
-/** Farbe für eine Last (Mesh + Slider-Basis) — folgt der Spreizung, OHNE Wrap. */
+function mix(a: string, b: string, f: number): string {
+  const x = parseRGB(a), y = parseRGB(b);
+  return `rgb(${Math.round(lerp(x[0], y[0], f))},${Math.round(lerp(x[1], y[1], f))},${Math.round(lerp(x[2], y[2], f))})`;
+}
+
+/** Felder-/Grenzen-Modell: Farbe je Feld an dessen Mitte, Enden voll, dazwischen linear. */
+export function colorAtBorders(load: number, stops: string[], borders: number[]): string {
+  const n = stops.length;
+  const center = (i: number) => {
+    const lo = i === 0 ? 0 : borders[i - 1];
+    const hi = i === n - 1 ? 1 : borders[i];
+    return (lo + hi) / 2;
+  };
+  const pos: number[] = [0], cols: string[] = [stops[0]];
+  for (let i = 0; i < n; i++) { pos.push(center(i)); cols.push(stops[i]); }
+  pos.push(1); cols.push(stops[n - 1]);
+  const t = clamp01(load);
+  for (let i = 0; i < pos.length - 1; i++) {
+    if (t <= pos[i + 1]) {
+      const span = pos[i + 1] - pos[i];
+      return mix(cols[i], cols[i + 1], span > 1e-9 ? (t - pos[i]) / span : 0);
+    }
+  }
+  return cols[cols.length - 1];
+}
+
+/** Farbe für eine Last (Mesh + Slider-Basis). borders (Felder-Modell) hat Vorrang,
+ *  sonst Spreizung. OHNE Wrap. */
 export function colorAt(load: number, s: ScaleSpec): string {
+  if (s.borders && s.stops.length >= 2 && s.borders.length === s.stops.length - 1)
+    return colorAtBorders(load, s.stops, s.borders);
   return colorFromStops(s.stops, spreize(load, s.spreizung));
 }
 

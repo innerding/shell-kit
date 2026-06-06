@@ -13,12 +13,18 @@ export interface ScaleSpec {
         unten: number;
         oben: number;
     };
+    /** Felder-/Grenzen-Modell: N−1 innere Feldgrenzen (Load 0..1). Wenn gesetzt
+     *  (Länge = stops−1), bestimmt es die Farbe (statt spreizung). */
+    borders?: number[];
 }
 /** Farbe an Position t∈[0,1] über die Stops (lineare RGB-Interpolation). */
 export declare function colorFromStops(stops: string[], t: number): string;
 export declare function spreize(load: number, sp: ScaleSpec['spreizung']): number;
 export declare function entspreize(disp: number, sp: ScaleSpec['spreizung']): number;
-/** Farbe für eine Last (Mesh + Slider-Basis) — folgt der Spreizung, OHNE Wrap. */
+/** Felder-/Grenzen-Modell: Farbe je Feld an dessen Mitte, Enden voll, dazwischen linear. */
+export declare function colorAtBorders(load: number, stops: string[], borders: number[]): string;
+/** Farbe für eine Last (Mesh + Slider-Basis). borders (Felder-Modell) hat Vorrang,
+ *  sonst Spreizung. OHNE Wrap. */
 export declare function colorAt(load: number, s: ScaleSpec): string;
 /** Display-Position 0..1 für eine Last. wrap=true: Comfort-Verjüngung an. */
 export declare function posForLoad(load: number, s: ScaleSpec, useWrap?: boolean): number;

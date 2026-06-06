@@ -92,8 +92,39 @@ function unwrap(disp, vj) {
     return 1 - 0.5 * Math.pow((1 - d) / 0.5, 1 / aVj(vj.oben));
 }
 // ── Öffentliche API ──────────────────────────────────────────────────────────
-/** Farbe für eine Last (Mesh + Slider-Basis) — folgt der Spreizung, OHNE Wrap. */
+function mix(a, b, f) {
+    const x = parseRGB(a), y = parseRGB(b);
+    return `rgb(${Math.round(lerp(x[0], y[0], f))},${Math.round(lerp(x[1], y[1], f))},${Math.round(lerp(x[2], y[2], f))})`;
+}
+/** Felder-/Grenzen-Modell: Farbe je Feld an dessen Mitte, Enden voll, dazwischen linear. */
+export function colorAtBorders(load, stops, borders) {
+    const n = stops.length;
+    const center = (i) => {
+        const lo = i === 0 ? 0 : borders[i - 1];
+        const hi = i === n - 1 ? 1 : borders[i];
+        return (lo + hi) / 2;
+    };
+    const pos = [0], cols = [stops[0]];
+    for (let i = 0; i < n; i++) {
+        pos.push(center(i));
+        cols.push(stops[i]);
+    }
+    pos.push(1);
+    cols.push(stops[n - 1]);
+    const t = clamp01(load);
+    for (let i = 0; i < pos.length - 1; i++) {
+        if (t <= pos[i + 1]) {
+            const span = pos[i + 1] - pos[i];
+            return mix(cols[i], cols[i + 1], span > 1e-9 ? (t - pos[i]) / span : 0);
+        }
+    }
+    return cols[cols.length - 1];
+}
+/** Farbe für eine Last (Mesh + Slider-Basis). borders (Felder-Modell) hat Vorrang,
+ *  sonst Spreizung. OHNE Wrap. */
 export function colorAt(load, s) {
+    if (s.borders && s.stops.length >= 2 && s.borders.length === s.stops.length - 1)
+        return colorAtBorders(load, s.stops, s.borders);
     return colorFromStops(s.stops, spreize(load, s.spreizung));
 }
 /** Display-Position 0..1 für eine Last. wrap=true: Comfort-Verjüngung an. */
