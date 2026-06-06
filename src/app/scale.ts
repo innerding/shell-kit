@@ -1,29 +1,34 @@
 // Skalen-Modell — EINE Quelle für alle Schieber-Oberflächen (Comfort · Mesh · P01).
 // Die Oberflächen sind Kopien DIESES Modells.
 //
-// Eine Skala = Farb-Stops (2–6) + Spreizung (Verteilung) + Verjüngung (Wrap, nur Anzeige).
+// Eine Skala = Farb-Stops (2–6) + Spreizung (drei Mitten-Pivots) + Verjüngung (Wrap).
+//
+//   Drei Pivots (Last-Werte) bestimmen die ANSICHT, auf der sich die Last verteilt:
+//     unten  → Anzeige 0.25   (Mitte des unteren Teils)
+//     mitte  → Anzeige 0.50   (globale Mitte, für alles)
+//     oben   → Anzeige 0.75   (Mitte des oberen Teils)
+//   dazu fix 0→0 und 1→1. Dazwischen STÜCKWEISE LINEAR, streng monoton, invertierbar.
+//   → bestimmt das Aussehen von BEIDEM (Mesh objektiv + Comfort).
+//
+//   Wrap (Verjüngung) = NUR Comfort-Button: staucht die Enden der ANZEIGE, damit der
+//   Comfort-Schieber nicht „knallt". Subjektiv. Fasst das Mesh NIE an.
 //
 //   colorAt(load)           → Farbe (Mesh + Slider-Basis; OHNE Wrap)
 //   posForLoad(load, wrap)  → Position 0..1 auf dem Schieber
 //   loadForPos(pos, wrap)   → Entzerrung (Position → echte Last)
-//
-// Alle Abbildungen monoton + invertierbar (Tests prüfen das). Die Kurven-Stärke ist
-// über zwei Konstanten tunebar (HET_STRENGTH, VJ_STRENGTH) — die Feinheit stimmen wir
-// an der Oberfläche ab; die STRUKTUR (Pivot=mitte, Enden via het, Wrap getrennt) steht.
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
 
-// Tunebar: wie stark het/Verjüngung wirken (param 0..1 → Kurven-Exponent).
-const HET_STRENGTH = 2;    // stauchen 1 → Exponent 3 (Ende stark gestaucht, Mitte gedehnt)
-const VJ_STRENGTH  = 3;    // verjüngung 1 → Exponent 4 (Enden stark gestaucht)
+// Wrap-Stärke (Comfort-Verjüngung): param 0..1 → Kurven-Exponent.
+const VJ_STRENGTH = 3; // verjüngung 1 → Exponent 4 (Enden stark gestaucht)
 
 export interface ScaleSpec {
   /** 2–6 Farben, von niedrig (unten/grün) nach hoch (oben/rot). */
   stops: string[];
-  /** Verteilung der Skala. mitte = Pivot (0..1); het = Spreizung der Enden (0..1). */
-  spreizung: { mitte: number; obenHet: number; untenHet: number };
-  /** Wrap (nur Anzeige, Comfort): staucht die Enden. 0..1 je Ende. */
+  /** Drei Mitten-Pivots als Last-Werte. 0 < unten < mitte < oben < 1. */
+  spreizung: { mitte: number; oben: number; unten: number };
+  /** Wrap (nur Comfort-Anzeige): staucht die Enden. 0..1 je Ende. */
   verjuengung: { unten: number; oben: number };
 }
 
@@ -52,31 +57,36 @@ export function colorFromStops(stops: string[], t: number): string {
   return `rgb(${Math.round(lerp(a[0], b[0], f))},${Math.round(lerp(a[1], b[1], f))},${Math.round(lerp(a[2], b[2], f))})`;
 }
 
-// ── Spreizung: Last → Display-Position (Verteilung) ──────────────────────────
-// Pivot mitte → 0.5. „Stauchen": Mitte bleibt homogen, das jeweilige Ende wird
-// zusammengedrückt (Exponent > 1 = Ende gestaucht, Mitte gedehnt).
-const gHet = (het: number) => 1 + HET_STRENGTH * clamp01(het);
+// ── Spreizung: Last → Display-Position (drei Pivots, stückweise linear) ───────
+const EPS = 0.001;
+const DISP = [0, 0.25, 0.5, 0.75, 1];
+
+/** Last-Stützstellen mit garantiert strenger Ordnung 0<unten<mitte<oben<1. */
+function loadStops(sp: ScaleSpec['spreizung']): number[] {
+  const unten = clamp(sp.unten, EPS, 1 - 3 * EPS);
+  const mitte = clamp(sp.mitte, unten + EPS, 1 - 2 * EPS);
+  const oben = clamp(sp.oben, mitte + EPS, 1 - EPS);
+  return [0, unten, mitte, oben, 1];
+}
+
+/** Stückweise-lineare Abbildung x→y über sortierte Stützstellen. */
+function pwl(x: number, xs: number[], ys: number[]): number {
+  if (x <= xs[0]) return ys[0];
+  for (let i = 0; i < xs.length - 1; i++) {
+    if (x <= xs[i + 1]) {
+      const t = (x - xs[i]) / (xs[i + 1] - xs[i]);
+      return ys[i] + t * (ys[i + 1] - ys[i]);
+    }
+  }
+  return ys[ys.length - 1];
+}
 
 export function spreize(load: number, sp: ScaleSpec['spreizung']): number {
-  const m = clamp(sp.mitte, 0.02, 0.98);
-  const l = clamp01(load);
-  if (l <= m) {
-    const lo = l / m;                                  // 0..1 unterer Teil
-    return 0.5 * Math.pow(lo, gHet(sp.untenHet));
-  }
-  const hi = (l - m) / (1 - m);                        // 0..1 oberer Teil
-  return 0.5 + 0.5 * (1 - Math.pow(1 - hi, gHet(sp.obenHet)));
+  return pwl(clamp01(load), loadStops(sp), DISP);
 }
 
 export function entspreize(disp: number, sp: ScaleSpec['spreizung']): number {
-  const m = clamp(sp.mitte, 0.02, 0.98);
-  const d = clamp01(disp);
-  if (d <= 0.5) {
-    const lo = Math.pow(d / 0.5, 1 / gHet(sp.untenHet));
-    return lo * m;
-  }
-  const hi = 1 - Math.pow(1 - (d - 0.5) / 0.5, 1 / gHet(sp.obenHet));
-  return m + hi * (1 - m);
+  return pwl(clamp01(disp), DISP, loadStops(sp));
 }
 
 // ── Verjüngung (Wrap): Display-Position → gestauchte Anzeige (nur Comfort) ────
@@ -112,9 +122,9 @@ export function loadForPos(pos: number, s: ScaleSpec, useWrap = false): number {
   return entspreize(base, s.spreizung);
 }
 
-/** Default-Skala: grün→gelb→rot, neutrale Spreizung/Verjüngung. */
+/** Default-Skala: grün→gelb→rot, lineare Verteilung (Pivots 0.25/0.5/0.75), kein Wrap. */
 export const DEFAULT_SCALE: ScaleSpec = {
   stops: ['#2ecc40', '#ffd400', '#ff2d2d'],
-  spreizung: { mitte: 0.5, obenHet: 0, untenHet: 0 },
+  spreizung: { mitte: 0.5, oben: 0.75, unten: 0.25 },
   verjuengung: { unten: 0, oben: 0 },
 };
