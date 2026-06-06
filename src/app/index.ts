@@ -5,4 +5,5 @@ export * from './decorations';  // Deco-Typen
 export * from './render';       // Render-Kern: Container/Composite + RenderAssets + mergeOverlapping
 export * from './colorist';     // Colorist: Last → Farbe (PALETTES/colorize/shapeLoad/heatColor)
 export * from './anthem';       // Anthem: Last-Mathematik (simSegmentLoads/normalizeLoads/dayPhase/produceAnthemLoads)
+export * from './scale';        // Skalen-Modell: colorAt/posForLoad/loadForPos (eine Quelle für alle Schieber)
 export * from './graph';        // Netz-Graph: buildNodeStretchMap/buildProtectedNodes/pruneDeadEnds
