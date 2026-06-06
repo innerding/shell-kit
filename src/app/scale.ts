@@ -15,7 +15,7 @@ const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
 
 // Tunebar: wie stark het/Verjüngung wirken (param 0..1 → Kurven-Exponent).
-const HET_STRENGTH = 0.7;  // het 1 → Exponent 0.3 (Enden stark gespreizt)
+const HET_STRENGTH = 2;    // stauchen 1 → Exponent 3 (Ende stark gestaucht, Mitte gedehnt)
 const VJ_STRENGTH  = 3;    // verjüngung 1 → Exponent 4 (Enden stark gestaucht)
 
 export interface ScaleSpec {
@@ -53,8 +53,9 @@ export function colorFromStops(stops: string[], t: number): string {
 }
 
 // ── Spreizung: Last → Display-Position (Verteilung) ──────────────────────────
-// Pivot mitte → 0.5. het spreizt das jeweilige Ende (Exponent < 1 = mehr Spread).
-const gHet = (het: number) => 1 - HET_STRENGTH * clamp01(het);
+// Pivot mitte → 0.5. „Stauchen": Mitte bleibt homogen, das jeweilige Ende wird
+// zusammengedrückt (Exponent > 1 = Ende gestaucht, Mitte gedehnt).
+const gHet = (het: number) => 1 + HET_STRENGTH * clamp01(het);
 
 export function spreize(load: number, sp: ScaleSpec['spreizung']): number {
   const m = clamp(sp.mitte, 0.02, 0.98);

@@ -13,7 +13,7 @@
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 // Tunebar: wie stark het/Verjüngung wirken (param 0..1 → Kurven-Exponent).
-const HET_STRENGTH = 0.7; // het 1 → Exponent 0.3 (Enden stark gespreizt)
+const HET_STRENGTH = 2; // stauchen 1 → Exponent 3 (Ende stark gestaucht, Mitte gedehnt)
 const VJ_STRENGTH = 3; // verjüngung 1 → Exponent 4 (Enden stark gestaucht)
 // ── Farben ──────────────────────────────────────────────────────────────────
 function parseRGB(c) {
@@ -44,8 +44,9 @@ export function colorFromStops(stops, t) {
     return `rgb(${Math.round(lerp(a[0], b[0], f))},${Math.round(lerp(a[1], b[1], f))},${Math.round(lerp(a[2], b[2], f))})`;
 }
 // ── Spreizung: Last → Display-Position (Verteilung) ──────────────────────────
-// Pivot mitte → 0.5. het spreizt das jeweilige Ende (Exponent < 1 = mehr Spread).
-const gHet = (het) => 1 - HET_STRENGTH * clamp01(het);
+// Pivot mitte → 0.5. „Stauchen": Mitte bleibt homogen, das jeweilige Ende wird
+// zusammengedrückt (Exponent > 1 = Ende gestaucht, Mitte gedehnt).
+const gHet = (het) => 1 + HET_STRENGTH * clamp01(het);
 export function spreize(load, sp) {
     const m = clamp(sp.mitte, 0.02, 0.98);
     const l = clamp01(load);
