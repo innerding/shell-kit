@@ -51,11 +51,12 @@ export function colorFromStops(stops, t) {
 // ── Spreizung: Last → Display-Position (drei Pivots, stückweise linear) ───────
 const EPS = 0.001;
 const DISP = [0, 0.25, 0.5, 0.75, 1];
-/** Last-Stützstellen mit garantiert strenger Ordnung 0<unten<mitte<oben<1. */
+/** Last-Stützstellen. mitte = Pivot; oben/unten = Anteil ihrer Hälfte (0..1).
+ *  Garantiert strenge Ordnung 0<unten<mitte<oben<1. */
 function loadStops(sp) {
-    const unten = clamp(sp.unten, EPS, 1 - 3 * EPS);
-    const mitte = clamp(sp.mitte, unten + EPS, 1 - 2 * EPS);
-    const oben = clamp(sp.oben, mitte + EPS, 1 - EPS);
+    const mitte = clamp(sp.mitte, 0.04, 0.96);
+    const unten = clamp(clamp01(sp.unten) * mitte, EPS, mitte - EPS);
+    const oben = clamp(mitte + clamp01(sp.oben) * (1 - mitte), mitte + EPS, 1 - EPS);
     return [0, unten, mitte, oben, 1];
 }
 /** Stückweise-lineare Abbildung x→y über sortierte Stützstellen. */
@@ -105,9 +106,9 @@ export function loadForPos(pos, s, useWrap = false) {
     const base = useWrap ? unwrap(pos, s.verjuengung) : clamp01(pos);
     return entspreize(base, s.spreizung);
 }
-/** Default-Skala: grün→gelb→rot, lineare Verteilung (Pivots 0.25/0.5/0.75), kein Wrap. */
+/** Default-Skala: grün→gelb→rot, lineare Verteilung (Mitte 0.5, Anteile neutral 0.5), kein Wrap. */
 export const DEFAULT_SCALE = {
     stops: ['#2ecc40', '#ffd400', '#ff2d2d'],
-    spreizung: { mitte: 0.5, oben: 0.75, unten: 0.25 },
+    spreizung: { mitte: 0.5, oben: 0.5, unten: 0.5 },
     verjuengung: { unten: 0, oben: 0 },
 };

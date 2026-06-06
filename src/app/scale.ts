@@ -26,7 +26,8 @@ const VJ_STRENGTH = 3; // verjüngung 1 → Exponent 4 (Enden stark gestaucht)
 export interface ScaleSpec {
   /** 2–6 Farben, von niedrig (unten/grün) nach hoch (oben/rot). */
   stops: string[];
-  /** Drei Mitten-Pivots als Last-Werte. 0 < unten < mitte < oben < 1. */
+  /** mitte = globaler Pivot (Last, →Anzeige 0.5). oben/unten = ANTEIL 0..1 der
+   *  Mitte ihrer Hälfte (0.5 = neutral). Relativ → bleiben bei Mitte-Verschub gleich. */
   spreizung: { mitte: number; oben: number; unten: number };
   /** Wrap (nur Comfort-Anzeige): staucht die Enden. 0..1 je Ende. */
   verjuengung: { unten: number; oben: number };
@@ -61,11 +62,12 @@ export function colorFromStops(stops: string[], t: number): string {
 const EPS = 0.001;
 const DISP = [0, 0.25, 0.5, 0.75, 1];
 
-/** Last-Stützstellen mit garantiert strenger Ordnung 0<unten<mitte<oben<1. */
+/** Last-Stützstellen. mitte = Pivot; oben/unten = Anteil ihrer Hälfte (0..1).
+ *  Garantiert strenge Ordnung 0<unten<mitte<oben<1. */
 function loadStops(sp: ScaleSpec['spreizung']): number[] {
-  const unten = clamp(sp.unten, EPS, 1 - 3 * EPS);
-  const mitte = clamp(sp.mitte, unten + EPS, 1 - 2 * EPS);
-  const oben = clamp(sp.oben, mitte + EPS, 1 - EPS);
+  const mitte = clamp(sp.mitte, 0.04, 0.96);
+  const unten = clamp(clamp01(sp.unten) * mitte, EPS, mitte - EPS);
+  const oben = clamp(mitte + clamp01(sp.oben) * (1 - mitte), mitte + EPS, 1 - EPS);
   return [0, unten, mitte, oben, 1];
 }
 
@@ -122,9 +124,9 @@ export function loadForPos(pos: number, s: ScaleSpec, useWrap = false): number {
   return entspreize(base, s.spreizung);
 }
 
-/** Default-Skala: grün→gelb→rot, lineare Verteilung (Pivots 0.25/0.5/0.75), kein Wrap. */
+/** Default-Skala: grün→gelb→rot, lineare Verteilung (Mitte 0.5, Anteile neutral 0.5), kein Wrap. */
 export const DEFAULT_SCALE: ScaleSpec = {
   stops: ['#2ecc40', '#ffd400', '#ff2d2d'],
-  spreizung: { mitte: 0.5, oben: 0.75, unten: 0.25 },
+  spreizung: { mitte: 0.5, oben: 0.5, unten: 0.5 },
   verjuengung: { unten: 0, oben: 0 },
 };

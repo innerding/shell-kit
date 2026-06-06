@@ -1,7 +1,8 @@
 export interface ScaleSpec {
     /** 2–6 Farben, von niedrig (unten/grün) nach hoch (oben/rot). */
     stops: string[];
-    /** Drei Mitten-Pivots als Last-Werte. 0 < unten < mitte < oben < 1. */
+    /** mitte = globaler Pivot (Last, →Anzeige 0.5). oben/unten = ANTEIL 0..1 der
+     *  Mitte ihrer Hälfte (0.5 = neutral). Relativ → bleiben bei Mitte-Verschub gleich. */
     spreizung: {
         mitte: number;
         oben: number;
@@ -23,5 +24,5 @@ export declare function colorAt(load: number, s: ScaleSpec): string;
 export declare function posForLoad(load: number, s: ScaleSpec, useWrap?: boolean): number;
 /** Entzerrung: Display-Position → echte Last (für die Comfort-Schwelle). */
 export declare function loadForPos(pos: number, s: ScaleSpec, useWrap?: boolean): number;
-/** Default-Skala: grün→gelb→rot, lineare Verteilung (Pivots 0.25/0.5/0.75), kein Wrap. */
+/** Default-Skala: grün→gelb→rot, lineare Verteilung (Mitte 0.5, Anteile neutral 0.5), kein Wrap. */
 export declare const DEFAULT_SCALE: ScaleSpec;
