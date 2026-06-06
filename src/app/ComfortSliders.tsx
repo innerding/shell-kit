@@ -1,6 +1,21 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { colorAt, type ScaleSpec } from './scale';
 
+// Fallback, falls keine Skala übergeben wird (alte Aufrufer).
 const GRADIENT = 'linear-gradient(to top, #2ecc40 0%, #a8e63c 14%, #f1c40f 28%, #ffaa00 42%, #ff5500 56%, #ff0044 72%, #ff0099 100%)';
+
+// Verlauf aus DERSELBEN Skala wie das Mesh (colorAt mit stops/borders) — so spricht
+// das BCK-Schauglas dieselbe Farbwelt wie das Mesh (Last 0 unten … 1 oben).
+function gradientFromScale(scale?: ScaleSpec): string {
+  if (!scale) return GRADIENT;
+  const N = 14;
+  const parts: string[] = [];
+  for (let i = 0; i <= N; i++) {
+    const load = i / N;
+    parts.push(`${colorAt(load, scale)} ${((load) * 100).toFixed(0)}%`);
+  }
+  return `linear-gradient(to top, ${parts.join(', ')})`;
+}
 
 const STRIP_W   = 12;
 const RIGHT_GAP = 12;
@@ -25,9 +40,10 @@ interface StripProps {
   expanded: boolean;
   onExpandChange: (expanded: boolean) => void;
   labels: { top: string; middle: string; bottom: string };
+  gradient: string;
 }
 
-function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labels }: StripProps) {
+function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labels, gradient }: StripProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -52,7 +68,7 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labe
   return (
     <div style={{ position: 'relative', width: expanded ? W_EXP : W_COL, height: 155, flexShrink: 0, transition: 'width 0.22s ease', userSelect: 'none', WebkitUserSelect: 'none' }}>
       <div ref={trackRef} style={{ position: 'absolute', left: expanded ? L_GAP_EXP : L_GAP_COL, top: 0, bottom: 0, width: STRIP_W, overflow: 'hidden', transition: 'left 0.22s ease', pointerEvents: 'none' }}>
-        <div style={{ position: 'absolute', inset: 0, borderRadius: 3, background: GRADIENT }} />
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 3, background: gradient }} />
         {maxValue < 0.99 && (
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: insetBottom(maxValue), height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' }} />
         )}
@@ -92,9 +108,12 @@ interface Props {
   onMovementChange: (v: number) => void;
   onStayChange: (v: number) => void;
   step2Active?: boolean;
+  /** Skala (stops/borders) — Schauglas spricht dieselbe Farbwelt wie das Mesh. */
+  scale?: ScaleSpec;
 }
 
-export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false }: Props) {
+export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale }: Props) {
+  const gradient = gradientFromScale(scale);
   const [movExpanded, setMovExpanded] = useState(false);
   const [stayVisible, setStayVisible] = useState(false);
   const [stayExpanded, setStayExpanded] = useState(false);
@@ -114,9 +133,9 @@ export default function ComfortSliders({ movementValue, stayValue, stayMaxValue,
 
   return (
     <div style={{ position: 'absolute', right: 0, top: 62, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, zIndex: 600 }}>
-      <SliderStrip value={movementValue} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={handleMovExpandChange} labels={{ top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }} />
+      <SliderStrip value={movementValue} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={handleMovExpandChange} labels={{ top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }} gradient={gradient} />
       {step2Active && stayVisible && (
-        <SliderStrip value={stayValue} maxValue={stayMaxValue} onChange={onStayChange} expanded={stayExpanded} onExpandChange={setStayExpanded} labels={{ top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }} />
+        <SliderStrip value={stayValue} maxValue={stayMaxValue} onChange={onStayChange} expanded={stayExpanded} onExpandChange={setStayExpanded} labels={{ top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }} gradient={gradient} />
       )}
     </div>
   );

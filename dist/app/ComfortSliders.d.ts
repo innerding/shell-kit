@@ -1,3 +1,4 @@
+import { type ScaleSpec } from './scale';
 interface Props {
     movementValue: number;
     stayValue: number;
@@ -5,6 +6,8 @@ interface Props {
     onMovementChange: (v: number) => void;
     onStayChange: (v: number) => void;
     step2Active?: boolean;
+    /** Skala (stops/borders) — Schauglas spricht dieselbe Farbwelt wie das Mesh. */
+    scale?: ScaleSpec;
 }
-export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active }: Props): import("react").JSX.Element;
+export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active, scale }: Props): import("react").JSX.Element;
 export {};
