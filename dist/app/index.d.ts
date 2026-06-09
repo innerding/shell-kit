@@ -8,3 +8,4 @@ export * from './anthem';
 export * from './scale';
 export * from './graph';
 export * from './bak';
+export * from './walker';
