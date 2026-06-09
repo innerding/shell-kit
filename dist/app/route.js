@@ -5,10 +5,14 @@
 // + nummerierte Waypoint-Marken in Tipp-/Reise-Reihenfolge.
 import L from 'leaflet';
 // Nummerierte Waypoint-Marke (kleine gefüllte Scheibe mit Reihenfolge-Ziffer).
-function waypointBadge(n, color) {
-    const html = `<div style="width:22px;height:22px;border-radius:50%;background:${color};` +
-        `border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.5);color:#fff;` +
-        `font:700 12px/18px system-ui,sans-serif;text-align:center;">${n}</div>`;
+function waypointBadge(n, color, digitRaw) {
+    const inner = digitRaw
+        ? `<div style="display:flex;align-items:center;justify-content:center;gap:1px;width:100%;height:100%;color:#fff;">` +
+            String(n).split('').map((d) => `<span style="display:inline-block;width:7px;height:9px;line-height:0;">${digitRaw(d)}</span>`).join('') +
+            `</div>`
+        : `<div style="color:#fff;font:700 12px/18px system-ui,sans-serif;text-align:center;width:100%;">${n}</div>`;
+    const html = `<div style="width:22px;height:22px;border-radius:50%;background:${color};box-sizing:border-box;` +
+        `border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;">${inner}</div>`;
     return L.divIcon({ html, className: '', iconSize: [22, 22], iconAnchor: [11, 11] });
 }
 /**
@@ -28,6 +32,6 @@ export function renderRoute(layer, route, waypoints, opts = {}) {
         L.polyline(line, { color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round', dashArray: breach ? '10 8' : undefined }).addTo(layer);
     }
     waypoints.forEach((wp, i) => {
-        L.marker(wp, { icon: waypointBadge(i + 1, color), interactive: false, zIndexOffset: 1000 }).addTo(layer);
+        L.marker(wp, { icon: waypointBadge(i + 1, color, opts.digitRaw), interactive: false, zIndexOffset: 1000 }).addTo(layer);
     });
 }

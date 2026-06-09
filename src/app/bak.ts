@@ -58,7 +58,13 @@ interface RouteGraph {
 
 // Baut den routbaren Knoten-Graph aus dem Netz: Knoten = Strecken-Endpunkte, je Strecke
 // eine Kante in beide Richtungen (Gewicht = Streckenlänge).
-function buildRouteGraph(net: SegmentedNet): RouteGraph {
+//
+// BAK-Stufe-1 (Ausweichroute): liegt `dimmed` vor, werden Kanten über ausgedimmte
+// (zu belebte) Strecken mit `penalty` multipliziert teurer → Dijkstra meidet sie,
+// solange irgendein komfortabler Umweg existiert; ist keiner da, nimmt es den
+// am wenigsten belebten Weg. Wichtig: das Gewicht beeinflusst NUR die Wegwahl;
+// die gemeldete Routenlänge/Zeit rechnet die Shell aus den echten Punkten.
+function buildRouteGraph(net: SegmentedNet, dimmed?: Set<string>, penalty = 1): RouteGraph {
   const adj = new Map<string, Edge[]>();
   const coordOf = new Map<string, LatLng>();
   const add = (from: string, e: Edge) => {
@@ -74,11 +80,18 @@ function buildRouteGraph(net: SegmentedNet): RouteGraph {
     if (sk === ek) continue; // entartete Schleife — nicht routbar
     if (!coordOf.has(sk)) coordOf.set(sk, a);
     if (!coordOf.has(ek)) coordOf.set(ek, b);
-    const w = stretchLength(pts);
+    const w = stretchLength(pts) * (dimmed && dimmed.has(s.id) ? penalty : 1);
     add(sk, { to: ek, weight: w, stretchId: s.id, pts });
     add(ek, { to: sk, weight: w, stretchId: s.id, pts: [...pts].reverse() });
   }
   return { adj, coordOf };
+}
+
+// Strecken-Länge je id (für die Engpass-Bewertung von Stufe 2).
+function buildStretchLengths(net: SegmentedNet): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const s of net.stretches) m.set(s.id, stretchLength(s.points as LatLng[]));
+  return m;
 }
 
 // Nächster Netzknoten zu einer Koordinate (für POI→Netz-Snap).
@@ -151,8 +164,28 @@ function appendEdge(route: LatLng[], stretchIds: string[], e: Edge): void {
  * unerreichbar ist.
  */
 export function solveRoute(net: SegmentedNet, waypoints: LatLng[]): Route | null {
+  return solveChain(buildRouteGraph(net), waypoints);
+}
+
+/**
+ * BAK-Stufe 1 — Ausweichroute: dieselbe Waypoint-Kette, aber das ausgedimmte
+ * (zu belebte) Netz wird gemieden (`penalty`-fach teurer). Liefert die ruhigste
+ * Route über dieselben POIs — oder null wie solveRoute. Die Shell prüft danach
+ * mit routeBreachesComfort, ob die Ausweichung den Comfort wirklich rettet.
+ */
+export function solveRouteAvoiding(
+  net: SegmentedNet,
+  waypoints: LatLng[],
+  dimmedStretchIds: Set<string>,
+  penalty = 1000,
+): Route | null {
+  return solveChain(buildRouteGraph(net, dimmedStretchIds, penalty), waypoints);
+}
+
+// Gemeinsamer Kern: schnappt jeden Waypoint auf den nächsten Netzknoten und
+// verkettet die kürzesten Wege (Gewichtung steckt im übergebenen Graph).
+function solveChain(g: RouteGraph, waypoints: LatLng[]): Route | null {
   if (waypoints.length < 2) return null;
-  const g = buildRouteGraph(net);
   const nodes: string[] = [];
   for (const w of waypoints) {
     const n = nearestNode(g, w);
@@ -169,6 +202,33 @@ export function solveRoute(net: SegmentedNet, waypoints: LatLng[]): Route | null
   }
   if (stretchIds.length === 0) return null;
   return { stretchIds, points };
+}
+
+/**
+ * BAK-Stufe 2 — Engpass-Suche: routet jedes Bein (POI→POI) einzeln und summiert
+ * die Länge des ausgedimmten Netzes je Bein. Liefert das Ziel-Waypoint-Index des
+ * am stärksten belebten Beins (= der POI, dessen Zuweg klemmt) — damit die Shell
+ * EINE gezielte Frage stellen kann („Weg zu X ist belebt — auslassen?"). Null,
+ * wenn kein Bein das ausgedimmte Netz berührt.
+ */
+export interface LegBreach { toIndex: number; dimmedLenM: number }
+export function worstBreachingLeg(
+  net: SegmentedNet,
+  waypoints: LatLng[],
+  dimmedStretchIds: Set<string>,
+): LegBreach | null {
+  if (waypoints.length < 2) return null;
+  const g = buildRouteGraph(net);
+  const len = buildStretchLengths(net);
+  let worst: LegBreach | null = null;
+  for (let i = 1; i < waypoints.length; i++) {
+    const leg = solveChain(g, [waypoints[i - 1], waypoints[i]]);
+    if (!leg) continue;
+    let dl = 0;
+    for (const id of leg.stretchIds) if (dimmedStretchIds.has(id)) dl += len.get(id) ?? 0;
+    if (dl > 0 && (!worst || dl > worst.dimmedLenM)) worst = { toIndex: i, dimmedLenM: dl };
+  }
+  return worst;
 }
 
 /**

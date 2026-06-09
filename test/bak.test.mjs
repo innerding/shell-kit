@@ -2,7 +2,7 @@
 //   node --test test/bak.test.mjs   (nach `npm run build`)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { solveRoute, routeBreachesComfort, toggleWaypoint } from '../dist/app/bak.js';
+import { solveRoute, solveRouteAvoiding, worstBreachingLeg, routeBreachesComfort, toggleWaypoint } from '../dist/app/bak.js';
 
 // Topologie: Quadrat-Ecke A-B-C, plus weite Umweg-Ecke D, plus isolierte Kante E-F.
 //   A→C kurz über B (s1+s2); der Umweg über D (s4+s3) ist viel länger.
@@ -59,6 +59,33 @@ test('routeBreachesComfort: Route ∩ ausgedimmt', () => {
   assert.equal(routeBreachesComfort(['s1', 's2'], new Set(['s2'])), true);
   assert.equal(routeBreachesComfort(['s1', 's2'], new Set(['s3'])), false);
   assert.equal(routeBreachesComfort([], new Set(['s1'])), false);
+});
+
+test('solveRouteAvoiding: meidet ausgedimmtes s2 → nimmt den Umweg s4+s3', () => {
+  // ohne Last: kurzer Weg s1+s2
+  assert.deepEqual(solveRoute(net, [A, C]).stretchIds, ['s1', 's2']);
+  // s2 (B–C) belebt → Ausweichroute über D (s4 + s3), s2 vermieden
+  const r = solveRouteAvoiding(net, [A, C], new Set(['s2']));
+  assert.ok(r, 'Ausweichroute gefunden');
+  assert.ok(!r.stretchIds.includes('s2'), 's2 wird gemieden');
+  assert.deepEqual(r.stretchIds, ['s4', 's3']);
+  assert.deepEqual(r.points[r.points.length - 1], C, 'endet trotzdem am Ziel');
+});
+
+test('solveRouteAvoiding: kein komfortabler Umweg → least-busy Route (enthält dimmed)', () => {
+  // alle Wege nach C dimmen → es bleibt nur belebtes Netz; trotzdem eine Route
+  const r = solveRouteAvoiding(net, [A, C], new Set(['s2', 's3']));
+  assert.ok(r, 'liefert trotzdem eine Route');
+});
+
+test('worstBreachingLeg: findet das belebte Bein (Ziel-Index)', () => {
+  // Kette A→C→D; s2 (im Bein A→C) belebt → schlechtestes Bein endet bei Index 1
+  const w = worstBreachingLeg(net, [A, C, D], new Set(['s2']));
+  assert.ok(w, 'Engpass gefunden');
+  assert.equal(w.toIndex, 1);
+  assert.ok(w.dimmedLenM > 0);
+  // ohne Last → kein Engpass
+  assert.equal(worstBreachingLeg(net, [A, C, D], new Set()), null);
 });
 
 test('toggleWaypoint: anhängen und entfernen, Reihenfolge erhalten', () => {

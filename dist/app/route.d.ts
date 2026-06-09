@@ -5,6 +5,7 @@ export interface RenderRouteOpts {
     color?: string;
     weight?: number;
     breach?: boolean;
+    digitRaw?: (d: string) => string;
 }
 /**
  * Zeichnet Route + Waypoint-Marken in `layer`. `waypoints` = die gewählten

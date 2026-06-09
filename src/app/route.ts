@@ -11,14 +11,23 @@ export interface RenderRouteOpts {
   color?: string;     // Routen-Farbe
   weight?: number;    // Routen-Stärke
   breach?: boolean;   // Route außerhalb der Comfort-Zone? → Warn-Farbe
+  // Liefert das Roh-SVG einer Ziffer (currentColor, füllt die Zelle). Wenn
+  // gesetzt, werden die Waypoint-Nummern aus diesen Custom-Ziffern gebaut statt
+  // aus System-Text — passend zur Rest-Dauer-Uhr (gleiche hand-gezeichnete Glyphen).
+  digitRaw?: (d: string) => string;
 }
 
 // Nummerierte Waypoint-Marke (kleine gefüllte Scheibe mit Reihenfolge-Ziffer).
-function waypointBadge(n: number, color: string): L.DivIcon {
+function waypointBadge(n: number, color: string, digitRaw?: (d: string) => string): L.DivIcon {
+  const inner = digitRaw
+    ? `<div style="display:flex;align-items:center;justify-content:center;gap:1px;width:100%;height:100%;color:#fff;">` +
+      String(n).split('').map((d) =>
+        `<span style="display:inline-block;width:7px;height:9px;line-height:0;">${digitRaw(d)}</span>`).join('') +
+      `</div>`
+    : `<div style="color:#fff;font:700 12px/18px system-ui,sans-serif;text-align:center;width:100%;">${n}</div>`;
   const html =
-    `<div style="width:22px;height:22px;border-radius:50%;background:${color};` +
-    `border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.5);color:#fff;` +
-    `font:700 12px/18px system-ui,sans-serif;text-align:center;">${n}</div>`;
+    `<div style="width:22px;height:22px;border-radius:50%;background:${color};box-sizing:border-box;` +
+    `border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;">${inner}</div>`;
   return L.divIcon({ html, className: '', iconSize: [22, 22], iconAnchor: [11, 11] });
 }
 
@@ -46,6 +55,6 @@ export function renderRoute(
   }
 
   waypoints.forEach((wp, i) => {
-    L.marker(wp as L.LatLngExpression, { icon: waypointBadge(i + 1, color), interactive: false, zIndexOffset: 1000 }).addTo(layer);
+    L.marker(wp as L.LatLngExpression, { icon: waypointBadge(i + 1, color, opts.digitRaw), interactive: false, zIndexOffset: 1000 }).addTo(layer);
   });
 }

@@ -33,7 +33,13 @@ function stretchLength(points) {
 }
 // Baut den routbaren Knoten-Graph aus dem Netz: Knoten = Strecken-Endpunkte, je Strecke
 // eine Kante in beide Richtungen (Gewicht = Streckenlänge).
-function buildRouteGraph(net) {
+//
+// BAK-Stufe-1 (Ausweichroute): liegt `dimmed` vor, werden Kanten über ausgedimmte
+// (zu belebte) Strecken mit `penalty` multipliziert teurer → Dijkstra meidet sie,
+// solange irgendein komfortabler Umweg existiert; ist keiner da, nimmt es den
+// am wenigsten belebten Weg. Wichtig: das Gewicht beeinflusst NUR die Wegwahl;
+// die gemeldete Routenlänge/Zeit rechnet die Shell aus den echten Punkten.
+function buildRouteGraph(net, dimmed, penalty = 1) {
     const adj = new Map();
     const coordOf = new Map();
     const add = (from, e) => {
@@ -55,11 +61,18 @@ function buildRouteGraph(net) {
             coordOf.set(sk, a);
         if (!coordOf.has(ek))
             coordOf.set(ek, b);
-        const w = stretchLength(pts);
+        const w = stretchLength(pts) * (dimmed && dimmed.has(s.id) ? penalty : 1);
         add(sk, { to: ek, weight: w, stretchId: s.id, pts });
         add(ek, { to: sk, weight: w, stretchId: s.id, pts: [...pts].reverse() });
     }
     return { adj, coordOf };
+}
+// Strecken-Länge je id (für die Engpass-Bewertung von Stufe 2).
+function buildStretchLengths(net) {
+    const m = new Map();
+    for (const s of net.stretches)
+        m.set(s.id, stretchLength(s.points));
+    return m;
 }
 // Nächster Netzknoten zu einer Koordinate (für POI→Netz-Snap).
 function nearestNode(g, [lat, lng]) {
@@ -142,9 +155,22 @@ function appendEdge(route, stretchIds, e) {
  * unerreichbar ist.
  */
 export function solveRoute(net, waypoints) {
+    return solveChain(buildRouteGraph(net), waypoints);
+}
+/**
+ * BAK-Stufe 1 — Ausweichroute: dieselbe Waypoint-Kette, aber das ausgedimmte
+ * (zu belebte) Netz wird gemieden (`penalty`-fach teurer). Liefert die ruhigste
+ * Route über dieselben POIs — oder null wie solveRoute. Die Shell prüft danach
+ * mit routeBreachesComfort, ob die Ausweichung den Comfort wirklich rettet.
+ */
+export function solveRouteAvoiding(net, waypoints, dimmedStretchIds, penalty = 1000) {
+    return solveChain(buildRouteGraph(net, dimmedStretchIds, penalty), waypoints);
+}
+// Gemeinsamer Kern: schnappt jeden Waypoint auf den nächsten Netzknoten und
+// verkettet die kürzesten Wege (Gewichtung steckt im übergebenen Graph).
+function solveChain(g, waypoints) {
     if (waypoints.length < 2)
         return null;
-    const g = buildRouteGraph(net);
     const nodes = [];
     for (const w of waypoints) {
         const n = nearestNode(g, w);
@@ -166,6 +192,25 @@ export function solveRoute(net, waypoints) {
     if (stretchIds.length === 0)
         return null;
     return { stretchIds, points };
+}
+export function worstBreachingLeg(net, waypoints, dimmedStretchIds) {
+    if (waypoints.length < 2)
+        return null;
+    const g = buildRouteGraph(net);
+    const len = buildStretchLengths(net);
+    let worst = null;
+    for (let i = 1; i < waypoints.length; i++) {
+        const leg = solveChain(g, [waypoints[i - 1], waypoints[i]]);
+        if (!leg)
+            continue;
+        let dl = 0;
+        for (const id of leg.stretchIds)
+            if (dimmedStretchIds.has(id))
+                dl += len.get(id) ?? 0;
+        if (dl > 0 && (!worst || dl > worst.dimmedLenM))
+            worst = { toIndex: i, dimmedLenM: dl };
+    }
+    return worst;
 }
 /**
  * bak-test-Kern: läuft die Route durch ausgedimmtes Netz (Ø-Last > comfort)?
