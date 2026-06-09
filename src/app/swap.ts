@@ -57,16 +57,27 @@ export function suggestSwap(
   const curLen = curRoute ? polylineLengthM(curRoute.points) : 0;
   const inChain = new Set(chainIds);
 
+  // Die Kaskade löst EINEN Engpass pro Runde (worstBreachingLeg) — ein Tausch muss
+  // also nur DIESEN Engpass beseitigen, nicht die ganze Route komfortabel machen.
+  // „Ruhe" = die an den Ersatz angrenzenden Beine (Vorgänger→Y, Y→Nachfolger) liegen
+  // im Comfort. Andere belebte Beine bleiben eigene Engpässe (nächste Runde).
+  const idx = chainIds.indexOf(bottleneckId);
+  const prev = idx > 0 ? chainIds[idx - 1] : undefined;
+  const next = idx >= 0 && idx < chainIds.length - 1 ? chainIds[idx + 1] : undefined;
+
   const out: SwapSuggestion[] = [];
   for (const c of pois) {
     if (c.id === bottleneckId || inChain.has(c.id)) continue;       // nicht sich selbst / nicht doppelt
     const tier = similarityTier(bott.subcategory, c.subcategory);
     if (tier < 1) continue;                                          // 1) nur ähnlich
     const newChain = chainIds.map((id) => (id === bottleneckId ? c.id : id));
-    const r = solveRoute(net, coordsOf(newChain));
-    if (!r) continue;                                                // unerreichbar
-    if (routeBreachesComfort(r.stretchIds, dimmedStretchIds)) continue; // 2) muss ruhig sein
-    const newLen = polylineLengthM(r.points);
+    const whole = solveRoute(net, coordsOf(newChain));
+    if (!whole) continue;                                            // unerreichbar
+    // 2) lokale Ruhe: die Beine um den Ersatz herum müssen im Comfort liegen.
+    const localIds = [prev, c.id, next].filter((id): id is string => id != null);
+    const local = solveRoute(net, coordsOf(localIds));
+    if (!local || routeBreachesComfort(local.stretchIds, dimmedStretchIds)) continue;
+    const newLen = polylineLengthM(whole.points);
     out.push({ id: c.id, subcategory: c.subcategory, tier, deltaM: newLen - curLen, newTotalM: newLen });
   }
   if (out.length === 0) return null;
