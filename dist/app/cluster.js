@@ -31,10 +31,17 @@ function placeMarker(layer, latlng, html, size, opts = {}) {
     });
     if (opts.tooltip)
         m.bindTooltip(opts.tooltip);
+    if (opts.onClick)
+        m.on('click', opts.onClick);
     m.addTo(layer);
 }
-/** Rendert die geclusterten Mitglieder (mit .cluster) in `layer` — neu aufrufen bei zoom/move. */
-export function renderClusterPois(map, layer, members, ghostByCluster) {
+/**
+ * Rendert die geclusterten Mitglieder (mit .cluster) in `layer` — neu aufrufen bei zoom/move.
+ * `onMemberClick` (optional) wird NUR an EINZELN gezeigte Mitglieder gehängt (nicht an
+ * den Ghost): ein verschlucktes Mitglied ist nicht da, ein einzeln sichtbares ist wie
+ * ein normaler POI anwählbar (Routenbildung) — der Konsument bekommt das ClusterMember.
+ */
+export function renderClusterPois(map, layer, members, ghostByCluster, onMemberClick) {
     layer.clearLayers();
     const byCluster = new Map();
     for (const m of members) {
@@ -77,8 +84,10 @@ export function renderClusterPois(map, layer, members, ghostByCluster) {
             const svg = m.renderSvg(ICON);
             if (!svg)
                 continue;
+            // Einzeln sichtbares Mitglied = wie ein normaler POI anwählbar (Routenbildung).
             placeMarker(layer, latlng, markerHtml(svg, ICON), ICON, {
                 tooltip: `<strong>${m.text}</strong><br/><span style="color:#718096">${m.subcategory}</span>`,
+                onClick: onMemberClick ? () => onMemberClick(m) : undefined,
             });
         }
         // Ankündigung: blasser Hexagon-Ring über sich nähernde Paare (>= SWALLOW, < ANNOUNCE).

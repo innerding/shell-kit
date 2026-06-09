@@ -21,6 +21,8 @@ const GHOST_MAX = 56;
 const HEX_COLOR = '#ff00ff';
 
 export interface ClusterMember {
+  /** Stabile id (z. B. POI-Index) — für Auswahl/Routenbildung durch den Konsumenten. */
+  id?: string;
   cluster?: string;
   coord: [number, number];          // [lon, lat]
   text: string;
@@ -42,7 +44,7 @@ function markerHtml(svg: string, size: number, opacity = 1): string {
 
 function placeMarker(
   layer: L.LayerGroup, latlng: L.LatLng, html: string, size: number,
-  opts: { interactive?: boolean; z?: number; tooltip?: string } = {},
+  opts: { interactive?: boolean; z?: number; tooltip?: string; onClick?: () => void } = {},
 ): void {
   const m = L.marker(latlng, {
     icon: L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2] }),
@@ -50,15 +52,22 @@ function placeMarker(
     zIndexOffset: opts.z ?? 0,
   });
   if (opts.tooltip) m.bindTooltip(opts.tooltip);
+  if (opts.onClick) m.on('click', opts.onClick);
   m.addTo(layer);
 }
 
-/** Rendert die geclusterten Mitglieder (mit .cluster) in `layer` — neu aufrufen bei zoom/move. */
+/**
+ * Rendert die geclusterten Mitglieder (mit .cluster) in `layer` — neu aufrufen bei zoom/move.
+ * `onMemberClick` (optional) wird NUR an EINZELN gezeigte Mitglieder gehängt (nicht an
+ * den Ghost): ein verschlucktes Mitglied ist nicht da, ein einzeln sichtbares ist wie
+ * ein normaler POI anwählbar (Routenbildung) — der Konsument bekommt das ClusterMember.
+ */
 export function renderClusterPois(
   map: L.Map,
   layer: L.LayerGroup,
   members: ClusterMember[],
   ghostByCluster: Map<string, ClusterGhost>,
+  onMemberClick?: (member: ClusterMember) => void,
 ): void {
   layer.clearLayers();
 
@@ -103,8 +112,10 @@ export function renderClusterPois(
       const m = e.members[0];
       const svg = m.renderSvg(ICON);
       if (!svg) continue;
+      // Einzeln sichtbares Mitglied = wie ein normaler POI anwählbar (Routenbildung).
       placeMarker(layer, latlng, markerHtml(svg, ICON), ICON, {
         tooltip: `<strong>${m.text}</strong><br/><span style="color:#718096">${m.subcategory}</span>`,
+        onClick: onMemberClick ? () => onMemberClick(m) : undefined,
       });
     }
 
