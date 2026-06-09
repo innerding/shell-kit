@@ -9,3 +9,4 @@ export * from './anthem';       // Anthem: Last-Mathematik (simSegmentLoads/norm
 export * from './scale';        // Skalen-Modell: colorAt/posForLoad/loadForPos (eine Quelle für alle Schieber)
 export * from './graph';        // Netz-Graph: buildNodeStretchMap/buildProtectedNodes/pruneDeadEnds
 export * from './bak';          // BAK: solveRoute/routeBreachesComfort/toggleWaypoint (bak-test)
+export * from './walker';       // Sim-Walker: walkAlong/nearestWaypoint/bearingDeg/distM (Guidance-Play S1)
