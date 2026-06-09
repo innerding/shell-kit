@@ -9,3 +9,5 @@ export * from './scale';
 export * from './graph';
 export * from './bak';
 export * from './walker';
+export * from './similarity';
+export * from './swap';
