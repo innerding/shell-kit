@@ -1,4 +1,6 @@
-// POI-Ähnlichkeit (B1, Stufe-3-Tausch) — reine Kategorie-Logik, kein DOM/Leaflet.
+// poi-circus-kinship (B1) — die „Verwandtschafts-Nummer" des POI-Dompteurs:
+// reine Kategorie-Logik (kein DOM/Leaflet). Bewusst DESKRIPTIV gehalten
+// (bucketOf/similarityTier), damit die Helfer für sich lesbar bleiben.
 //
 // Jeder POI trägt eine `subcategory` (z. B. "Points_historical", "Square_Move",
 // "Transport_Parking"). Die HAUPTKATEGORIE (Bucket) ist der Präfix vor dem "_"

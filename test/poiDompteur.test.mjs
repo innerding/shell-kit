@@ -1,8 +1,8 @@
-// Tests für swap.ts (B1-Vorschlags-Pipeline) — gegen das kompilierte dist.
-//   node --test test/swap.test.mjs   (nach `npm run build`)
+// Tests für poiDompteur.ts (POI-Dompteur, B1-Pipeline) — gegen das kompilierte dist.
+//   node --test test/poiDompteur.test.mjs   (nach `npm run build`)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { suggestSwap } from '../dist/app/swap.js';
+import { dompteurPick } from '../dist/app/poiDompteur.js';
 
 // Netz wie in bak.test: A-B-C (kurz s1+s2), Umweg über D (s4+s3), isoliert E-F.
 const A = [48.400, 14.200];
@@ -30,29 +30,29 @@ const pois = [
   { id: 'e', subcategory: 'Service_Sleep',     coord: E }, // unähnlich + isoliert
 ];
 
-test('suggestSwap: ähnlicher, ruhiger Ersatz wird vorgeschlagen', () => {
+test('dompteurPick: ähnlicher, ruhiger Ersatz wird vorgeschlagen', () => {
   // Kette A→C; Bein über s2 belebt. Tausch C→D (gleiche Hauptkat Points) meidet s2.
-  const s = suggestSwap(net, ['a', 'c'], pois, 'c', new Set(['s2']));
+  const s = dompteurPick(net, ['a', 'c'], pois, 'c', new Set(['s2']));
   assert.ok(s, 'Vorschlag gefunden');
   assert.equal(s.id, 'd');
   assert.equal(s.tier, 2);             // Points_historical ↔ Points_others = gleiche Hauptkat
   assert.equal(typeof s.deltaM, 'number');
 });
 
-test('suggestSwap: unähnliche Kandidaten werden ignoriert → null', () => {
+test('dompteurPick: unähnliche Kandidaten werden ignoriert → null', () => {
   // Nur 'e' (Service) als möglicher Ersatz für den Points-Engpass 'c', dazu isoliert.
-  const s = suggestSwap(net, ['a', 'c'], [pois[0], pois[1], pois[3]], 'c', new Set(['s2']));
+  const s = dompteurPick(net, ['a', 'c'], [pois[0], pois[1], pois[3]], 'c', new Set(['s2']));
   assert.equal(s, null);
 });
 
-test('suggestSwap: bereits gewählte POIs kommen nicht als Ersatz', () => {
+test('dompteurPick: bereits gewählte POIs kommen nicht als Ersatz', () => {
   // 'd' ist schon in der Kette → kein Ersatz mehr verfügbar → null.
-  const s = suggestSwap(net, ['a', 'c', 'd'], pois, 'c', new Set(['s2']));
+  const s = dompteurPick(net, ['a', 'c', 'd'], pois, 'c', new Set(['s2']));
   assert.equal(s, null);
 });
 
-test('suggestSwap: kein ruhiger Ersatz (alles belebt) → null', () => {
+test('dompteurPick: kein ruhiger Ersatz (alles belebt) → null', () => {
   // s3 + s4 (die Wege zu D) ebenfalls belebt → Tausch C→D bliebe im Breach.
-  const s = suggestSwap(net, ['a', 'c'], pois, 'c', new Set(['s2', 's3', 's4']));
+  const s = dompteurPick(net, ['a', 'c'], pois, 'c', new Set(['s2', 's3', 's4']));
   assert.equal(s, null);
 });

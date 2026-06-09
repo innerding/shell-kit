@@ -10,5 +10,5 @@ export * from './scale'; // Skalen-Modell: colorAt/posForLoad/loadForPos (eine Q
 export * from './graph'; // Netz-Graph: buildNodeStretchMap/buildProtectedNodes/pruneDeadEnds
 export * from './bak'; // BAK: solveRoute/routeBreachesComfort/toggleWaypoint (bak-test)
 export * from './walker'; // Sim-Walker: walkAlong/nearestWaypoint/bearingDeg/distM (Guidance-Play S1)
-export * from './similarity'; // POI-Ähnlichkeit: bucketOf/similarityTier (B1, Stufe-3-Tausch)
-export * from './swap'; // POI-Tausch-Vorschlag: suggestSwap (B1-Pipeline)
+export * from './similarity'; // poi-circus-kinship: bucketOf/similarityTier (deskriptive Helfer)
+export * from './poiDompteur'; // POI-Dompteur: dompteurPick (Filter-Pipeline, B1/Stufe-3-Tausch)

@@ -10,4 +10,4 @@ export * from './graph';
 export * from './bak';
 export * from './walker';
 export * from './similarity';
-export * from './swap';
+export * from './poiDompteur';

@@ -1,13 +1,15 @@
-// POI-Tausch-Vorschlag (B1, Stufe 3) — komponierbare Vorschlags-Pipeline, rein/testbar.
+// POI-Dompteur (B1, Stufe 3) — die Logik, die unruhige (belebte) POIs „bändigt":
+// eine komponierbare Filter-/Ranking-Pipeline, rein/testbar. Der Dompteur stellt
+// dem Wanderer einen ruhigeren Ersatz für einen belebten POI in Aussicht.
 //
-// Wenn ein gewählter POI (Engpass) zu belebt ist, schlägt das System einen ERSATZ
-// vor. Filter-/Ranking-Dimensionen (erweiterbar — „einer von mehreren"):
-//   1. ÄHNLICHKEIT  — nur Kandidaten ähnlicher Kategorie (similarityTier ≥ 1),
-//                     damit die Tour ihren Charakter behält.
-//   2. RUHE         — die getauschte Route muss im Comfort liegen (kein Breach) —
-//                     der eigentliche Zweck des Tauschs.
-//   3. UMWEG        — unter den ruhigen Ähnlichen der kleinste Zeit-/Längenaufschlag.
+// Die Filter sind die „poi-circus"-Nummern (erweiterbar — „einer von mehreren"):
+//   1. poi-circus-kinship  — nur Kandidaten ähnlicher Kategorie (similarityTier ≥ 1),
+//                            damit die Tour ihren Charakter behält.
+//   2. poi-circus-energy   — Ruhe/Last: die an den Ersatz angrenzenden Beine müssen
+//                            im Comfort liegen (kein Breach) — der Zweck des Tauschs.
+//   3. poi-circus-detour   — Umweg: unter den ruhigen Ähnlichen der kleinste Aufschlag.
 // Sortierung: höchste Ähnlichkeitsstufe, dann kleinster Umweg.
+// (Die zugehörige Animation = `poi-dompteur-energy`, Runtime-seitig.)
 //
 // Orientierung: ALLE Koordinaten [lat, lng] (wie net.stretches[].points / bak.ts) —
 // der Runtime-Adapter swappt eingehende [lon,lat]-POIs VOR dem Aufruf.
@@ -19,33 +21,35 @@ import { solveRoute, routeBreachesComfort } from './bak.js';
 import { polylineLengthM } from './walker.js';
 import { similarityTier, type SimilarityTier } from './similarity.js';
 
-export interface SwapPoi {
+/** Ein POI in der Manege — Eingabe-Form für den Dompteur. */
+export interface CircusPoi {
   id: string;
   subcategory: string;
   coord: LatLng;        // [lat, lng]
 }
 
-export interface SwapSuggestion {
+/** Was der Dompteur auswählt: der ruhigere Ersatz-POI samt Kennzahlen. */
+export interface DompteurPick {
   id: string;               // Ersatz-POI
   subcategory: string;
-  tier: SimilarityTier;     // Ähnlichkeit zum Engpass (1..3)
+  tier: SimilarityTier;     // Ähnlichkeit zum Engpass (1..3) — poi-circus-kinship
   deltaM: number;           // Längenänderung der Route ggü. dem Original (m; <0 = kürzer)
   newTotalM: number;        // Gesamtlänge der getauschten Route (m)
 }
 
 /**
- * Bester Tausch-Vorschlag für `bottleneckId` aus der geordneten Kette `chainIds`.
- * `pois` = alle wählbaren POIs (mit id/subcategory/coord). `dimmedStretchIds` =
- * ausgedimmtes Netz (Shell-seitig aus loads+comfort gebildet). Null, wenn es keinen
- * ähnlichen, ruhigen, erreichbaren Ersatz gibt.
+ * Der Dompteur wählt den besten ruhigeren Ersatz für `bottleneckId` aus der
+ * geordneten Kette `chainIds`. `pois` = alle wählbaren POIs (CircusPoi).
+ * `dimmedStretchIds` = ausgedimmtes Netz (Shell-seitig aus loads+comfort gebildet).
+ * Null, wenn es keinen ähnlichen, ruhigen, erreichbaren Ersatz gibt.
  */
-export function suggestSwap(
+export function dompteurPick(
   net: SegmentedNet,
   chainIds: string[],
-  pois: SwapPoi[],
+  pois: CircusPoi[],
   bottleneckId: string,
   dimmedStretchIds: Set<string>,
-): SwapSuggestion | null {
+): DompteurPick | null {
   const byId = new Map(pois.map((p) => [p.id, p]));
   const bott = byId.get(bottleneckId);
   if (!bott) return null;
@@ -57,23 +61,23 @@ export function suggestSwap(
   const curLen = curRoute ? polylineLengthM(curRoute.points) : 0;
   const inChain = new Set(chainIds);
 
-  // Die Kaskade löst EINEN Engpass pro Runde (worstBreachingLeg) — ein Tausch muss
-  // also nur DIESEN Engpass beseitigen, nicht die ganze Route komfortabel machen.
-  // „Ruhe" = die an den Ersatz angrenzenden Beine (Vorgänger→Y, Y→Nachfolger) liegen
-  // im Comfort. Andere belebte Beine bleiben eigene Engpässe (nächste Runde).
+  // poi-circus-energy: die Kaskade löst EINEN Engpass pro Runde (worstBreachingLeg) —
+  // ein Tausch muss also nur DIESEN Engpass beseitigen, nicht die ganze Route
+  // komfortabel machen. „Ruhe" = die an den Ersatz angrenzenden Beine (Vorgänger→Y,
+  // Y→Nachfolger) liegen im Comfort. Andere belebte Beine = eigene Engpässe (nächste Runde).
   const idx = chainIds.indexOf(bottleneckId);
   const prev = idx > 0 ? chainIds[idx - 1] : undefined;
   const next = idx >= 0 && idx < chainIds.length - 1 ? chainIds[idx + 1] : undefined;
 
-  const out: SwapSuggestion[] = [];
+  const out: DompteurPick[] = [];
   for (const c of pois) {
     if (c.id === bottleneckId || inChain.has(c.id)) continue;       // nicht sich selbst / nicht doppelt
     const tier = similarityTier(bott.subcategory, c.subcategory);
-    if (tier < 1) continue;                                          // 1) nur ähnlich
+    if (tier < 1) continue;                                          // poi-circus-kinship: nur ähnlich
     const newChain = chainIds.map((id) => (id === bottleneckId ? c.id : id));
     const whole = solveRoute(net, coordsOf(newChain));
     if (!whole) continue;                                            // unerreichbar
-    // 2) lokale Ruhe: die Beine um den Ersatz herum müssen im Comfort liegen.
+    // poi-circus-energy: lokale Ruhe — die Beine um den Ersatz herum im Comfort.
     const localIds = [prev, c.id, next].filter((id): id is string => id != null);
     const local = solveRoute(net, coordsOf(localIds));
     if (!local || routeBreachesComfort(local.stretchIds, dimmedStretchIds)) continue;
@@ -82,7 +86,7 @@ export function suggestSwap(
   }
   if (out.length === 0) return null;
 
-  // 3) höchste Ähnlichkeit, dann kleinster Umweg.
+  // poi-circus-detour: höchste Ähnlichkeit, dann kleinster Umweg.
   out.sort((a, b) => b.tier - a.tier || a.deltaM - b.deltaM);
   return out[0];
 }
