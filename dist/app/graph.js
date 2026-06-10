@@ -38,6 +38,26 @@ export function isNearDimmedStretch(lat, lng, net, dimmedStretchIds, thresholdM 
     return false;
 }
 /**
+ * Path-Proxy für die POI-Last (ann_128, MVP): die Ø-Last der dem POI NÄCHSTEN
+ * Strecke. Bis es echte Rest-Radien (Step 2) gibt, erbt ein POI die Last der
+ * Strecke, an der es liegt (nächster Stützpunkt = nächste Strecke). `averageById`
+ * = id → Ø-Last (aus stretchAverages). 0, wenn keine Strecke/Last vorhanden.
+ */
+export function nearestStretchLoad(lat, lng, net, averageById) {
+    let bestId = null;
+    let bestD = Infinity;
+    for (const s of net.stretches) {
+        for (const p of s.points) {
+            const d = distM(lat, lng, p[0], p[1]);
+            if (d < bestD) {
+                bestD = d;
+                bestId = s.id;
+            }
+        }
+    }
+    return bestId != null ? (averageById.get(bestId) ?? 0) : 0;
+}
+/**
  * Berechnet alle pre-existenten Sackgassen des Netzes (statisch, einmal beim
  * Bundle-Laden). Startet mit Strecken die einen Grad-1-Endknoten haben, kaskadiert
  * dann: Strecken die dadurch ihrerseits zur Sackgasse werden, ebenfalls markiert.

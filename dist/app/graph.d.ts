@@ -5,6 +5,13 @@ import type { SegmentedNet } from './anthem';
  */
 export declare function isNearDimmedStretch(lat: number, lng: number, net: SegmentedNet, dimmedStretchIds: Set<string>, thresholdM?: number): boolean;
 /**
+ * Path-Proxy für die POI-Last (ann_128, MVP): die Ø-Last der dem POI NÄCHSTEN
+ * Strecke. Bis es echte Rest-Radien (Step 2) gibt, erbt ein POI die Last der
+ * Strecke, an der es liegt (nächster Stützpunkt = nächste Strecke). `averageById`
+ * = id → Ø-Last (aus stretchAverages). 0, wenn keine Strecke/Last vorhanden.
+ */
+export declare function nearestStretchLoad(lat: number, lng: number, net: SegmentedNet, averageById: Map<string, number>): number;
+/**
  * Berechnet alle pre-existenten Sackgassen des Netzes (statisch, einmal beim
  * Bundle-Laden). Startet mit Strecken die einen Grad-1-Endknoten haben, kaskadiert
  * dann: Strecken die dadurch ihrerseits zur Sackgasse werden, ebenfalls markiert.
