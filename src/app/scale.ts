@@ -144,6 +144,29 @@ export function colorAt(load: number, s: ScaleSpec): string {
   return colorFromStops(s.stops, spreize(load, s.spreizung));
 }
 
+/** Anzahl der Stufen = Anzahl der Farb-Felder (stops). */
+export function stageCount(s: ScaleSpec): number {
+  return Math.max(1, s.stops.length);
+}
+
+/** Stufe 1..N einer Last auf DIESER Skala — die EINE Stufen-Wahrheit (Mesh-Felder,
+ *  Comfort-Schnitt, später POI-Gestalt lesen daraus; ann_128, Option A). Spiegelt die
+ *  Branch-Logik von colorAt: mit gültigen `borders` (Felder-Modell, Vorrang) zähle die
+ *  Grenzen, die die Last ERREICHT (Grenzwert gehört zum OBEREN Feld); sonst (Spreizung)
+ *  die Display-Position in N gleiche Bänder geschnitten. OHNE Wrap, OHNE Hysterese
+ *  (Halbstufen/Deadband = Step 3). */
+export function stageOf(load: number, s: ScaleSpec): number {
+  const n = stageCount(s);
+  const t = clamp01(load);
+  if (s.borders && s.stops.length >= 2 && s.borders.length === s.stops.length - 1) {
+    let stage = 1;
+    for (const b of s.borders) if (t >= b) stage++;
+    return Math.min(n, stage);
+  }
+  const disp = spreize(t, s.spreizung);          // 0..1 Display-Position
+  return Math.min(n, Math.floor(disp * n) + 1);
+}
+
 /** Display-Position 0..1 für eine Last. wrap=true: Comfort-Verjüngung an. */
 export function posForLoad(load: number, s: ScaleSpec, useWrap = false): number {
   const base = spreize(load, s.spreizung);

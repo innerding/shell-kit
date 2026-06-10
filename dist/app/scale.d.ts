@@ -26,6 +26,15 @@ export declare function colorAtBorders(load: number, stops: string[], borders: n
 /** Farbe für eine Last (Mesh + Slider-Basis). borders (Felder-Modell) hat Vorrang,
  *  sonst Spreizung. OHNE Wrap. */
 export declare function colorAt(load: number, s: ScaleSpec): string;
+/** Anzahl der Stufen = Anzahl der Farb-Felder (stops). */
+export declare function stageCount(s: ScaleSpec): number;
+/** Stufe 1..N einer Last auf DIESER Skala — die EINE Stufen-Wahrheit (Mesh-Felder,
+ *  Comfort-Schnitt, später POI-Gestalt lesen daraus; ann_128, Option A). Spiegelt die
+ *  Branch-Logik von colorAt: mit gültigen `borders` (Felder-Modell, Vorrang) zähle die
+ *  Grenzen, die die Last ERREICHT (Grenzwert gehört zum OBEREN Feld); sonst (Spreizung)
+ *  die Display-Position in N gleiche Bänder geschnitten. OHNE Wrap, OHNE Hysterese
+ *  (Halbstufen/Deadband = Step 3). */
+export declare function stageOf(load: number, s: ScaleSpec): number;
 /** Display-Position 0..1 für eine Last. wrap=true: Comfort-Verjüngung an. */
 export declare function posForLoad(load: number, s: ScaleSpec, useWrap?: boolean): number;
 /** Entzerrung: Display-Position → echte Last (für die Comfort-Schwelle). */
