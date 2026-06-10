@@ -2,7 +2,7 @@
 //   node --test test/poiDompteur.test.mjs   (nach `npm run build`)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { dompteurPick } from '../dist/app/poiDompteur.js';
+import { dompteurPick, dompteurPicks } from '../dist/app/poiDompteur.js';
 
 // Netz wie in bak.test: A-B-C (kurz s1+s2), Umweg über D (s4+s3), isoliert E-F.
 const A = [48.400, 14.200];
@@ -55,4 +55,13 @@ test('dompteurPick: kein ruhiger Ersatz (alles belebt) → null', () => {
   // s3 + s4 (die Wege zu D) ebenfalls belebt → Tausch C→D bliebe im Breach.
   const s = dompteurPick(net, ['a', 'c'], pois, 'c', new Set(['s2', 's3', 's4']));
   assert.equal(s, null);
+});
+
+test('dompteurPicks: Rangliste; dompteurPick == dompteurPicks[0]', () => {
+  const list = dompteurPicks(net, ['a', 'c'], pois, 'c', new Set(['s2']));
+  assert.ok(Array.isArray(list) && list.length >= 1);
+  assert.equal(list[0].id, 'd');
+  assert.deepEqual(dompteurPick(net, ['a', 'c'], pois, 'c', new Set(['s2'])), list[0]);
+  // kein Kandidat → leeres Array
+  assert.deepEqual(dompteurPicks(net, ['a', 'c'], [pois[0], pois[1], pois[3]], 'c', new Set(['s2'])), []);
 });

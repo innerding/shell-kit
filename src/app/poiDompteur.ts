@@ -38,6 +38,22 @@ export interface DompteurPick {
 }
 
 /**
+ * Wie dompteurPick, aber die GANZE Rangliste (bestplatziert zuerst, gekappt auf
+ * `limit`) — für das Durchblättern der Alternativen (Tap-to-cycle). Leeres Array,
+ * wenn es keinen ähnlichen, ruhigen, erreichbaren Ersatz gibt.
+ */
+export function dompteurPicks(
+  net: SegmentedNet,
+  chainIds: string[],
+  pois: CircusPoi[],
+  bottleneckId: string,
+  dimmedStretchIds: Set<string>,
+  limit = 5,
+): DompteurPick[] {
+  return collectPicks(net, chainIds, pois, bottleneckId, dimmedStretchIds).slice(0, Math.max(1, limit));
+}
+
+/**
  * Der Dompteur wählt den besten ruhigeren Ersatz für `bottleneckId` aus der
  * geordneten Kette `chainIds`. `pois` = alle wählbaren POIs (CircusPoi).
  * `dimmedStretchIds` = ausgedimmtes Netz (Shell-seitig aus loads+comfort gebildet).
@@ -50,9 +66,20 @@ export function dompteurPick(
   bottleneckId: string,
   dimmedStretchIds: Set<string>,
 ): DompteurPick | null {
+  return collectPicks(net, chainIds, pois, bottleneckId, dimmedStretchIds)[0] ?? null;
+}
+
+// Gemeinsamer Kern: sammelt + sortiert alle tauglichen Ersatz-Kandidaten.
+function collectPicks(
+  net: SegmentedNet,
+  chainIds: string[],
+  pois: CircusPoi[],
+  bottleneckId: string,
+  dimmedStretchIds: Set<string>,
+): DompteurPick[] {
   const byId = new Map(pois.map((p) => [p.id, p]));
   const bott = byId.get(bottleneckId);
-  if (!bott) return null;
+  if (!bott) return [];
 
   const coordsOf = (ids: string[]): LatLng[] =>
     ids.map((id) => byId.get(id)?.coord).filter((c): c is LatLng => Array.isArray(c));
@@ -84,9 +111,7 @@ export function dompteurPick(
     const newLen = polylineLengthM(whole.points);
     out.push({ id: c.id, subcategory: c.subcategory, tier, deltaM: newLen - curLen, newTotalM: newLen });
   }
-  if (out.length === 0) return null;
-
   // poi-circus-detour: höchste Ähnlichkeit, dann kleinster Umweg.
   out.sort((a, b) => b.tier - a.tier || a.deltaM - b.deltaM);
-  return out[0];
+  return out;
 }

@@ -15,6 +15,12 @@ export interface DompteurPick {
     newTotalM: number;
 }
 /**
+ * Wie dompteurPick, aber die GANZE Rangliste (bestplatziert zuerst, gekappt auf
+ * `limit`) — für das Durchblättern der Alternativen (Tap-to-cycle). Leeres Array,
+ * wenn es keinen ähnlichen, ruhigen, erreichbaren Ersatz gibt.
+ */
+export declare function dompteurPicks(net: SegmentedNet, chainIds: string[], pois: CircusPoi[], bottleneckId: string, dimmedStretchIds: Set<string>, limit?: number): DompteurPick[];
+/**
  * Der Dompteur wählt den besten ruhigeren Ersatz für `bottleneckId` aus der
  * geordneten Kette `chainIds`. `pois` = alle wählbaren POIs (CircusPoi).
  * `dimmedStretchIds` = ausgedimmtes Netz (Shell-seitig aus loads+comfort gebildet).

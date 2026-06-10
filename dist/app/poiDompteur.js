@@ -19,16 +19,28 @@ import { solveRoute, routeBreachesComfort } from './bak.js';
 import { polylineLengthM } from './walker.js';
 import { similarityTier } from './similarity.js';
 /**
+ * Wie dompteurPick, aber die GANZE Rangliste (bestplatziert zuerst, gekappt auf
+ * `limit`) — für das Durchblättern der Alternativen (Tap-to-cycle). Leeres Array,
+ * wenn es keinen ähnlichen, ruhigen, erreichbaren Ersatz gibt.
+ */
+export function dompteurPicks(net, chainIds, pois, bottleneckId, dimmedStretchIds, limit = 5) {
+    return collectPicks(net, chainIds, pois, bottleneckId, dimmedStretchIds).slice(0, Math.max(1, limit));
+}
+/**
  * Der Dompteur wählt den besten ruhigeren Ersatz für `bottleneckId` aus der
  * geordneten Kette `chainIds`. `pois` = alle wählbaren POIs (CircusPoi).
  * `dimmedStretchIds` = ausgedimmtes Netz (Shell-seitig aus loads+comfort gebildet).
  * Null, wenn es keinen ähnlichen, ruhigen, erreichbaren Ersatz gibt.
  */
 export function dompteurPick(net, chainIds, pois, bottleneckId, dimmedStretchIds) {
+    return collectPicks(net, chainIds, pois, bottleneckId, dimmedStretchIds)[0] ?? null;
+}
+// Gemeinsamer Kern: sammelt + sortiert alle tauglichen Ersatz-Kandidaten.
+function collectPicks(net, chainIds, pois, bottleneckId, dimmedStretchIds) {
     const byId = new Map(pois.map((p) => [p.id, p]));
     const bott = byId.get(bottleneckId);
     if (!bott)
-        return null;
+        return [];
     const coordsOf = (ids) => ids.map((id) => byId.get(id)?.coord).filter((c) => Array.isArray(c));
     const curRoute = solveRoute(net, coordsOf(chainIds));
     const curLen = curRoute ? polylineLengthM(curRoute.points) : 0;
@@ -59,9 +71,7 @@ export function dompteurPick(net, chainIds, pois, bottleneckId, dimmedStretchIds
         const newLen = polylineLengthM(whole.points);
         out.push({ id: c.id, subcategory: c.subcategory, tier, deltaM: newLen - curLen, newTotalM: newLen });
     }
-    if (out.length === 0)
-        return null;
     // poi-circus-detour: höchste Ähnlichkeit, dann kleinster Umweg.
     out.sort((a, b) => b.tier - a.tier || a.deltaM - b.deltaM);
-    return out[0];
+    return out;
 }
