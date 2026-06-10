@@ -29,6 +29,16 @@ export interface LegBreach {
     toIndex: number;
     dimmedLenM: number;
 }
+/**
+ * ALLE belebten Beine (Ziel-Index + ausgedimmte Länge), absteigend nach Schwere
+ * sortiert — für die Manege (Sammelkarte bei Überlast: mehrere Engpässe auf einmal).
+ */
+export declare function breachingLegs(net: SegmentedNet, waypoints: LatLng[], dimmedStretchIds: Set<string>): LegBreach[];
+/**
+ * BAK-Stufe 2 — Engpass-Suche: das am stärksten belebte Bein (= der POI, dessen
+ * Zuweg klemmt), damit die Shell EINE gezielte Frage stellen kann. Null, wenn kein
+ * Bein das ausgedimmte Netz berührt.
+ */
 export declare function worstBreachingLeg(net: SegmentedNet, waypoints: LatLng[], dimmedStretchIds: Set<string>): LegBreach | null;
 /**
  * bak-test-Kern: läuft die Route durch ausgedimmtes Netz (Ø-Last > comfort)?

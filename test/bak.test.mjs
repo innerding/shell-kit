@@ -2,7 +2,7 @@
 //   node --test test/bak.test.mjs   (nach `npm run build`)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { solveRoute, solveRouteAvoiding, worstBreachingLeg, routeBreachesComfort, toggleWaypoint } from '../dist/app/bak.js';
+import { solveRoute, solveRouteAvoiding, worstBreachingLeg, breachingLegs, routeBreachesComfort, toggleWaypoint } from '../dist/app/bak.js';
 
 // Topologie: Quadrat-Ecke A-B-C, plus weite Umweg-Ecke D, plus isolierte Kante E-F.
 //   A→C kurz über B (s1+s2); der Umweg über D (s4+s3) ist viel länger.
@@ -86,6 +86,20 @@ test('worstBreachingLeg: findet das belebte Bein (Ziel-Index)', () => {
   assert.ok(w.dimmedLenM > 0);
   // ohne Last → kein Engpass
   assert.equal(worstBreachingLeg(net, [A, C, D], new Set()), null);
+});
+
+test('breachingLegs: ALLE belebten Beine, nach Schwere sortiert', () => {
+  // Kette A→C→D: Bein1 (A→C) über s2, Bein2 (C→D) über s3 — beide belebt.
+  const legs = breachingLegs(net, [A, C, D], new Set(['s2', 's3']));
+  assert.equal(legs.length, 2);
+  assert.deepEqual(legs.map((l) => l.toIndex).sort(), [1, 2]);
+  // s3 (D–C, lang) ist schwerer als s2 (B–C, kurz) → toIndex 2 zuerst
+  assert.equal(legs[0].toIndex, 2);
+  assert.ok(legs[0].dimmedLenM >= legs[1].dimmedLenM);
+  // worstBreachingLeg == breachingLegs[0]
+  assert.deepEqual(worstBreachingLeg(net, [A, C, D], new Set(['s2', 's3'])), legs[0]);
+  // ohne Last → leer
+  assert.deepEqual(breachingLegs(net, [A, C, D], new Set()), []);
 });
 
 test('toggleWaypoint: anhängen und entfernen, Reihenfolge erhalten', () => {

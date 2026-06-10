@@ -193,12 +193,16 @@ function solveChain(g, waypoints) {
         return null;
     return { stretchIds, points };
 }
-export function worstBreachingLeg(net, waypoints, dimmedStretchIds) {
+/**
+ * ALLE belebten Beine (Ziel-Index + ausgedimmte Länge), absteigend nach Schwere
+ * sortiert — für die Manege (Sammelkarte bei Überlast: mehrere Engpässe auf einmal).
+ */
+export function breachingLegs(net, waypoints, dimmedStretchIds) {
     if (waypoints.length < 2)
-        return null;
+        return [];
     const g = buildRouteGraph(net);
     const len = buildStretchLengths(net);
-    let worst = null;
+    const out = [];
     for (let i = 1; i < waypoints.length; i++) {
         const leg = solveChain(g, [waypoints[i - 1], waypoints[i]]);
         if (!leg)
@@ -207,10 +211,19 @@ export function worstBreachingLeg(net, waypoints, dimmedStretchIds) {
         for (const id of leg.stretchIds)
             if (dimmedStretchIds.has(id))
                 dl += len.get(id) ?? 0;
-        if (dl > 0 && (!worst || dl > worst.dimmedLenM))
-            worst = { toIndex: i, dimmedLenM: dl };
+        if (dl > 0)
+            out.push({ toIndex: i, dimmedLenM: dl });
     }
-    return worst;
+    out.sort((a, b) => b.dimmedLenM - a.dimmedLenM);
+    return out;
+}
+/**
+ * BAK-Stufe 2 — Engpass-Suche: das am stärksten belebte Bein (= der POI, dessen
+ * Zuweg klemmt), damit die Shell EINE gezielte Frage stellen kann. Null, wenn kein
+ * Bein das ausgedimmte Netz berührt.
+ */
+export function worstBreachingLeg(net, waypoints, dimmedStretchIds) {
+    return breachingLegs(net, waypoints, dimmedStretchIds)[0] ?? null;
 }
 /**
  * bak-test-Kern: läuft die Route durch ausgedimmtes Netz (Ø-Last > comfort)?
