@@ -76,3 +76,38 @@ test('ungültige borders (falsche Länge) → Spreizungs-Fallback', () => {
   };
   assert.equal(stageOf(0.5, bad), 2);     // Fallback-Band, nicht borders
 });
+
+// ── resampleScale (Coloursample, Step 1) ───────────────────────────────────
+import { resampleScale, colorAt } from '../dist/app/scale.js';
+
+const LIN2 = { stops: ['#000000', '#ffffff'], spreizung: { mitte: 0.5, oben: 0.5, unten: 0.5 }, verjuengung: { unten: 0, oben: 0 } };
+
+test('resampleScale: 3→6 Struktur (6 stops + 5 gleichmäßige borders, neutrale Spreizung)', () => {
+  const lin3 = { stops: ['#2ecc40', '#ffd400', '#ff2d2d'], spreizung: { mitte: 0.5, oben: 0.5, unten: 0.5 }, verjuengung: { unten: 0, oben: 0 } };
+  const r = resampleScale(lin3, 6);
+  assert.equal(r.stops.length, 6);
+  assert.deepEqual(r.borders.map((b) => +b.toFixed(4)), [1/6, 2/6, 3/6, 4/6, 5/6].map((b) => +b.toFixed(4)));
+  assert.deepEqual(r.spreizung, { mitte: 0.5, oben: 0.5, unten: 0.5 });
+});
+
+test('resampleScale: Farbe = Gradient an der Feld-Mitte (deterministisch, linear grau)', () => {
+  const r = resampleScale(LIN2, 6);
+  // Mitten 1/12,3/12,…,11/12 → grau round(255*t)
+  assert.equal(r.stops[0], 'rgb(21,21,21)');    // 0.0833
+  assert.equal(r.stops[2], 'rgb(106,106,106)'); // 0.4167
+  assert.equal(r.stops[5], 'rgb(234,234,234)'); // 0.9167
+});
+
+test('resampleScale: Ergebnis reproduziert die gesampelte Farbe an der Feld-Mitte', () => {
+  const r = resampleScale(LIN2, 6);
+  for (let i = 0; i < 6; i++) {
+    assert.equal(colorAt((i + 0.5) / 6, r), r.stops[i]); // borders-Modell trifft die Mitte exakt
+    assert.equal(stageOf((i + 0.5) / 6, r), i + 1);       // und liegt in Stufe i+1
+  }
+});
+
+test('resampleScale: n geklemmt auf >=2, Wrap bleibt erhalten', () => {
+  const withWrap = { ...LIN2, verjuengung: { unten: 0.7, oben: 0.3 } };
+  assert.equal(resampleScale(withWrap, 1).stops.length, 2);
+  assert.deepEqual(resampleScale(withWrap, 6).verjuengung, { unten: 0.7, oben: 0.3 });
+});

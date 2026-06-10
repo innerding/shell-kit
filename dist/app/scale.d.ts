@@ -35,6 +35,15 @@ export declare function stageCount(s: ScaleSpec): number;
  *  die Display-Position in N gleiche Bänder geschnitten. OHNE Wrap, OHNE Hysterese
  *  (Halbstufen/Deadband = Step 3). */
 export declare function stageOf(load: number, s: ScaleSpec): number;
+/** Coloursample — das Farb-Pendant zu resampleNet (Wegnetz). Schneidet den
+ *  AUTORIERTEN (stetigen) Gradienten in n GLEICH große Last-Felder und gibt jedem
+ *  die treffendste Farbe = die Gradient-Farbe in der Feld-MITTE ((i+0.5)/n). Ergebnis
+ *  = diskrete n-Feld-Skala: n stops + n−1 gleichmäßige borders, neutrale Spreizung
+ *  (die Breiten-Form ist jetzt in den Farben eingefangen). Wrap (Comfort) bleibt.
+ *  Gedacht als Bake-at-Publish im Capsuler → das Bundle trägt die fertige Stufen-
+ *  Welt, die Runtime liest nur. Funktioniert für beide Autorier-Modi (Spreizung
+ *  ODER borders), weil es colorAt sampelt. ann_128, Step 1. */
+export declare function resampleScale(s: ScaleSpec, n?: number): ScaleSpec;
 /** Display-Position 0..1 für eine Last. wrap=true: Comfort-Verjüngung an. */
 export declare function posForLoad(load: number, s: ScaleSpec, useWrap?: boolean): number;
 /** Entzerrung: Display-Position → echte Last (für die Comfort-Schwelle). */

@@ -167,6 +167,22 @@ export function stageOf(load: number, s: ScaleSpec): number {
   return Math.min(n, Math.floor(disp * n) + 1);
 }
 
+/** Coloursample — das Farb-Pendant zu resampleNet (Wegnetz). Schneidet den
+ *  AUTORIERTEN (stetigen) Gradienten in n GLEICH große Last-Felder und gibt jedem
+ *  die treffendste Farbe = die Gradient-Farbe in der Feld-MITTE ((i+0.5)/n). Ergebnis
+ *  = diskrete n-Feld-Skala: n stops + n−1 gleichmäßige borders, neutrale Spreizung
+ *  (die Breiten-Form ist jetzt in den Farben eingefangen). Wrap (Comfort) bleibt.
+ *  Gedacht als Bake-at-Publish im Capsuler → das Bundle trägt die fertige Stufen-
+ *  Welt, die Runtime liest nur. Funktioniert für beide Autorier-Modi (Spreizung
+ *  ODER borders), weil es colorAt sampelt. ann_128, Step 1. */
+export function resampleScale(s: ScaleSpec, n = 6): ScaleSpec {
+  const N = Math.max(2, Math.floor(n));
+  const stops: string[] = [];
+  for (let i = 0; i < N; i++) stops.push(colorAt((i + 0.5) / N, s));   // Mitte jedes gleich großen Feldes
+  const borders = Array.from({ length: N - 1 }, (_, i) => (i + 1) / N); // gleichmäßige innere Grenzen
+  return { stops, borders, spreizung: { mitte: 0.5, oben: 0.5, unten: 0.5 }, verjuengung: s.verjuengung };
+}
+
 /** Display-Position 0..1 für eine Last. wrap=true: Comfort-Verjüngung an. */
 export function posForLoad(load: number, s: ScaleSpec, useWrap = false): number {
   const base = spreize(load, s.spreizung);
