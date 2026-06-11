@@ -31,6 +31,7 @@ function markerHtml(svg, size, opacity = 1, badge = '') {
 function bindMarkerGestures(m, onTap, onLong) {
     let timer = null;
     let longFired = false;
+    let sx = 0, sy = 0;
     const clear = () => { if (timer) {
         clearTimeout(timer);
         timer = null;
@@ -43,8 +44,21 @@ function bindMarkerGestures(m, onTap, onLong) {
         m.on('contextmenu', (e) => { L.DomEvent.preventDefault(e.originalEvent); longFired = true; onLong(); });
         const el = m.getElement();
         if (el) {
-            el.addEventListener('touchstart', () => { longFired = false; clear(); timer = setTimeout(() => { longFired = true; onLong(); }, 500); }, { passive: true });
-            el.addEventListener('touchmove', clear, { passive: true });
+            // Bewegungs-SCHWELLE (12 px): ein haltender Finger jittert immer ein paar Pixel —
+            // ohne Schwelle würde jeder Mikro-touchmove den Long-press-Timer killen.
+            el.addEventListener('touchstart', (ev) => {
+                const t = ev.touches[0];
+                sx = t ? t.clientX : 0;
+                sy = t ? t.clientY : 0;
+                longFired = false;
+                clear();
+                timer = setTimeout(() => { longFired = true; onLong(); }, 500);
+            }, { passive: true });
+            el.addEventListener('touchmove', (ev) => {
+                const t = ev.touches[0];
+                if (t && Math.hypot(t.clientX - sx, t.clientY - sy) > 12)
+                    clear();
+            }, { passive: true });
             el.addEventListener('touchend', clear);
             el.addEventListener('touchcancel', clear);
         }
@@ -76,7 +90,10 @@ export function renderClusterPois(map, layer, members, ghostByCluster, onMemberC
 routeNumOf, numBadgeHtml, 
 // Long-press auf ein EINZELN gezeigtes Mitglied → Detail (wie short-tap = Auswahl,
 // nur die andere Geste). Am Ghost nicht (Aggregat mehrerer POIs).
-onMemberLongPress) {
+onMemberLongPress, 
+// Short-tap auf den GHOST → Cluster-Info (zentrierte Card statt überlaufendem
+// Tooltip). Gesetzt → der Ghost-Tooltip entfällt (lief aus dem Screen).
+onGhostClick) {
     layer.clearLayers();
     const byCluster = new Map();
     for (const m of members) {
@@ -126,7 +143,10 @@ onMemberLongPress) {
             }
             placeMarker(layer, latlng, markerHtml(svg, size, 1, ghostBadge), size, {
                 z: 1000,
-                tooltip: `<strong>${ghost?.text ?? clusterName}</strong><br/>` +
+                onClick: onGhostClick ? () => onGhostClick(clusterName) : undefined,
+                // Tooltip nur als Fallback, wenn kein Card-Handler da ist (sonst lief er aus
+                // dem Screen — die zentrierte Card ersetzt ihn).
+                tooltip: onGhostClick ? undefined : `<strong>${ghost?.text ?? clusterName}</strong><br/>` +
                     `<span style="color:#718096">${total} POIs</span><br/><em>${names}</em>`,
             });
         }
