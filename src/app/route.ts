@@ -19,6 +19,10 @@ export interface RenderRouteOpts {
   // gesetzt, werden die Waypoint-Nummern aus diesen Custom-Ziffern gebaut statt
   // aus System-Text — passend zur Rest-Dauer-Uhr (gleiche hand-gezeichnete Glyphen).
   digitRaw?: (d: string) => string;
+  /** Default true. false = KEINE Nummern-Scheiben zeichnen — die Reihenfolge-Nummer
+   *  trägt dann der POI-Marker selbst (rechts oben in der Ecke), statt sie zentriert
+   *  über das POI zu legen. */
+  waypointNumbers?: boolean;
 }
 
 // Nummerierte Waypoint-Marke (kleine gefüllte Scheibe mit Reihenfolge-Ziffer).
@@ -75,7 +79,9 @@ export function renderRoute(
     }
   }
 
-  waypoints.forEach((wp, i) => {
-    L.marker(wp as L.LatLngExpression, { icon: waypointBadge(i + 1, color, opts.digitRaw), interactive: false, zIndexOffset: 1000 }).addTo(layer);
-  });
+  if (opts.waypointNumbers !== false) {
+    waypoints.forEach((wp, i) => {
+      L.marker(wp as L.LatLngExpression, { icon: waypointBadge(i + 1, color, opts.digitRaw), interactive: false, zIndexOffset: 1000 }).addTo(layer);
+    });
+  }
 }

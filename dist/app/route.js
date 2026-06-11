@@ -48,7 +48,9 @@ export function renderRoute(layer, route, waypoints, opts = {}) {
             }).addTo(layer);
         }
     }
-    waypoints.forEach((wp, i) => {
-        L.marker(wp, { icon: waypointBadge(i + 1, color, opts.digitRaw), interactive: false, zIndexOffset: 1000 }).addTo(layer);
-    });
+    if (opts.waypointNumbers !== false) {
+        waypoints.forEach((wp, i) => {
+            L.marker(wp, { icon: waypointBadge(i + 1, color, opts.digitRaw), interactive: false, zIndexOffset: 1000 }).addTo(layer);
+        });
+    }
 }

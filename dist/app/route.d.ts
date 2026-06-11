@@ -7,6 +7,10 @@ export interface RenderRouteOpts {
     net?: SegmentedNet;
     dimmedStretchIds?: Set<string>;
     digitRaw?: (d: string) => string;
+    /** Default true. false = KEINE Nummern-Scheiben zeichnen — die Reihenfolge-Nummer
+     *  trägt dann der POI-Marker selbst (rechts oben in der Ecke), statt sie zentriert
+     *  über das POI zu legen. */
+    waypointNumbers?: boolean;
 }
 /**
  * Zeichnet Route + Waypoint-Marken in `layer`. `waypoints` = die gewählten
