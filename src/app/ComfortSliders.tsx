@@ -41,9 +41,13 @@ interface StripProps {
   onExpandChange: (expanded: boolean) => void;
   labels: { top: string; middle: string; bottom: string };
   gradient: string;
+  /** Aktueller Last-Pegel des GANZEN Netzes (0..1). Darüber wird der Gradient
+   *  ausgeblichen (milchig) — das Schauglas zeigt nur die Last, die da ist. Der
+   *  volle Gradient bleibt als 1px-Stroke ringsum sichtbar (Skala-Referenz). */
+  loadLevel?: number;
 }
 
-function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labels, gradient }: StripProps) {
+function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labels, gradient, loadLevel }: StripProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,7 +72,15 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labe
   return (
     <div style={{ position: 'relative', width: expanded ? W_EXP : W_COL, height: 155, flexShrink: 0, transition: 'width 0.22s ease', userSelect: 'none', WebkitUserSelect: 'none' }}>
       <div ref={trackRef} style={{ position: 'absolute', left: expanded ? L_GAP_EXP : L_GAP_COL, top: 0, bottom: 0, width: STRIP_W, overflow: 'hidden', transition: 'left 0.22s ease', pointerEvents: 'none' }}>
+        {/* Stroke-Lage: voller Gradient → bildet den 1px-Umriss (Skala bleibt lesbar). */}
         <div style={{ position: 'absolute', inset: 0, borderRadius: 3, background: gradient }} />
+        {/* Füll-Lage: voller Gradient, 1px eingerückt → der Stroke scheint ringsum durch. */}
+        <div style={{ position: 'absolute', inset: 1, borderRadius: 2, background: gradient }} />
+        {/* Bleach-Scrim: über der Füllung von loadLevel bis oben — milchig ausgeblichen,
+            wo das Netz aktuell keine Last trägt. Der Gradient-Stroke bleibt sichtbar. */}
+        {loadLevel != null && loadLevel < 0.999 && (
+          <div style={{ position: 'absolute', left: 1, right: 1, top: 1, bottom: insetBottom(loadLevel), borderRadius: 2, background: 'rgba(255,255,255,0.62)' }} />
+        )}
         {maxValue < 0.99 && (
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: insetBottom(maxValue), height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' }} />
         )}
@@ -110,9 +122,11 @@ interface Props {
   step2Active?: boolean;
   /** Skala (stops/borders) — Schauglas spricht dieselbe Farbwelt wie das Mesh. */
   scale?: ScaleSpec;
+  /** Last-Pegel des GANZEN Netzes (0..1) — bleicht den Gradienten darüber aus. */
+  loadLevel?: number;
 }
 
-export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale }: Props) {
+export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale, loadLevel }: Props) {
   const gradient = gradientFromScale(scale);
   const [movExpanded, setMovExpanded] = useState(false);
   const [stayVisible, setStayVisible] = useState(false);
@@ -133,7 +147,7 @@ export default function ComfortSliders({ movementValue, stayValue, stayMaxValue,
 
   return (
     <div style={{ position: 'absolute', right: 0, top: 62, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, zIndex: 600 }}>
-      <SliderStrip value={movementValue} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={handleMovExpandChange} labels={{ top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }} gradient={gradient} />
+      <SliderStrip value={movementValue} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={handleMovExpandChange} labels={{ top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }} gradient={gradient} loadLevel={loadLevel} />
       {step2Active && stayVisible && (
         <SliderStrip value={stayValue} maxValue={stayMaxValue} onChange={onStayChange} expanded={stayExpanded} onExpandChange={setStayExpanded} labels={{ top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }} gradient={gradient} />
       )}
