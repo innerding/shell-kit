@@ -79,7 +79,9 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labe
         {/* Bleach-Scrim: über der Füllung von loadLevel bis oben — milchig ausgeblichen,
             wo das Netz aktuell keine Last trägt. Der Gradient-Stroke bleibt sichtbar. */}
         {loadLevel != null && loadLevel < 0.999 && (
-          <div style={{ position: 'absolute', left: 1, right: 1, top: 1, bottom: insetBottom(loadLevel), borderRadius: 2, background: 'rgba(255,255,255,0.62)' }} />
+          // Sofortfix: nur ein 3px-Band am RECHTEN Rand (linker Rand nach rechts gerückt)
+          // — die volle Mesh-Farbe bleibt links sichtbar; der Bleach deutet den Pegel an.
+          <div style={{ position: 'absolute', left: STRIP_W - 4, right: 1, top: 1, bottom: insetBottom(loadLevel), borderRadius: 1, background: 'rgba(255,255,255,0.62)' }} />
         )}
         {maxValue < 0.99 && (
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: insetBottom(maxValue), height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' }} />
