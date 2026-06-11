@@ -2,7 +2,7 @@
 //   node --test test/scale.test.mjs   (nach `npm run build`)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { stageOf, stageCount } from '../dist/app/scale.js';
+import { stageOf, stageCount, stageTop } from '../dist/app/scale.js';
 
 // 6-Stufen-Skala über das Felder-/Grenzen-Modell: 6 stops, 5 innere Grenzen.
 const SCALE6 = {
@@ -11,6 +11,15 @@ const SCALE6 = {
   spreizung: { mitte: 0.5, oben: 0.5, unten: 0.5 },
   verjuengung: { unten: 0, oben: 0 },
 };
+
+test('stageTop: nur HÖHERE Stufe breacht (borders [0.1,0.3,0.5,0.7,0.9])', () => {
+  const comfort = 0.45;                      // Stufe 3 (0.3..0.5)
+  assert.equal(stageOf(comfort, SCALE6), 3);
+  assert.ok(Math.abs(stageTop(comfort, SCALE6) - 0.5) < 1e-9);   // Dach von Stufe 3
+  assert.equal(0.48 > stageTop(comfort, SCALE6), false);          // gleiche Stufe → kein Breach
+  assert.equal(0.6 > stageTop(comfort, SCALE6), true);            // Stufe 4 → Breach
+  assert.equal(stageTop(0.95, SCALE6), 1);                        // oberste Stufe → 1
+});
 
 test('stageCount = Anzahl stops', () => {
   assert.equal(stageCount(SCALE6), 6);

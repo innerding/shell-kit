@@ -167,6 +167,19 @@ export function stageOf(load: number, s: ScaleSpec): number {
   return Math.min(n, Math.floor(disp * n) + 1);
 }
 
+/** Stufen-DACH: die Last-Obergrenze der Stufe, in der `load` liegt (0..1). Damit lässt
+ *  sich ein STUFEN-Schnitt bauen: `x > stageTop(comfort)` ⟺ x liegt in einer HÖHEREN
+ *  Stufe als comfort. So alarmiert „flüssig" nicht „flüssig", nur „belebt"/„voll".
+ *  Oberste Stufe → 1. Borders-Modell: die nächste Grenze; Spreizung: Display-Grenze
+ *  stage/n zurück in Last (entspreize). */
+export function stageTop(load: number, s: ScaleSpec): number {
+  const n = stageCount(s);
+  const stage = stageOf(load, s);   // 1..n
+  if (stage >= n) return 1;
+  if (s.borders && s.stops.length >= 2 && s.borders.length === s.stops.length - 1) return s.borders[stage - 1];
+  return entspreize(stage / n, s.spreizung);
+}
+
 /** Coloursample — das Farb-Pendant zu resampleNet (Wegnetz). Schneidet den
  *  AUTORIERTEN (stetigen) Gradienten in n GLEICH große Last-Felder und gibt jedem
  *  die treffendste Farbe = die Gradient-Farbe in der Feld-MITTE ((i+0.5)/n). Ergebnis

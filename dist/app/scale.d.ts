@@ -35,6 +35,12 @@ export declare function stageCount(s: ScaleSpec): number;
  *  die Display-Position in N gleiche Bänder geschnitten. OHNE Wrap, OHNE Hysterese
  *  (Halbstufen/Deadband = Step 3). */
 export declare function stageOf(load: number, s: ScaleSpec): number;
+/** Stufen-DACH: die Last-Obergrenze der Stufe, in der `load` liegt (0..1). Damit lässt
+ *  sich ein STUFEN-Schnitt bauen: `x > stageTop(comfort)` ⟺ x liegt in einer HÖHEREN
+ *  Stufe als comfort. So alarmiert „flüssig" nicht „flüssig", nur „belebt"/„voll".
+ *  Oberste Stufe → 1. Borders-Modell: die nächste Grenze; Spreizung: Display-Grenze
+ *  stage/n zurück in Last (entspreize). */
+export declare function stageTop(load: number, s: ScaleSpec): number;
 /** Coloursample — das Farb-Pendant zu resampleNet (Wegnetz). Schneidet den
  *  AUTORIERTEN (stetigen) Gradienten in n GLEICH große Last-Felder und gibt jedem
  *  die treffendste Farbe = die Gradient-Farbe in der Feld-MITTE ((i+0.5)/n). Ergebnis
