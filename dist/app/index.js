@@ -13,3 +13,4 @@ export * from './walker'; // Sim-Walker: walkAlong/nearestWaypoint/bearingDeg/di
 export * from './similarity'; // poi-circus-kinship: bucketOf/similarityTier (deskriptive Helfer)
 export * from './poiDompteur'; // POI-Dompteur: dompteurPick/dompteurPicks (Filter-Pipeline, B1/Stufe-3)
 export * from './poiVisual'; // POI-Gestalt: poiVisualState/poiBreaches (Step 4a, ann_126)
+export * from './detour'; // Path-Detour-Generator: detourPicks (Geschwister von poiDompteur, ann_138)

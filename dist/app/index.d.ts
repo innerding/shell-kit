@@ -12,3 +12,4 @@ export * from './walker';
 export * from './similarity';
 export * from './poiDompteur';
 export * from './poiVisual';
+export * from './detour';
