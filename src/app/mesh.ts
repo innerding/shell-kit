@@ -2,7 +2,8 @@
 //
 // Pro 10 m-Segment (Vertex-Pair) eine Polylinie, gefärbt über das Skalen-Modell
 // (colorAt + ScaleSpec, OHNE Wrap — der Wrap ist Comfort-exklusiv). lineCap 'round'.
-// BCK-Dimming über dimmedStretchIds (Ø-Last der Strecke > Comfort-Schwelle).
+// BCK: Strecken über Comfort (dimmedStretchIds) behalten ihre Last-Farbe und
+// PULSIEREN nervös (Step 2, ann_132) — sie verschwinden nicht mehr.
 import L from 'leaflet';
 import { colorAt, DEFAULT_SCALE, type ScaleSpec } from './scale';
 import { stretchAverages, type SegmentedNet } from './anthem';
@@ -36,22 +37,29 @@ export function renderColorMesh(
     }
   }
 
-  // Pass 2: Farbe (oder Dimm-Grau) oben drauf; statische Sackgassen ausgelassen.
+  // Pass 2: Last-Farbe oben drauf; statische Sackgassen ausgelassen. Über Comfort
+  // (dimmed) → KEINE Ausblendung mehr (Step 2, ann_132): das Segment behält seine
+  // Last-Farbe und PULSIERT nervös („nervös = Problem"). Der Keyframe `scim-seg-pulse`
+  // + die Phasen-Versatz-Klassen werden runtime-seitig injiziert (className-Vertrag);
+  // der idx-basierte Versatz desynchronisiert → Schimmern statt gleichtaktiges Atmen.
   let idx = 0;
   for (const s of net.stretches) {
     const segCount = s.points.length - 1;
     const isHidden = hidden(s.id);
     const isDimmed = dimmed(s.id);
     for (let i = 0; i < segCount; i++) {
-      const load = loads[idx++] ?? 0;
+      const load = loads[idx] ?? 0;
+      const segIdx = idx;
+      idx++;
       if (isHidden) continue;
       L.polyline(
         [s.points[i], s.points[i + 1]] as L.LatLngExpression[],
         {
-          color:   isDimmed ? '#7a8699' : colorAt(load, scale),
-          weight:  isDimmed ? 2 : weight,
-          opacity: isDimmed ? 0.12 : 1,
+          color: colorAt(load, scale),
+          weight,
+          opacity: 1,
           lineCap: 'round',
+          className: isDimmed ? `scim-seg scim-seg-d${segIdx % 4}` : '',
         },
       ).addTo(layer);
     }
