@@ -127,6 +127,49 @@ function alongDistanceM(polyline: LatLng[], p: LatLng): number {
 }
 
 /**
+ * GPS → Route: projiziert eine reale Position `p` auf die Polylinie und liefert denselben
+ * `WalkState` wie `walkAlong` (gesnappte Position, Lauf-Distanz, Segment-Bearing). So
+ * treibt echtes GPS dieselbe Guidance-Schnittstelle wie der Simulator. `finishM` = wie nah
+ * ans Ende (m), bis `finished` greift. `headingOverride` (z. B. GPS-/Kompass-Kurs in Grad)
+ * ersetzt das Segment-Bearing, wenn gesetzt (>= 0).
+ */
+export function locateOnRoute(
+  polyline: LatLng[], p: LatLng, finishM = 8, headingOverride = -1,
+): WalkState {
+  if (!polyline || polyline.length === 0) {
+    return { pos: [0, 0], bearing: 0, doneM: 0, totalM: 0, progress: 0, finished: true };
+  }
+  const start = polyline[0];
+  const totalM = polylineLengthM(polyline);
+  if (polyline.length < 2 || totalM === 0) {
+    return { pos: start, bearing: 0, doneM: 0, totalM, progress: totalM === 0 ? 1 : 0, finished: true };
+  }
+  // Nächstes Segment (kleinste Lot-Distanz) + Lauf-Distanz + gesnappter Punkt.
+  let acc = 0, bestPerp = Infinity, bestAlong = 0, bestSeg = 1, bestT = 0;
+  for (let i = 1; i < polyline.length; i++) {
+    const a = polyline[i - 1], b = polyline[i];
+    const segLen = distM(a, b);
+    if (segLen === 0) continue;
+    const latRef = toRad(a[0]);
+    const bx = toRad(b[1] - a[1]) * Math.cos(latRef) * EARTH_R;
+    const by = toRad(b[0] - a[0]) * EARTH_R;
+    const px = toRad(p[1] - a[1]) * Math.cos(latRef) * EARTH_R;
+    const py = toRad(p[0] - a[0]) * EARTH_R;
+    const abLen2 = bx * bx + by * by;
+    let t = abLen2 === 0 ? 0 : (px * bx + py * by) / abLen2;
+    t = Math.max(0, Math.min(1, t));
+    const perp = Math.hypot(px - bx * t, py - by * t);
+    if (perp < bestPerp) { bestPerp = perp; bestAlong = acc + t * segLen; bestSeg = i; bestT = t; }
+    acc += segLen;
+  }
+  const a = polyline[bestSeg - 1], b = polyline[bestSeg];
+  const pos: LatLng = [a[0] + (b[0] - a[0]) * bestT, a[1] + (b[1] - a[1]) * bestT];
+  const bearing = headingOverride >= 0 ? headingOverride : bearingDeg(a, b);
+  const doneM = Math.max(0, Math.min(totalM, bestAlong));
+  return { pos, bearing, doneM, totalM, progress: doneM / totalM, finished: totalM - doneM <= finishM };
+}
+
+/**
  * Nächster Wegpunkt IN GEHRICHTUNG: der erste Wegpunkt, dessen Lauf-Position entlang
  * `polyline` VOR der zurückgelegten Distanz `doneM` liegt (nicht der nächstgelegene —
  * der kann hinter einem liegen). `distM` = Rest-Distanz dorthin entlang der Route.

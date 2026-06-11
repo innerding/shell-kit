@@ -2,7 +2,7 @@
 //   node --test test/walker.test.mjs   (nach `npm run build`)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { walkAlong, nearestWaypoint, nextWaypointAhead, distM, polylineLengthM, bearingDeg } from '../dist/app/walker.js';
+import { walkAlong, nearestWaypoint, nextWaypointAhead, distM, polylineLengthM, bearingDeg, locateOnRoute } from '../dist/app/walker.js';
 
 // Gerade Nord-Linie: A → B → C, je 0.001° Breite ≈ 111,2 m (Länge konstant).
 const A = [48.000, 14.000];
@@ -72,4 +72,37 @@ test('nextWaypointAhead: am Start (doneM 0) → nächster ist B, nicht A', () =>
 test('nextWaypointAhead: alle passiert → Ziel (letzter)', () => {
   const nw = nextWaypointAhead(LINE, [A, B, C], TOTAL + 50);
   assert.equal(nw.idx, 2);
+});
+
+// ── locateOnRoute (S5: GPS → Route, gleiche WalkState-Schnittstelle) ──────────
+test('locateOnRoute: Punkt auf der Linie bei B → doneM≈SEG, gesnappt auf B', () => {
+  const w = locateOnRoute(LINE, B);
+  assert.ok(Math.abs(w.doneM - SEG) < 0.5, `doneM=${w.doneM}`);
+  assert.ok(distM(w.pos, B) < 0.5, `pos=${w.pos}`);
+  assert.ok(Math.abs(w.progress - 0.5) < 0.01, `progress=${w.progress}`);
+  assert.equal(w.finished, false);
+});
+
+test('locateOnRoute: seitlich versetzter Punkt wird aufs nächste Segment gesnappt', () => {
+  const off = [48.0005, 14.0003];          // bei ~1/4, leicht östlich daneben
+  const w = locateOnRoute(LINE, off);
+  assert.ok(distM(w.pos, [48.0005, 14.000]) < 1.0, `pos=${w.pos}`);  // auf die Linie projiziert
+  assert.ok(w.doneM > 0 && w.doneM < TOTAL, `doneM=${w.doneM}`);
+});
+
+test('locateOnRoute: nahe am Ende → finished', () => {
+  const w = locateOnRoute(LINE, C, 8);
+  assert.ok(w.finished, `progress=${w.progress}`);
+  assert.ok(Math.abs(w.doneM - TOTAL) < 0.5, `doneM=${w.doneM}`);
+});
+
+test('locateOnRoute: headingOverride ersetzt das Segment-Bearing', () => {
+  const w = locateOnRoute(LINE, B, 8, 123);
+  assert.equal(w.bearing, 123);
+});
+
+test('locateOnRoute: <2 Punkte → statisch am Start, finished', () => {
+  const w = locateOnRoute([A], B);
+  assert.deepEqual(w.pos, A);
+  assert.equal(w.finished, true);
 });

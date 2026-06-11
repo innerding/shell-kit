@@ -26,6 +26,14 @@ export declare function nearestWaypoint(pos: LatLng, waypoints: LatLng[]): {
     distM: number;
 };
 /**
+ * GPS → Route: projiziert eine reale Position `p` auf die Polylinie und liefert denselben
+ * `WalkState` wie `walkAlong` (gesnappte Position, Lauf-Distanz, Segment-Bearing). So
+ * treibt echtes GPS dieselbe Guidance-Schnittstelle wie der Simulator. `finishM` = wie nah
+ * ans Ende (m), bis `finished` greift. `headingOverride` (z. B. GPS-/Kompass-Kurs in Grad)
+ * ersetzt das Segment-Bearing, wenn gesetzt (>= 0).
+ */
+export declare function locateOnRoute(polyline: LatLng[], p: LatLng, finishM?: number, headingOverride?: number): WalkState;
+/**
  * Nächster Wegpunkt IN GEHRICHTUNG: der erste Wegpunkt, dessen Lauf-Position entlang
  * `polyline` VOR der zurückgelegten Distanz `doneM` liegt (nicht der nächstgelegene —
  * der kann hinter einem liegen). `distM` = Rest-Distanz dorthin entlang der Route.
