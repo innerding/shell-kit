@@ -63,7 +63,8 @@ export function walkAlong(polyline, elapsedSec, speedMps) {
     const prev = polyline[polyline.length - 2];
     return { pos: last, bearing: bearingDeg(prev, last), doneM: totalM, totalM, progress: 1, finished: true };
 }
-/** Nächster Wegpunkt (POI) zur Position — für die „nächster Halt"-Anzeige. */
+/** Nächster Wegpunkt (POI) zur Position — rein nach Distanz (NICHT in Gehrichtung).
+ *  Für „nächster Halt in Gehrichtung" → nextWaypointAhead nutzen. */
 export function nearestWaypoint(pos, waypoints) {
     let idx = -1;
     let best = Infinity;
@@ -75,4 +76,54 @@ export function nearestWaypoint(pos, waypoints) {
         }
     }
     return { idx, distM: best };
+}
+/** Lauf-Distanz (m) der Projektion von `p` auf die Polylinie — wie weit ENTLANG der
+ *  Route der zu p nächstgelegene Punkt liegt. Equirektangulär in lokale Meter je
+ *  Segment (für kurze Wegsegmente genau genug). */
+function alongDistanceM(polyline, p) {
+    let acc = 0, bestPerp = Infinity, bestAlong = 0;
+    for (let i = 1; i < polyline.length; i++) {
+        const a = polyline[i - 1], b = polyline[i];
+        const segLen = distM(a, b);
+        if (segLen === 0)
+            continue;
+        const latRef = toRad(a[0]);
+        const bx = toRad(b[1] - a[1]) * Math.cos(latRef) * EARTH_R;
+        const by = toRad(b[0] - a[0]) * EARTH_R;
+        const px = toRad(p[1] - a[1]) * Math.cos(latRef) * EARTH_R;
+        const py = toRad(p[0] - a[0]) * EARTH_R;
+        const abLen2 = bx * bx + by * by;
+        let t = abLen2 === 0 ? 0 : (px * bx + py * by) / abLen2;
+        t = Math.max(0, Math.min(1, t));
+        const perp = Math.hypot(px - bx * t, py - by * t);
+        if (perp < bestPerp) {
+            bestPerp = perp;
+            bestAlong = acc + t * segLen;
+        }
+        acc += segLen;
+    }
+    return bestAlong;
+}
+/**
+ * Nächster Wegpunkt IN GEHRICHTUNG: der erste Wegpunkt, dessen Lauf-Position entlang
+ * `polyline` VOR der zurückgelegten Distanz `doneM` liegt (nicht der nächstgelegene —
+ * der kann hinter einem liegen). `distM` = Rest-Distanz dorthin entlang der Route.
+ * Sind alle passiert, gilt das Ziel (letzter Wegpunkt) als nächster.
+ */
+export function nextWaypointAhead(polyline, waypoints, doneM, epsM = 5) {
+    let bestIdx = -1, bestAlong = Infinity;
+    for (let i = 0; i < waypoints.length; i++) {
+        const along = alongDistanceM(polyline, waypoints[i]);
+        if (along > doneM + epsM && along < bestAlong) {
+            bestAlong = along;
+            bestIdx = i;
+        }
+    }
+    if (bestIdx === -1) {
+        if (waypoints.length === 0)
+            return { idx: -1, distM: 0 };
+        const last = waypoints.length - 1;
+        return { idx: last, distM: Math.max(0, alongDistanceM(polyline, waypoints[last]) - doneM) };
+    }
+    return { idx: bestIdx, distM: Math.max(0, bestAlong - doneM) };
 }

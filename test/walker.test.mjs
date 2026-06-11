@@ -2,7 +2,7 @@
 //   node --test test/walker.test.mjs   (nach `npm run build`)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { walkAlong, nearestWaypoint, distM, polylineLengthM, bearingDeg } from '../dist/app/walker.js';
+import { walkAlong, nearestWaypoint, nextWaypointAhead, distM, polylineLengthM, bearingDeg } from '../dist/app/walker.js';
 
 // Gerade Nord-Linie: A → B → C, je 0.001° Breite ≈ 111,2 m (Länge konstant).
 const A = [48.000, 14.000];
@@ -55,4 +55,21 @@ test('nearestWaypoint findet den nächsten', () => {
   const near = nearestWaypoint([48.00105, 14.000], [A, B, C]); // dicht an B (idx 1)
   assert.equal(near.idx, 1);
   assert.ok(near.distM < 10);
+});
+
+test('nextWaypointAhead: kurz NACH B → nächster ist C (nicht das nähere B)', () => {
+  // doneM knapp über SEG (an B vorbei) → B liegt hinter uns, nächster Halt = C (idx 2).
+  const nw = nextWaypointAhead(LINE, [A, B, C], SEG + 10);
+  assert.equal(nw.idx, 2);
+  assert.ok(Math.abs(nw.distM - (TOTAL - (SEG + 10))) < 1, `distM=${nw.distM}`);
+});
+
+test('nextWaypointAhead: am Start (doneM 0) → nächster ist B, nicht A', () => {
+  const nw = nextWaypointAhead(LINE, [A, B, C], 0);
+  assert.equal(nw.idx, 1);
+});
+
+test('nextWaypointAhead: alle passiert → Ziel (letzter)', () => {
+  const nw = nextWaypointAhead(LINE, [A, B, C], TOTAL + 50);
+  assert.equal(nw.idx, 2);
 });
