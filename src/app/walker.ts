@@ -47,6 +47,7 @@ export interface WalkState {
   totalM: number;    // Gesamtlänge der Route (m)
   progress: number;  // 0..1
   finished: boolean; // Ende erreicht
+  offM?: number;     // Lot-Distanz der realen Position zur Route (m) — nur GPS (locateOnRoute); Sim = 0/undefined
 }
 
 /**
@@ -166,7 +167,7 @@ export function locateOnRoute(
   const pos: LatLng = [a[0] + (b[0] - a[0]) * bestT, a[1] + (b[1] - a[1]) * bestT];
   const bearing = headingOverride >= 0 ? headingOverride : bearingDeg(a, b);
   const doneM = Math.max(0, Math.min(totalM, bestAlong));
-  return { pos, bearing, doneM, totalM, progress: doneM / totalM, finished: totalM - doneM <= finishM };
+  return { pos, bearing, doneM, totalM, progress: doneM / totalM, finished: totalM - doneM <= finishM, offM: bestPerp };
 }
 
 /**

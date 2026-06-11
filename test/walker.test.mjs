@@ -106,3 +106,10 @@ test('locateOnRoute: <2 Punkte → statisch am Start, finished', () => {
   assert.deepEqual(w.pos, A);
   assert.equal(w.finished, true);
 });
+
+test('locateOnRoute: offM ≈ 0 auf der Linie, > 0 seitlich daneben', () => {
+  assert.ok((locateOnRoute(LINE, B).offM ?? -1) < 0.5, 'auf der Linie ~0');
+  const off = [48.0005, 14.0010];           // ~74 m östlich der Nord-Linie
+  const w = locateOnRoute(LINE, off);
+  assert.ok((w.offM ?? 0) > 40 && (w.offM ?? 0) < 110, `offM=${w.offM}`);
+});

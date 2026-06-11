@@ -12,6 +12,7 @@ export interface WalkState {
     totalM: number;
     progress: number;
     finished: boolean;
+    offM?: number;
 }
 /**
  * Position entlang der Polylinie nach `elapsedSec` bei `speedMps` (m/s).

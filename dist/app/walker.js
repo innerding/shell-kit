@@ -148,7 +148,7 @@ export function locateOnRoute(polyline, p, finishM = 8, headingOverride = -1) {
     const pos = [a[0] + (b[0] - a[0]) * bestT, a[1] + (b[1] - a[1]) * bestT];
     const bearing = headingOverride >= 0 ? headingOverride : bearingDeg(a, b);
     const doneM = Math.max(0, Math.min(totalM, bestAlong));
-    return { pos, bearing, doneM, totalM, progress: doneM / totalM, finished: totalM - doneM <= finishM };
+    return { pos, bearing, doneM, totalM, progress: doneM / totalM, finished: totalM - doneM <= finishM, offM: bestPerp };
 }
 /**
  * Nächster Wegpunkt IN GEHRICHTUNG: der erste Wegpunkt, dessen Lauf-Position entlang
