@@ -208,9 +208,14 @@ export function loadForPos(pos: number, s: ScaleSpec, useWrap = false): number {
   return entspreize(base, s.spreizung);
 }
 
-/** Default-Skala: grün→gelb→rot, lineare Verteilung (Mitte 0.5, Anteile neutral 0.5), kein Wrap. */
+// Generelle Default-Skala = 6 Stufen, passend zur systemweiten Comfort-Sprache
+// (still·ruhig·moderat·flüssig·belebt·voll) und zur Alarm-Logik (stageTop). Farben
+// aus dem bestehenden 7-Farb-Comfort-Verlauf destilliert (grün→rot, ohne Magenta),
+// damit Mesh, Schauglas und Fallback dieselbe Farbwelt sprechen. Borders gleichmäßig
+// (jedes Sechstel) — neutraler Default, per-Rep via Bundle überschreibbar.
 export const DEFAULT_SCALE: ScaleSpec = {
-  stops: ['#2ecc40', '#ffd400', '#ff2d2d'],
+  stops: ['#2ecc40', '#a8e63c', '#f1c40f', '#ffaa00', '#ff5500', '#ff0044'],
+  borders: [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6],
   spreizung: { mitte: 0.5, oben: 0.5, unten: 0.5 },
   verjuengung: { unten: 0, oben: 0 },
 };

@@ -54,5 +54,4 @@ export declare function resampleScale(s: ScaleSpec, n?: number): ScaleSpec;
 export declare function posForLoad(load: number, s: ScaleSpec, useWrap?: boolean): number;
 /** Entzerrung: Display-Position → echte Last (für die Comfort-Schwelle). */
 export declare function loadForPos(pos: number, s: ScaleSpec, useWrap?: boolean): number;
-/** Default-Skala: grün→gelb→rot, lineare Verteilung (Mitte 0.5, Anteile neutral 0.5), kein Wrap. */
 export declare const DEFAULT_SCALE: ScaleSpec;
