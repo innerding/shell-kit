@@ -22,14 +22,16 @@ function waypointBadge(n, color, digitRaw) {
  */
 export function renderRoute(layer, route, waypoints, opts = {}) {
     layer.clearLayers();
-    const breach = opts.breach ?? false;
-    const color = opts.color ?? (breach ? '#d2502a' : '#1b2a6b');
+    // Route ENTKOPPELT von Comfort (ann_133): ein NEUTRALER Pfad — zeigt nur WO man
+    // geht, durchgezogen. Die Last erzählt allein das Mesh (per-Segment); KEIN
+    // Whole-Route-Breach-Strich mehr (war falsch granuliert + visuell willkürlich).
+    const color = opts.color ?? '#1b2a6b';
     const weight = opts.weight ?? 5;
     if (route && route.points.length >= 2) {
         const line = route.points;
         // weiße Unterlage für Kontrast, dann farbige Route darüber.
         L.polyline(line, { color: '#ffffff', weight: weight + 3, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(layer);
-        L.polyline(line, { color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round', dashArray: breach ? '10 8' : undefined }).addTo(layer);
+        L.polyline(line, { color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(layer);
     }
     waypoints.forEach((wp, i) => {
         L.marker(wp, { icon: waypointBadge(i + 1, color, opts.digitRaw), interactive: false, zIndexOffset: 1000 }).addTo(layer);

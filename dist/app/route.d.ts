@@ -4,7 +4,6 @@ import type { LatLng } from './anthem';
 export interface RenderRouteOpts {
     color?: string;
     weight?: number;
-    breach?: boolean;
     digitRaw?: (d: string) => string;
 }
 /**
