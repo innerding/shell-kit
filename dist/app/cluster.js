@@ -25,6 +25,31 @@ function markerHtml(svg, size, opacity = 1, badge = '') {
     // Eck-Badge (Weg-Nummer) — vom Konsumenten geliefert; relativ positioniert.
     return badge ? `<div style="position:relative;width:${size}px;height:${size}px;">${inner}${badge}</div>` : inner;
 }
+// Short-tap (click) + Long-press (Touch-Halten ~500 ms ODER Desktop-Rechtsklick/
+// contextmenu) an einem Marker. Ein gefeuerter Long-press schluckt den darauf
+// folgenden click (sonst würde beim Loslassen zusätzlich onTap auslösen).
+function bindMarkerGestures(m, onTap, onLong) {
+    let timer = null;
+    let longFired = false;
+    const clear = () => { if (timer) {
+        clearTimeout(timer);
+        timer = null;
+    } };
+    m.on('click', () => { if (longFired) {
+        longFired = false;
+        return;
+    } onTap?.(); });
+    if (onLong) {
+        m.on('contextmenu', (e) => { L.DomEvent.preventDefault(e.originalEvent); longFired = true; onLong(); });
+        const el = m.getElement();
+        if (el) {
+            el.addEventListener('touchstart', () => { longFired = false; clear(); timer = setTimeout(() => { longFired = true; onLong(); }, 500); }, { passive: true });
+            el.addEventListener('touchmove', clear, { passive: true });
+            el.addEventListener('touchend', clear);
+            el.addEventListener('touchcancel', clear);
+        }
+    }
+}
 function placeMarker(layer, latlng, html, size, opts = {}) {
     const m = L.marker(latlng, {
         icon: L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2] }),
@@ -33,9 +58,9 @@ function placeMarker(layer, latlng, html, size, opts = {}) {
     });
     if (opts.tooltip)
         m.bindTooltip(opts.tooltip);
-    if (opts.onClick)
-        m.on('click', opts.onClick);
-    m.addTo(layer);
+    m.addTo(layer); // erst hinzufügen → getElement() für die Touch-Geste verfügbar
+    if (opts.onClick || opts.onLongPress)
+        bindMarkerGestures(m, opts.onClick, opts.onLongPress);
 }
 /**
  * Rendert die geclusterten Mitglieder (mit .cluster) in `layer` — neu aufrufen bei zoom/move.
@@ -48,7 +73,10 @@ export function renderClusterPois(map, layer, members, ghostByCluster, onMemberC
 // Konsumenten, mit dessen Ziffern). Einzeln gezeigte Mitglieder tragen ihre Nummer;
 // ein Ghost trägt die KLEINSTE Nummer seiner verschluckten Mitglieder (überträgt
 // sich beim Einzoomen auf das dann sichtbare Mitglied).
-routeNumOf, numBadgeHtml) {
+routeNumOf, numBadgeHtml, 
+// Long-press auf ein EINZELN gezeigtes Mitglied → Detail (wie short-tap = Auswahl,
+// nur die andere Geste). Am Ghost nicht (Aggregat mehrerer POIs).
+onMemberLongPress) {
     layer.clearLayers();
     const byCluster = new Map();
     for (const m of members) {
@@ -114,6 +142,7 @@ routeNumOf, numBadgeHtml) {
             placeMarker(layer, latlng, markerHtml(svg, ICON, 1, badge), ICON, {
                 tooltip: `<strong>${m.text}</strong><br/><span style="color:#718096">${m.subcategory}</span>`,
                 onClick: onMemberClick ? () => onMemberClick(m) : undefined,
+                onLongPress: onMemberLongPress ? () => onMemberLongPress(m) : undefined,
             });
         }
         // Ankündigung: blasser Hexagon-Ring über sich nähernde Paare (>= SWALLOW, < ANNOUNCE).

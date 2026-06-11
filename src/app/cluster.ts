@@ -44,9 +44,29 @@ function markerHtml(svg: string, size: number, opacity = 1, badge = ''): string 
   return badge ? `<div style="position:relative;width:${size}px;height:${size}px;">${inner}${badge}</div>` : inner;
 }
 
+// Short-tap (click) + Long-press (Touch-Halten ~500 ms ODER Desktop-Rechtsklick/
+// contextmenu) an einem Marker. Ein gefeuerter Long-press schluckt den darauf
+// folgenden click (sonst würde beim Loslassen zusätzlich onTap auslösen).
+function bindMarkerGestures(m: L.Marker, onTap?: () => void, onLong?: () => void): void {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let longFired = false;
+  const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  m.on('click', () => { if (longFired) { longFired = false; return; } onTap?.(); });
+  if (onLong) {
+    m.on('contextmenu', (e) => { L.DomEvent.preventDefault((e as L.LeafletMouseEvent).originalEvent); longFired = true; onLong(); });
+    const el = m.getElement();
+    if (el) {
+      el.addEventListener('touchstart', () => { longFired = false; clear(); timer = setTimeout(() => { longFired = true; onLong(); }, 500); }, { passive: true });
+      el.addEventListener('touchmove', clear, { passive: true });
+      el.addEventListener('touchend', clear);
+      el.addEventListener('touchcancel', clear);
+    }
+  }
+}
+
 function placeMarker(
   layer: L.LayerGroup, latlng: L.LatLng, html: string, size: number,
-  opts: { interactive?: boolean; z?: number; tooltip?: string; onClick?: () => void } = {},
+  opts: { interactive?: boolean; z?: number; tooltip?: string; onClick?: () => void; onLongPress?: () => void } = {},
 ): void {
   const m = L.marker(latlng, {
     icon: L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2] }),
@@ -54,8 +74,8 @@ function placeMarker(
     zIndexOffset: opts.z ?? 0,
   });
   if (opts.tooltip) m.bindTooltip(opts.tooltip);
-  if (opts.onClick) m.on('click', opts.onClick);
-  m.addTo(layer);
+  m.addTo(layer);   // erst hinzufügen → getElement() für die Touch-Geste verfügbar
+  if (opts.onClick || opts.onLongPress) bindMarkerGestures(m, opts.onClick, opts.onLongPress);
 }
 
 /**
@@ -76,6 +96,9 @@ export function renderClusterPois(
   // sich beim Einzoomen auf das dann sichtbare Mitglied).
   routeNumOf?: (id: string) => number,
   numBadgeHtml?: (n: number, size: number, stackIndex?: number) => string,
+  // Long-press auf ein EINZELN gezeigtes Mitglied → Detail (wie short-tap = Auswahl,
+  // nur die andere Geste). Am Ghost nicht (Aggregat mehrerer POIs).
+  onMemberLongPress?: (member: ClusterMember) => void,
 ): void {
   layer.clearLayers();
 
@@ -140,6 +163,7 @@ export function renderClusterPois(
       placeMarker(layer, latlng, markerHtml(svg, ICON, 1, badge), ICON, {
         tooltip: `<strong>${m.text}</strong><br/><span style="color:#718096">${m.subcategory}</span>`,
         onClick: onMemberClick ? () => onMemberClick(m) : undefined,
+        onLongPress: onMemberLongPress ? () => onMemberLongPress(m) : undefined,
       });
     }
 
