@@ -45,9 +45,20 @@ interface StripProps {
    *  ausgeblichen (milchig) — das Schauglas zeigt nur die Last, die da ist. Der
    *  volle Gradient bleibt als 1px-Stroke ringsum sichtbar (Skala-Referenz). */
   loadLevel?: number;
+  /** Wert → Comfort-Wort + -Farbe. Gesetzt → links vom Schauglas blendet beim
+   *  Ziehen/Ausfahren der eingestellte Comfort-Status ein (verschwindet beim Collapse). */
+  labelOf?: (value: number) => { word: string; color: string };
 }
 
-function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labels, gradient, loadLevel }: StripProps) {
+// Lesbare Textfarbe auf einer Farb-Box (einfache Luminanz).
+function readable(hex: string): string {
+  const h = hex.replace('#', '');
+  const n = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const r = parseInt(n.slice(0, 2), 16), g = parseInt(n.slice(2, 4), 16), b = parseInt(n.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#14223e' : '#fff';
+}
+
+function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labels, gradient, loadLevel, labelOf }: StripProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -89,6 +100,16 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labe
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: insetBottom(linePos), height: expanded ? 3 : 2, background: '#fff', boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 2 }} />
       </div>
 
+      {/* Comfort-Status LINKS vom Schauglas — blendet beim Ausfahren/Ziehen ein, beim
+          Collapse aus (Farb-Box mit dem Comfort-Wort, dieselbe Welt wie die Detail-Card). */}
+      {labelOf && (() => {
+        const c = labelOf(value);
+        if (!c.word) return null;
+        return (
+          <span aria-hidden style={{ position: 'absolute', top: '50%', right: STRIP_W + RIGHT_GAP + SPACER + COL_W + 4, transform: 'translateY(-50%)', whiteSpace: 'nowrap', pointerEvents: 'none', opacity: expanded ? 1 : 0, transition: 'opacity 0.15s ease', background: c.color, color: readable(c.color), font: '700 11px/1 system-ui,sans-serif', letterSpacing: '0.02em', padding: '4px 9px', borderRadius: 7, boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>{c.word}</span>
+        );
+      })()}
+
       {expanded && (
         <div style={{ position: 'absolute', right: 0, width: LABEL_W, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', pointerEvents: 'none' }}>
           <span style={{ writingMode: 'vertical-rl', fontSize: 11, fontWeight: 700, color: 'rgba(0,0,0,0.80)', letterSpacing: '0.02em' }}>{labels.top}</span>
@@ -128,9 +149,11 @@ interface Props {
   loadLevel?: number;
   /** Rest-Pegel (0..1, areal) — bleicht den RAST-Gradienten darüber aus. */
   stayLoadLevel?: number;
+  /** Wert → Comfort-Wort + -Farbe (für den Status-Text links vom Schauglas). */
+  labelOf?: (value: number) => { word: string; color: string };
 }
 
-export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale, loadLevel, stayLoadLevel }: Props) {
+export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale, loadLevel, stayLoadLevel, labelOf }: Props) {
   const gradient = gradientFromScale(scale);
   const [movExpanded, setMovExpanded] = useState(false);
   const [stayExpanded, setStayExpanded] = useState(false);
@@ -138,9 +161,9 @@ export default function ComfortSliders({ movementValue, stayValue, stayMaxValue,
   // Beide Slider permanent (kein Auto-Show/Hide mehr); jeder klappt unabhängig auf.
   return (
     <div style={{ position: 'absolute', right: 0, top: 62, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, zIndex: 600 }}>
-      <SliderStrip value={movementValue} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={setMovExpanded} labels={{ top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }} gradient={gradient} loadLevel={loadLevel} />
+      <SliderStrip value={movementValue} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={setMovExpanded} labels={{ top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }} gradient={gradient} loadLevel={loadLevel} labelOf={labelOf} />
       {step2Active && (
-        <SliderStrip value={stayValue} maxValue={stayMaxValue} onChange={onStayChange} expanded={stayExpanded} onExpandChange={setStayExpanded} labels={{ top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }} gradient={gradient} loadLevel={stayLoadLevel} />
+        <SliderStrip value={stayValue} maxValue={stayMaxValue} onChange={onStayChange} expanded={stayExpanded} onExpandChange={setStayExpanded} labels={{ top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }} gradient={gradient} loadLevel={stayLoadLevel} labelOf={labelOf} />
       )}
     </div>
   );

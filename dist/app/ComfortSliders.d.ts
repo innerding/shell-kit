@@ -12,6 +12,11 @@ interface Props {
     loadLevel?: number;
     /** Rest-Pegel (0..1, areal) — bleicht den RAST-Gradienten darüber aus. */
     stayLoadLevel?: number;
+    /** Wert → Comfort-Wort + -Farbe (für den Status-Text links vom Schauglas). */
+    labelOf?: (value: number) => {
+        word: string;
+        color: string;
+    };
 }
-export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active, scale, loadLevel, stayLoadLevel }: Props): import("react").JSX.Element;
+export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active, scale, loadLevel, stayLoadLevel, labelOf }: Props): import("react").JSX.Element;
 export {};
