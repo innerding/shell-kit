@@ -78,20 +78,14 @@ export function renderRoute(
   // zeigt das Overlay den Strecken-Anteil mit, der NICHT auf der Route liegt (Netz und
   // Route vermischt). Aus legs ist der Puls per Konstruktion ein Subset der Route.
   //
-  // Jeder Engpass bekommt ZWEI mit-pulsierende Linien: ein weißes Casing (breiter, in
-  // Phase) + der farbige Puls darüber. Das Casing bindet das Zappeln sichtbar AN die
-  // weiß-gefasste Route.
+  // Kein weißes Casing (umrandete sonst jedes Teilstück rundum statt nur seitlich) —
+  // der farbige Stroke-Puls allein, in der Routenfarbe, mit Phasen-Versatz pro Stück.
   if (route && opts.dimmedStretchIds && opts.dimmedStretchIds.size > 0) {
     const dimmed = opts.dimmedStretchIds;
     const drawBusy = (seg: L.LatLngExpression[], k: number) => {
-      const d = k % 4;
-      L.polyline(seg, {
-        color: '#ffffff', weight: weight + 3, opacity: 0.95, lineCap: 'round', lineJoin: 'round', renderer,
-        className: `scim-route-busy-casing scim-seg-d${d}`,
-      }).addTo(layer);
       L.polyline(seg, {
         color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round', renderer,
-        className: `scim-route-busy scim-seg-d${d}`,
+        className: `scim-route-busy scim-seg-d${k % 4}`,
       }).addTo(layer);
     };
     if (route.legs && route.legs.length > 0) {
