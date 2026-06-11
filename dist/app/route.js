@@ -33,6 +33,21 @@ export function renderRoute(layer, route, waypoints, opts = {}) {
         L.polyline(line, { color: '#ffffff', weight: weight + 3, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(layer);
         L.polyline(line, { color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(layer);
     }
+    // Busy-Overlay: Engpass-Stretches AUF der Route (route ∩ dimmed) als pulsierende
+    // Linie darüber. Stroke-Stärke zappelt (Keyframe `scim-route-busy`, runtime-seitig);
+    // Phasen-Versatz pro Stück → Schimmern. Geometrie aus dem Netz.
+    if (route && opts.net && opts.dimmedStretchIds && opts.dimmedStretchIds.size > 0) {
+        const onRoute = new Set(route.stretchIds);
+        let k = 0;
+        for (const s of opts.net.stretches) {
+            if (!onRoute.has(s.id) || !opts.dimmedStretchIds.has(s.id) || s.points.length < 2)
+                continue;
+            L.polyline(s.points, {
+                color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round',
+                className: `scim-route-busy scim-seg-d${k++ % 4}`,
+            }).addTo(layer);
+        }
+    }
     waypoints.forEach((wp, i) => {
         L.marker(wp, { icon: waypointBadge(i + 1, color, opts.digitRaw), interactive: false, zIndexOffset: 1000 }).addTo(layer);
     });

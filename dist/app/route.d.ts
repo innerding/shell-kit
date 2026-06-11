@@ -1,9 +1,11 @@
 import L from 'leaflet';
 import type { Route } from './bak';
-import type { LatLng } from './anthem';
+import type { LatLng, SegmentedNet } from './anthem';
 export interface RenderRouteOpts {
     color?: string;
     weight?: number;
+    net?: SegmentedNet;
+    dimmedStretchIds?: Set<string>;
     digitRaw?: (d: string) => string;
 }
 /**

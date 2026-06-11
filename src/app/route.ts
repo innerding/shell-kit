@@ -5,11 +5,16 @@
 // + nummerierte Waypoint-Marken in Tipp-/Reise-Reihenfolge.
 import L from 'leaflet';
 import type { Route } from './bak';
-import type { LatLng } from './anthem';
+import type { LatLng, SegmentedNet } from './anthem';
 
 export interface RenderRouteOpts {
   color?: string;     // Routen-Farbe (Default: neutrales Navy)
   weight?: number;    // Routen-Stärke
+  // Busy-Overlay (ann_135): Route-Stretches über Comfort ZAPPELN in der Stroke-
+  // Stärke (gut sichtbar). `net` liefert die Geometrie, `dimmedStretchIds` welche
+  // Stretches über Comfort sind — gezappelt werden nur die, die AUF der Route liegen.
+  net?: SegmentedNet;
+  dimmedStretchIds?: Set<string>;
   // Liefert das Roh-SVG einer Ziffer (currentColor, füllt die Zelle). Wenn
   // gesetzt, werden die Waypoint-Nummern aus diesen Custom-Ziffern gebaut statt
   // aus System-Text — passend zur Rest-Dauer-Uhr (gleiche hand-gezeichnete Glyphen).
@@ -53,6 +58,21 @@ export function renderRoute(
     // weiße Unterlage für Kontrast, dann farbige Route darüber.
     L.polyline(line, { color: '#ffffff', weight: weight + 3, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(layer);
     L.polyline(line, { color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(layer);
+  }
+
+  // Busy-Overlay: Engpass-Stretches AUF der Route (route ∩ dimmed) als pulsierende
+  // Linie darüber. Stroke-Stärke zappelt (Keyframe `scim-route-busy`, runtime-seitig);
+  // Phasen-Versatz pro Stück → Schimmern. Geometrie aus dem Netz.
+  if (route && opts.net && opts.dimmedStretchIds && opts.dimmedStretchIds.size > 0) {
+    const onRoute = new Set(route.stretchIds);
+    let k = 0;
+    for (const s of opts.net.stretches) {
+      if (!onRoute.has(s.id) || !opts.dimmedStretchIds.has(s.id) || s.points.length < 2) continue;
+      L.polyline(s.points as L.LatLngExpression[], {
+        color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round',
+        className: `scim-route-busy scim-seg-d${k++ % 4}`,
+      }).addTo(layer);
+    }
   }
 
   waypoints.forEach((wp, i) => {
