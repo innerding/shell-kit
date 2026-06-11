@@ -59,7 +59,7 @@ export function detourPicks(net, waypoints, avgById, scale, comfort, limit = 4) 
         if (peak > c)
             continue; // nur komfortable Umwege anbieten
         out.push({
-            points: r.points, stretchIds: r.stretchIds,
+            points: r.points, stretchIds: r.stretchIds, legs: r.legs,
             deltaM: Math.max(0, polylineLengthM(r.points) - directLen),
             peakLoad: peak, stage: stageOf(peak, scale),
         });

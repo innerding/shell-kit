@@ -1,7 +1,13 @@
 import type { SegmentedNet, LatLng } from './anthem';
+export interface RouteLeg {
+    stretchId: string;
+    from: number;
+    to: number;
+}
 export interface Route {
     stretchIds: string[];
     points: LatLng[];
+    legs?: RouteLeg[];
 }
 /**
  * Löst eine Route über den Segment-Graph durch die geordnete Waypoint-Kette.

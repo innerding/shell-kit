@@ -1,8 +1,10 @@
+import { type RouteLeg } from './bak.js';
 import { type ScaleSpec } from './scale.js';
 import type { SegmentedNet, LatLng } from './anthem';
 export interface DetourPick {
     points: LatLng[];
     stretchIds: string[];
+    legs?: RouteLeg[];
     deltaM: number;
     peakLoad: number;
     stage: number;

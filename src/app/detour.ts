@@ -8,7 +8,7 @@
 // Mehrere Umwege entstehen durch progressiv strengeres Meiden: bei `comfort` nur die
 // breachenden Stretches (kürzester-gerade-noch-komfortabel), tiefer → mehr gemieden
 // (ruhiger, länger). solveRouteAvoiding meidet per PENALTY (weich), darum die Filterung.
-import { solveRoute, solveRouteAvoiding, type Route } from './bak.js';
+import { solveRoute, solveRouteAvoiding, type Route, type RouteLeg } from './bak.js';
 import { polylineLengthM } from './walker.js';
 import { stageOf, type ScaleSpec } from './scale.js';
 import type { SegmentedNet, LatLng } from './anthem';
@@ -16,6 +16,7 @@ import type { SegmentedNet, LatLng } from './anthem';
 export interface DetourPick {
   points: LatLng[];      // Umweg-Geometrie [lat,lng]
   stretchIds: string[];
+  legs?: RouteLeg[];     // per-Strecke Index-Bereiche in points (für routen-treue Overlays)
   deltaM: number;        // Mehrweg ggü. der direkten Route (m; ≥ 0)
   peakLoad: number;      // 0..1, höchste Ø-Last auf dem Umweg
   stage: number;         // stageOf(peakLoad) — fürs Comfort-Label (sehr ruhig…voll)
@@ -67,7 +68,7 @@ export function detourPicks(
     const peak = peakLoadOf(r.stretchIds, avgById);
     if (peak > c) continue;                                       // nur komfortable Umwege anbieten
     out.push({
-      points: r.points, stretchIds: r.stretchIds,
+      points: r.points, stretchIds: r.stretchIds, legs: r.legs,
       deltaM: Math.max(0, polylineLengthM(r.points) - directLen),
       peakLoad: peak, stage: stageOf(peak, scale),
     });

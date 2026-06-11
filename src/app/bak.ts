@@ -39,9 +39,21 @@ function stretchLength(points: LatLng[]): number {
   return len;
 }
 
+// Ein befahrener Streckenzug AUF der Route, als Index-Bereich [from..to] in
+// route.points. Die Slice route.points[from..to] ist EXAKT der Routen-Anteil dieser
+// Strecke (inkl. der geteilten Knoten an beiden Enden) — nie die ganze Netz-Strecke.
+// Damit kann ein Konsument (z. B. Busy-Overlay) Teile der Route markieren, ohne je
+// auf net.stretches[].points zurückzugreifen → Netz und Route bleiben getrennt.
+export interface RouteLeg {
+  stretchId: string;
+  from: number;  // Start-Index in route.points (inklusive)
+  to: number;    // End-Index in route.points (inklusive)
+}
+
 export interface Route {
   stretchIds: string[]; // Strecken, über die die Route läuft (in Reise-Reihenfolge)
   points: LatLng[];     // durchgehende Polylinie (Reise-Reihenfolge, ohne Knoten-Dubletten)
+  legs?: RouteLeg[];    // per-Strecke Index-Bereiche in points (für routen-treue Overlays)
 }
 
 interface Edge {
@@ -147,13 +159,19 @@ function shortestPath(g: RouteGraph, from: string, to: string): Edge[] | null {
   return edges;
 }
 
-// Hängt die Punkte einer Kante an die Route an (ohne den Verbindungsknoten zu doppeln).
-function appendEdge(route: LatLng[], stretchIds: string[], e: Edge): void {
+// Hängt die Punkte einer Kante an die Route an (ohne den Verbindungsknoten zu doppeln)
+// und vermerkt den befahrenen Streckenzug als Index-Bereich in route (für legs).
+function appendEdge(route: LatLng[], stretchIds: string[], legs: RouteLeg[], e: Edge): void {
   const pts = e.pts;
-  const start = route.length === 0 ? 0 : 1; // ersten Punkt überspringen, wenn er = letzter ist
+  const beforeLen = route.length;
+  const start = beforeLen === 0 ? 0 : 1; // ersten Punkt überspringen, wenn er = letzter ist
   for (let i = start; i < pts.length; i++) route.push(pts[i]);
   // Strecken-id nur einmal hintereinander (eine Strecke kann nicht zweimal in Folge liegen).
   if (stretchIds[stretchIds.length - 1] !== e.stretchId) stretchIds.push(e.stretchId);
+  // leg = [geteilter Anfangsknoten .. neues Ende]; Slice = genau dieser Strecken-Anteil
+  // der Route. Aufeinanderfolgende legs teilen den Knoten → lückenloses Kacheln.
+  const from = beforeLen === 0 ? 0 : beforeLen - 1;
+  legs.push({ stretchId: e.stretchId, from, to: route.length - 1 });
 }
 
 /**
@@ -194,14 +212,15 @@ function solveChain(g: RouteGraph, waypoints: LatLng[]): Route | null {
   }
   const points: LatLng[] = [];
   const stretchIds: string[] = [];
+  const legs: RouteLeg[] = [];
   for (let i = 1; i < nodes.length; i++) {
     if (nodes[i] === nodes[i - 1]) continue; // gleicher Knoten → kein Bein
     const edges = shortestPath(g, nodes[i - 1], nodes[i]);
     if (edges == null) return null;
-    for (const e of edges) appendEdge(points, stretchIds, e);
+    for (const e of edges) appendEdge(points, stretchIds, legs, e);
   }
   if (stretchIds.length === 0) return null;
-  return { stretchIds, points };
+  return { stretchIds, points, legs };
 }
 
 /**

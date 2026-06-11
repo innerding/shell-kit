@@ -34,23 +34,22 @@ export function renderRoute(layer, route, waypoints, opts = {}) {
         L.polyline(line, { color: '#ffffff', weight: weight + 3, opacity: 0.9, lineCap: 'round', lineJoin: 'round', renderer }).addTo(layer);
         L.polyline(line, { color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round', renderer }).addTo(layer);
     }
-    // Busy-Overlay: Engpass-Stretches AUF der Route (route ∩ dimmed) als pulsierende
-    // Linie darüber. Stroke-Stärke zappelt (Keyframe `scim-route-busy`, runtime-seitig);
-    // Phasen-Versatz pro Stück → Schimmern. Geometrie aus dem Netz.
+    // Busy-Overlay: Engpass-Teile AUF der Route (route ∩ dimmed) als pulsierende Linie
+    // darüber. Stroke-Stärke zappelt (Keyframe `scim-route-busy`, runtime-seitig);
+    // Phasen-Versatz pro Stück → Schimmern.
+    //
+    // WICHTIG (Befund 2026-06-11 „Netz vs. Route"): die Geometrie kommt aus route.legs
+    // (Slice der ROUTE), NICHT aus net.stretches[].points (die ganze Netz-Strecke). Sonst
+    // zeigt das Overlay den Strecken-Anteil mit, der NICHT auf der Route liegt (Netz und
+    // Route vermischt). Aus legs ist der Puls per Konstruktion ein Subset der Route.
     //
     // Jeder Engpass bekommt ZWEI mit-pulsierende Linien: ein weißes Casing (breiter, in
     // Phase) + der farbige Puls darüber. Das Casing bindet das Zappeln sichtbar AN die
-    // Route — ohne es löst das Auge die nackte Pulslinie ab und liest sie als loses
-    // Fragment abseits der weiß-gefassten Route (Befund 2026-06-11). Die Geometrie liegt
-    // immer auf route.points (s ∈ route.stretchIds); das Casing macht das auch sichtbar.
-    if (route && opts.net && opts.dimmedStretchIds && opts.dimmedStretchIds.size > 0) {
-        const onRoute = new Set(route.stretchIds);
-        let k = 0;
-        for (const s of opts.net.stretches) {
-            if (!onRoute.has(s.id) || !opts.dimmedStretchIds.has(s.id) || s.points.length < 2)
-                continue;
-            const seg = s.points;
-            const d = k++ % 4;
+    // weiß-gefasste Route.
+    if (route && opts.dimmedStretchIds && opts.dimmedStretchIds.size > 0) {
+        const dimmed = opts.dimmedStretchIds;
+        const drawBusy = (seg, k) => {
+            const d = k % 4;
             L.polyline(seg, {
                 color: '#ffffff', weight: weight + 3, opacity: 0.95, lineCap: 'round', lineJoin: 'round', renderer,
                 className: `scim-route-busy-casing scim-seg-d${d}`,
@@ -59,6 +58,28 @@ export function renderRoute(layer, route, waypoints, opts = {}) {
                 color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round', renderer,
                 className: `scim-route-busy scim-seg-d${d}`,
             }).addTo(layer);
+        };
+        if (route.legs && route.legs.length > 0) {
+            // Routen-treu: nur die Punkte-Slices der Route, die zu belebten Strecken gehören.
+            let k = 0;
+            for (const leg of route.legs) {
+                if (!dimmed.has(leg.stretchId))
+                    continue;
+                const seg = route.points.slice(leg.from, leg.to + 1);
+                if (seg.length < 2)
+                    continue;
+                drawBusy(seg, k++);
+            }
+        }
+        else if (opts.net) {
+            // Fallback (Route ohne legs, z. B. manuell konstruiert): ganze Netz-Strecke.
+            const onRoute = new Set(route.stretchIds);
+            let k = 0;
+            for (const s of opts.net.stretches) {
+                if (!onRoute.has(s.id) || !dimmed.has(s.id) || s.points.length < 2)
+                    continue;
+                drawBusy(s.points, k++);
+            }
         }
     }
     if (opts.waypointNumbers !== false) {
