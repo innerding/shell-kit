@@ -28,7 +28,7 @@ function hektikOf(load, comfort) {
  *  schlägt den Daten-Zustand; sonst on-route vs off-route × breaching. */
 export function poiVisualState(inp) {
     const stage = stageOf(inp.load, inp.scale);
-    const breaching = poiBreaches(inp.load, inp.comfort);
+    const breaching = inp.breaching ?? poiBreaches(inp.load, inp.comfort);
     switch (inp.role ?? 'normal') {
         case 'candidate': // Alternativ-Kandidat VOR Aktivierung: ×1.2, 50 % Wasserzeichen, ruhig.
             return { size: POI_SIZE.normal, opacity: 0.5, hektik: 0, stage, breaching, kind: 'candidate' };

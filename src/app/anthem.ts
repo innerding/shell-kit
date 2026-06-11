@@ -6,7 +6,7 @@
 // Tageskurve (dayPhase, 5-Min-Atem). `produceAnthemLoads` = die loads-only-Variante,
 // die die Runtime fürs Mesh braucht (ein Last-Wert je 10 m-Segment).
 
-export { heatColor as loadColour } from './colorist';
+export { heatColor as loadColour } from './colorist.js';
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
@@ -54,6 +54,32 @@ export function stretchAverages(net: SegmentedNet, loads: number[]): StretchLoad
     out.push({ id: s.id, average: segs > 0 ? sum / segs : 0, segmentCount: segs });
   }
   return out;
+}
+
+/**
+ * Hysterese / Deadband (BCK Step 3 / W2): das „belebt"-Set (Strecken über Comfort)
+ * STATEFUL fortschreiben, statt jeden Tick frisch `avg > comfort` zu schneiden — sonst
+ * flackern Strecken, deren Last um die Comfort-Schwelle pendelt. Symmetrisches Deadband:
+ * eine Strecke KOMMT in belebt erst bei `avg > comfort + margin`, VERLÄSST es erst bei
+ * `avg < comfort − margin`; dazwischen behält sie ihren Vorzustand `prev`.
+ *
+ * Rein → die Runtime hält `prev` in einem Ref über die Snapshots. `avgById` = id → Ø-Last
+ * (aus stretchAverages). `margin` = Deadband-Halbbreite (0..1; 0 ⇒ nackter Schwellenschnitt).
+ * Gibt das NEUE belebt-Set zurück (nur ids aus avgById).
+ */
+export function settleDimmed(
+  prev: Set<string>,
+  avgById: Map<string, number>,
+  comfort: number,
+  margin: number,
+): Set<string> {
+  const next = new Set<string>();
+  const enter = comfort + margin;   // rein nach „belebt"
+  const exit = comfort - margin;    // raus aus „belebt"
+  for (const [id, avg] of avgById) {
+    if (prev.has(id) ? avg > exit : avg > enter) next.add(id);
+  }
+  return next;
 }
 
 export interface NormalizeParams {

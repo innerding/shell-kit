@@ -37,6 +37,10 @@ export interface PoiVisualInput {
     scale: ScaleSpec;
     /** Interaktions-Overlay (default 'normal'). */
     role?: PoiRole;
+    /** Externe Breach-Entscheidung (Step 3 / W2): wenn gesetzt, ersetzt sie den nackten
+     *  `load > comfort`-Schnitt — z. B. das HYSTERETISCHE belebt-Set (settleDimmed). Die
+     *  Hektik-STÄRKE nutzt weiter die rohe Last; nur das Ob (on/off) kommt von hier. */
+    breaching?: boolean;
 }
 /** Comfort-Schnitt — die NAHT für Step 3 (Hysterese). HEUTE: nackter Schwellen-
  *  Vergleich, EINE Schwelle, kein Deadband. Step 3 ersetzt NUR diese Funktion

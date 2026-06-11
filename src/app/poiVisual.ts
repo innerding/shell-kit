@@ -49,6 +49,10 @@ export interface PoiVisualInput {
   scale: ScaleSpec;
   /** Interaktions-Overlay (default 'normal'). */
   role?: PoiRole;
+  /** Externe Breach-Entscheidung (Step 3 / W2): wenn gesetzt, ersetzt sie den nackten
+   *  `load > comfort`-Schnitt — z. B. das HYSTERETISCHE belebt-Set (settleDimmed). Die
+   *  Hektik-STÄRKE nutzt weiter die rohe Last; nur das Ob (on/off) kommt von hier. */
+  breaching?: boolean;
 }
 
 /** Comfort-Schnitt — die NAHT für Step 3 (Hysterese). HEUTE: nackter Schwellen-
@@ -70,7 +74,7 @@ function hektikOf(load: number, comfort: number): number {
  *  schlägt den Daten-Zustand; sonst on-route vs off-route × breaching. */
 export function poiVisualState(inp: PoiVisualInput): PoiVisual {
   const stage = stageOf(inp.load, inp.scale);
-  const breaching = poiBreaches(inp.load, inp.comfort);
+  const breaching = inp.breaching ?? poiBreaches(inp.load, inp.comfort);
 
   switch (inp.role ?? 'normal') {
     case 'candidate':   // Alternativ-Kandidat VOR Aktivierung: ×1.2, 50 % Wasserzeichen, ruhig.
