@@ -70,6 +70,29 @@ export function nearestStretchLoad(
 }
 
 /**
+ * Areale REST-Last (W3) um einen Punkt: längen-gewichtetes Mittel der Ø-Lasten aller
+ * Strecken-Stützpunkte innerhalb `radiusM`. Ersetzt für POIs den linearen Path-Proxy
+ * (nearestStretchLoad) durch den ANDRANG IN DER FLÄCHE (Rast/Rest) — eigenes areales
+ * Modell statt „Last der nächsten Strecke". `averageById` = id → Ø-Last (stretchAverages).
+ * 0, wenn nichts im Radius liegt.
+ */
+export function restLoad(
+  lat: number, lng: number,
+  net: SegmentedNet,
+  averageById: Map<string, number>,
+  radiusM: number,
+): number {
+  let sum = 0, n = 0;
+  for (const s of net.stretches) {
+    const a = averageById.get(s.id) ?? 0;
+    for (const p of s.points as [number, number][]) {
+      if (distM(lat, lng, p[0], p[1]) <= radiusM) { sum += a; n++; }
+    }
+  }
+  return n > 0 ? sum / n : 0;
+}
+
+/**
  * Berechnet alle pre-existenten Sackgassen des Netzes (statisch, einmal beim
  * Bundle-Laden). Startet mit Strecken die einen Grad-1-Endknoten haben, kaskadiert
  * dann: Strecken die dadurch ihrerseits zur Sackgasse werden, ebenfalls markiert.
