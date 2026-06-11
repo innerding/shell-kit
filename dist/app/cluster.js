@@ -18,10 +18,12 @@ const ANNOUNCE = ICON * 2;
 const GHOST_MIN = 34;
 const GHOST_MAX = 56;
 const HEX_COLOR = '#ff00ff';
-function markerHtml(svg, size, opacity = 1) {
-    return `<div style="width:${size}px;height:${size}px;line-height:0;` +
+function markerHtml(svg, size, opacity = 1, badge = '') {
+    const inner = `<div style="width:${size}px;height:${size}px;line-height:0;` +
         (opacity < 1 ? `opacity:${opacity};` : 'filter:drop-shadow(0 1px 2px rgba(0,0,0,.55));') +
         `">${svg}</div>`;
+    // Eck-Badge (Weg-Nummer) — vom Konsumenten geliefert; relativ positioniert.
+    return badge ? `<div style="position:relative;width:${size}px;height:${size}px;">${inner}${badge}</div>` : inner;
 }
 function placeMarker(layer, latlng, html, size, opts = {}) {
     const m = L.marker(latlng, {
@@ -41,7 +43,12 @@ function placeMarker(layer, latlng, html, size, opts = {}) {
  * den Ghost): ein verschlucktes Mitglied ist nicht da, ein einzeln sichtbares ist wie
  * ein normaler POI anwählbar (Routenbildung) — der Konsument bekommt das ClusterMember.
  */
-export function renderClusterPois(map, layer, members, ghostByCluster, onMemberClick) {
+export function renderClusterPois(map, layer, members, ghostByCluster, onMemberClick, 
+// Weg-Nummer eines Mitglieds (0 = nicht auf der Route) + Badge-HTML-Builder (vom
+// Konsumenten, mit dessen Ziffern). Einzeln gezeigte Mitglieder tragen ihre Nummer;
+// ein Ghost trägt die KLEINSTE Nummer seiner verschluckten Mitglieder (überträgt
+// sich beim Einzoomen auf das dann sichtbare Mitglied).
+routeNumOf, numBadgeHtml) {
     layer.clearLayers();
     const byCluster = new Map();
     for (const m of members) {
@@ -72,7 +79,17 @@ export function renderClusterPois(map, layer, members, ghostByCluster, onMemberC
             const size = Math.min(GHOST_MAX, GHOST_MIN + (total - 2) * 5);
             const svg = ghost ? ghost.renderSvg(size) : '';
             const names = ghostEnts.flatMap((e) => e.members.map((m) => m.text)).join(' · ');
-            placeMarker(layer, latlng, markerHtml(svg, size), size, {
+            // Ghost-Nummer = kleinste Weg-Nummer der verschluckten Mitglieder (überträgt
+            // sich beim Einzoomen auf das dann einzeln sichtbare Mitglied).
+            let ghostNum = 0;
+            for (const e of ghostEnts)
+                for (const mm of e.members) {
+                    const n = mm.id != null ? (routeNumOf?.(mm.id) ?? 0) : 0;
+                    if (n > 0 && (ghostNum === 0 || n < ghostNum))
+                        ghostNum = n;
+                }
+            const ghostBadge = ghostNum > 0 && numBadgeHtml ? numBadgeHtml(ghostNum, size) : '';
+            placeMarker(layer, latlng, markerHtml(svg, size, 1, ghostBadge), size, {
                 z: 1000,
                 tooltip: `<strong>${ghost?.text ?? clusterName}</strong><br/>` +
                     `<span style="color:#718096">${total} POIs</span><br/><em>${names}</em>`,
@@ -85,7 +102,9 @@ export function renderClusterPois(map, layer, members, ghostByCluster, onMemberC
             if (!svg)
                 continue;
             // Einzeln sichtbares Mitglied = wie ein normaler POI anwählbar (Routenbildung).
-            placeMarker(layer, latlng, markerHtml(svg, ICON), ICON, {
+            const num = m.id != null ? (routeNumOf?.(m.id) ?? 0) : 0;
+            const badge = num > 0 && numBadgeHtml ? numBadgeHtml(num, ICON) : '';
+            placeMarker(layer, latlng, markerHtml(svg, ICON, 1, badge), ICON, {
                 tooltip: `<strong>${m.text}</strong><br/><span style="color:#718096">${m.subcategory}</span>`,
                 onClick: onMemberClick ? () => onMemberClick(m) : undefined,
             });
