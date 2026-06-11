@@ -79,16 +79,23 @@ routeNumOf, numBadgeHtml) {
             const size = Math.min(GHOST_MAX, GHOST_MIN + (total - 2) * 5);
             const svg = ghost ? ghost.renderSvg(size) : '';
             const names = ghostEnts.flatMap((e) => e.members.map((m) => m.text)).join(' · ');
-            // Ghost-Nummer = kleinste Weg-Nummer der verschluckten Mitglieder (überträgt
-            // sich beim Einzoomen auf das dann einzeln sichtbare Mitglied).
-            let ghostNum = 0;
+            // Ghost-Nummern = ALLE Weg-Nummern der verschluckten Mitglieder als versetzter
+            // Stapel (kleinste oben, weitere rechts-unten versetzt → deutet „mehrere" an;
+            // übertragen sich beim Einzoomen auf die einzeln sichtbaren Mitglieder).
+            const ghostNums = [];
             for (const e of ghostEnts)
                 for (const mm of e.members) {
                     const n = mm.id != null ? (routeNumOf?.(mm.id) ?? 0) : 0;
-                    if (n > 0 && (ghostNum === 0 || n < ghostNum))
-                        ghostNum = n;
+                    if (n > 0)
+                        ghostNums.push(n);
                 }
-            const ghostBadge = ghostNum > 0 && numBadgeHtml ? numBadgeHtml(ghostNum, size) : '';
+            ghostNums.sort((a, b) => a - b);
+            let ghostBadge = '';
+            if (numBadgeHtml) {
+                // letztes zuerst (tiefster Versatz, hinten), kleinste zuletzt = obenauf.
+                for (let i = ghostNums.length - 1; i >= 0; i--)
+                    ghostBadge += numBadgeHtml(ghostNums[i], size, i);
+            }
             placeMarker(layer, latlng, markerHtml(svg, size, 1, ghostBadge), size, {
                 z: 1000,
                 tooltip: `<strong>${ghost?.text ?? clusterName}</strong><br/>` +
