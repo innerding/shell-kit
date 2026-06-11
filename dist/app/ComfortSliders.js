@@ -56,25 +56,10 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labe
                     _jsx("div", { style: { position: 'absolute', left: STRIP_W - 4, right: 1, top: 1, bottom: insetBottom(loadLevel), borderRadius: 1, background: 'rgba(255,255,255,0.62)' } })), maxValue < 0.99 && (_jsx("div", { style: { position: 'absolute', left: 0, right: 0, bottom: insetBottom(maxValue), height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' } })), _jsx("div", { style: { position: 'absolute', left: 0, right: 0, bottom: insetBottom(linePos), height: expanded ? 3 : 2, background: '#fff', boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 2 } })] }), expanded && (_jsxs("div", { style: { position: 'absolute', right: 0, width: LABEL_W, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', pointerEvents: 'none' }, children: [_jsx("span", { style: { writingMode: 'vertical-rl', fontSize: 11, fontWeight: 700, color: 'rgba(0,0,0,0.80)', letterSpacing: '0.02em' }, children: labels.top }), _jsx("span", { style: { fontSize: 13, fontWeight: 900, color: 'rgba(0,0,0,0.80)', letterSpacing: '0.04em', textAlign: 'center' }, children: labels.middle }), _jsx("span", { style: { writingMode: 'vertical-rl', fontSize: 11, fontWeight: 700, color: 'rgba(0,0,0,0.80)', letterSpacing: '0.02em' }, children: labels.bottom })] })), !expanded && (_jsx("div", { onPointerDown: () => { onExpandChange(true); scheduleCollapse(); }, style: { position: 'absolute', inset: 0, cursor: 'pointer', touchAction: 'none' } })), expanded && (_jsxs(_Fragment, { children: [_jsx("div", { onPointerDown: (e) => { dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); readPosition(e.clientY); }, onPointerMove: (e) => { if (dragging.current)
                             readPosition(e.clientY); }, onPointerUp: () => { dragging.current = false; }, style: { position: 'absolute', left: 0, top: 0, bottom: 0, width: L_GAP_EXP + STRIP_W + RIGHT_GAP, cursor: 'ns-resize', touchAction: 'none' } }), _jsx("div", { onPointerDown: () => onExpandChange(false), style: { position: 'absolute', right: 0, top: 0, bottom: 0, width: COL_W, cursor: 'pointer', touchAction: 'none' } })] }))] }));
 }
-export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale, loadLevel }) {
+export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale, loadLevel, stayLoadLevel }) {
     const gradient = gradientFromScale(scale);
     const [movExpanded, setMovExpanded] = useState(false);
-    const [stayVisible, setStayVisible] = useState(false);
     const [stayExpanded, setStayExpanded] = useState(false);
-    const stayHideTimer = useRef(null);
-    const handleMovExpandChange = (exp) => {
-        setMovExpanded(exp);
-        if (exp) {
-            if (stayHideTimer.current)
-                clearTimeout(stayHideTimer.current);
-            setStayVisible(true);
-            setStayExpanded(true);
-        }
-        else {
-            stayHideTimer.current = setTimeout(() => { setStayExpanded(false); setTimeout(() => setStayVisible(false), 250); }, 3000);
-        }
-    };
-    useEffect(() => () => { if (stayHideTimer.current)
-        clearTimeout(stayHideTimer.current); }, []);
-    return (_jsxs("div", { style: { position: 'absolute', right: 0, top: 62, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, zIndex: 600 }, children: [_jsx(SliderStrip, { value: movementValue, maxValue: 1, onChange: onMovementChange, expanded: movExpanded, onExpandChange: handleMovExpandChange, labels: { top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }, gradient: gradient, loadLevel: loadLevel }), step2Active && stayVisible && (_jsx(SliderStrip, { value: stayValue, maxValue: stayMaxValue, onChange: onStayChange, expanded: stayExpanded, onExpandChange: setStayExpanded, labels: { top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }, gradient: gradient }))] }));
+    // Beide Slider permanent (kein Auto-Show/Hide mehr); jeder klappt unabhängig auf.
+    return (_jsxs("div", { style: { position: 'absolute', right: 0, top: 62, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, zIndex: 600 }, children: [_jsx(SliderStrip, { value: movementValue, maxValue: 1, onChange: onMovementChange, expanded: movExpanded, onExpandChange: setMovExpanded, labels: { top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }, gradient: gradient, loadLevel: loadLevel }), step2Active && (_jsx(SliderStrip, { value: stayValue, maxValue: stayMaxValue, onChange: onStayChange, expanded: stayExpanded, onExpandChange: setStayExpanded, labels: { top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }, gradient: gradient, loadLevel: stayLoadLevel }))] }));
 }

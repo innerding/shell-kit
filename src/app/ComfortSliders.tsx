@@ -124,34 +124,23 @@ interface Props {
   step2Active?: boolean;
   /** Skala (stops/borders) — Schauglas spricht dieselbe Farbwelt wie das Mesh. */
   scale?: ScaleSpec;
-  /** Last-Pegel des GANZEN Netzes (0..1) — bleicht den Gradienten darüber aus. */
+  /** Last-Pegel des GANZEN Netzes (0..1) — bleicht den WEG-Gradienten darüber aus. */
   loadLevel?: number;
+  /** Rest-Pegel (0..1, areal) — bleicht den RAST-Gradienten darüber aus. */
+  stayLoadLevel?: number;
 }
 
-export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale, loadLevel }: Props) {
+export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale, loadLevel, stayLoadLevel }: Props) {
   const gradient = gradientFromScale(scale);
   const [movExpanded, setMovExpanded] = useState(false);
-  const [stayVisible, setStayVisible] = useState(false);
   const [stayExpanded, setStayExpanded] = useState(false);
-  const stayHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleMovExpandChange = (exp: boolean) => {
-    setMovExpanded(exp);
-    if (exp) {
-      if (stayHideTimer.current) clearTimeout(stayHideTimer.current);
-      setStayVisible(true); setStayExpanded(true);
-    } else {
-      stayHideTimer.current = setTimeout(() => { setStayExpanded(false); setTimeout(() => setStayVisible(false), 250); }, 3000);
-    }
-  };
-
-  useEffect(() => () => { if (stayHideTimer.current) clearTimeout(stayHideTimer.current); }, []);
-
+  // Beide Slider permanent (kein Auto-Show/Hide mehr); jeder klappt unabhängig auf.
   return (
     <div style={{ position: 'absolute', right: 0, top: 62, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, zIndex: 600 }}>
-      <SliderStrip value={movementValue} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={handleMovExpandChange} labels={{ top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }} gradient={gradient} loadLevel={loadLevel} />
-      {step2Active && stayVisible && (
-        <SliderStrip value={stayValue} maxValue={stayMaxValue} onChange={onStayChange} expanded={stayExpanded} onExpandChange={setStayExpanded} labels={{ top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }} gradient={gradient} />
+      <SliderStrip value={movementValue} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={setMovExpanded} labels={{ top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }} gradient={gradient} loadLevel={loadLevel} />
+      {step2Active && (
+        <SliderStrip value={stayValue} maxValue={stayMaxValue} onChange={onStayChange} expanded={stayExpanded} onExpandChange={setStayExpanded} labels={{ top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }} gradient={gradient} loadLevel={stayLoadLevel} />
       )}
     </div>
   );

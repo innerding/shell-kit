@@ -8,8 +8,10 @@ interface Props {
     step2Active?: boolean;
     /** Skala (stops/borders) — Schauglas spricht dieselbe Farbwelt wie das Mesh. */
     scale?: ScaleSpec;
-    /** Last-Pegel des GANZEN Netzes (0..1) — bleicht den Gradienten darüber aus. */
+    /** Last-Pegel des GANZEN Netzes (0..1) — bleicht den WEG-Gradienten darüber aus. */
     loadLevel?: number;
+    /** Rest-Pegel (0..1, areal) — bleicht den RAST-Gradienten darüber aus. */
+    stayLoadLevel?: number;
 }
-export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active, scale, loadLevel }: Props): import("react").JSX.Element;
+export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active, scale, loadLevel, stayLoadLevel }: Props): import("react").JSX.Element;
 export {};
