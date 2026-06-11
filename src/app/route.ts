@@ -10,6 +10,10 @@ import type { LatLng, SegmentedNet } from './anthem';
 export interface RenderRouteOpts {
   color?: string;     // Routen-Farbe (Default: neutrales Navy)
   weight?: number;    // Routen-Stärke
+  /** Optionaler Leaflet-Renderer für die Route-Polylinien. SVG (statt Map-Default
+   *  Canvas) ist nötig, damit das Busy-Overlay per CSS-Klasse animieren kann —
+   *  auf Canvas greifen keine CSS-Keyframes. Das schwere Mesh bleibt auf Canvas. */
+  renderer?: L.Renderer;
   // Busy-Overlay (ann_135): Route-Stretches über Comfort ZAPPELN in der Stroke-
   // Stärke (gut sichtbar). `net` liefert die Geometrie, `dimmedStretchIds` welche
   // Stretches über Comfort sind — gezappelt werden nur die, die AUF der Route liegen.
@@ -56,12 +60,13 @@ export function renderRoute(
   // Whole-Route-Breach-Strich mehr (war falsch granuliert + visuell willkürlich).
   const color = opts.color ?? '#1b2a6b';
   const weight = opts.weight ?? 5;
+  const renderer = opts.renderer;
 
   if (route && route.points.length >= 2) {
     const line = route.points as L.LatLngExpression[];
     // weiße Unterlage für Kontrast, dann farbige Route darüber.
-    L.polyline(line, { color: '#ffffff', weight: weight + 3, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(layer);
-    L.polyline(line, { color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(layer);
+    L.polyline(line, { color: '#ffffff', weight: weight + 3, opacity: 0.9, lineCap: 'round', lineJoin: 'round', renderer }).addTo(layer);
+    L.polyline(line, { color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round', renderer }).addTo(layer);
   }
 
   // Busy-Overlay: Engpass-Stretches AUF der Route (route ∩ dimmed) als pulsierende
@@ -73,7 +78,7 @@ export function renderRoute(
     for (const s of opts.net.stretches) {
       if (!onRoute.has(s.id) || !opts.dimmedStretchIds.has(s.id) || s.points.length < 2) continue;
       L.polyline(s.points as L.LatLngExpression[], {
-        color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round',
+        color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round', renderer,
         className: `scim-route-busy scim-seg-d${k++ % 4}`,
       }).addTo(layer);
     }

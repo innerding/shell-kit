@@ -4,6 +4,10 @@ import type { LatLng, SegmentedNet } from './anthem';
 export interface RenderRouteOpts {
     color?: string;
     weight?: number;
+    /** Optionaler Leaflet-Renderer für die Route-Polylinien. SVG (statt Map-Default
+     *  Canvas) ist nötig, damit das Busy-Overlay per CSS-Klasse animieren kann —
+     *  auf Canvas greifen keine CSS-Keyframes. Das schwere Mesh bleibt auf Canvas. */
+    renderer?: L.Renderer;
     net?: SegmentedNet;
     dimmedStretchIds?: Set<string>;
     digitRaw?: (d: string) => string;
