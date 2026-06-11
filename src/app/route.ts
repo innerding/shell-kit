@@ -72,14 +72,26 @@ export function renderRoute(
   // Busy-Overlay: Engpass-Stretches AUF der Route (route ∩ dimmed) als pulsierende
   // Linie darüber. Stroke-Stärke zappelt (Keyframe `scim-route-busy`, runtime-seitig);
   // Phasen-Versatz pro Stück → Schimmern. Geometrie aus dem Netz.
+  //
+  // Jeder Engpass bekommt ZWEI mit-pulsierende Linien: ein weißes Casing (breiter, in
+  // Phase) + der farbige Puls darüber. Das Casing bindet das Zappeln sichtbar AN die
+  // Route — ohne es löst das Auge die nackte Pulslinie ab und liest sie als loses
+  // Fragment abseits der weiß-gefassten Route (Befund 2026-06-11). Die Geometrie liegt
+  // immer auf route.points (s ∈ route.stretchIds); das Casing macht das auch sichtbar.
   if (route && opts.net && opts.dimmedStretchIds && opts.dimmedStretchIds.size > 0) {
     const onRoute = new Set(route.stretchIds);
     let k = 0;
     for (const s of opts.net.stretches) {
       if (!onRoute.has(s.id) || !opts.dimmedStretchIds.has(s.id) || s.points.length < 2) continue;
-      L.polyline(s.points as L.LatLngExpression[], {
+      const seg = s.points as L.LatLngExpression[];
+      const d = k++ % 4;
+      L.polyline(seg, {
+        color: '#ffffff', weight: weight + 3, opacity: 0.95, lineCap: 'round', lineJoin: 'round', renderer,
+        className: `scim-route-busy-casing scim-seg-d${d}`,
+      }).addTo(layer);
+      L.polyline(seg, {
         color, weight, opacity: 0.95, lineCap: 'round', lineJoin: 'round', renderer,
-        className: `scim-route-busy scim-seg-d${k++ % 4}`,
+        className: `scim-route-busy scim-seg-d${d}`,
       }).addTo(layer);
     }
   }
