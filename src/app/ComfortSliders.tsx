@@ -1,5 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { colorAt, type ScaleSpec } from './scale';
+import { colorAt, stageOf, type ScaleSpec } from './scale';
+
+// Stufen-Band-MITTEN (Load 0..1) je Stufe 1..n — robust für borders ODER Spreizung
+// (per Sampling). Dort sitzt das jeweilige Kaskaden-Wort auf Schauglas-Höhe.
+function bandCenters(scale: ScaleSpec, n: number): number[] {
+  const lo = new Array(n + 1).fill(2), hi = new Array(n + 1).fill(-1);
+  const STEPS = 240;
+  for (let i = 0; i <= STEPS; i++) {
+    const h = i / STEPS, s = stageOf(h, scale);
+    if (s >= 1 && s <= n) { if (h < lo[s]) lo[s] = h; if (h > hi[s]) hi[s] = h; }
+  }
+  const out: number[] = [];
+  for (let s = 1; s <= n; s++) out.push(lo[s] > hi[s] ? (s - 0.5) / n : (lo[s] + hi[s]) / 2);
+  return out;
+}
 
 // Fallback, falls keine Skala übergeben wird (alte Aufrufer).
 const GRADIENT = 'linear-gradient(to top, #2ecc40 0%, #a8e63c 14%, #f1c40f 28%, #ffaa00 42%, #ff5500 56%, #ff0044 72%, #ff0099 100%)';
@@ -39,15 +53,16 @@ interface StripProps {
   onChange: (v: number) => void;
   expanded: boolean;
   onExpandChange: (expanded: boolean) => void;
-  labels: { top: string; middle: string; bottom: string };
   gradient: string;
   /** Aktueller Last-Pegel des GANZEN Netzes (0..1). Darüber wird der Gradient
    *  ausgeblichen (milchig) — das Schauglas zeigt nur die Last, die da ist. Der
    *  volle Gradient bleibt als 1px-Stroke ringsum sichtbar (Skala-Referenz). */
   loadLevel?: number;
-  /** Wert → Comfort-Wort + -Farbe. Gesetzt → links vom Schauglas blendet beim
-   *  Ziehen/Ausfahren der eingestellte Comfort-Status ein (verschwindet beim Collapse). */
-  labelOf?: (value: number) => { word: string; color: string };
+  /** LINKS, dominant, weiß+Schatten, vertikal zentriert — das Manifest des Sliders
+   *  (z. B. „Comfort/von/Stationen." bzw. „Geh/Deinen/Weg."), zeilenweise. */
+  manifest?: string[];
+  /** RECHTS, weiß+Schatten, je Wort auf seiner Schauglas-Höhe (Stufen-Band-Mitte). */
+  cascade?: { word: string; pos: number }[];
 }
 
 // Lesbare Textfarbe auf einer Farb-Box (einfache Luminanz).
@@ -58,7 +73,7 @@ function readable(hex: string): string {
   return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#14223e' : '#fff';
 }
 
-function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labels, gradient, loadLevel, labelOf }: StripProps) {
+function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, gradient, loadLevel, manifest, cascade }: StripProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -100,23 +115,30 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, labe
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: insetBottom(linePos), height: expanded ? 3 : 2, background: '#fff', boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 2 }} />
       </div>
 
-      {/* Comfort-Status LINKS vom Schauglas — blendet beim Ausfahren/Ziehen ein, beim
-          Collapse aus (Farb-Box mit dem Comfort-Wort, dieselbe Welt wie die Detail-Card). */}
-      {labelOf && (() => {
-        const c = labelOf(value);
-        if (!c.word) return null;
-        return (
-          <span aria-hidden style={{ position: 'absolute', top: '50%', right: STRIP_W + RIGHT_GAP + SPACER + COL_W + 4, transform: 'translateY(-50%)', whiteSpace: 'nowrap', pointerEvents: 'none', opacity: expanded ? 1 : 0, transition: 'opacity 0.15s ease', background: c.color, color: readable(c.color), font: '700 11px/1 system-ui,sans-serif', letterSpacing: '0.02em', padding: '4px 9px', borderRadius: 7, boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>{c.word}</span>
-        );
-      })()}
-
-      {expanded && (
-        <div style={{ position: 'absolute', right: 0, width: LABEL_W, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', pointerEvents: 'none' }}>
-          <span style={{ writingMode: 'vertical-rl', fontSize: 11, fontWeight: 700, color: 'rgba(0,0,0,0.80)', letterSpacing: '0.02em' }}>{labels.top}</span>
-          <span style={{ fontSize: 13, fontWeight: 900, color: 'rgba(0,0,0,0.80)', letterSpacing: '0.04em', textAlign: 'center' }}>{labels.middle}</span>
-          <span style={{ writingMode: 'vertical-rl', fontSize: 11, fontWeight: 700, color: 'rgba(0,0,0,0.80)', letterSpacing: '0.02em' }}>{labels.bottom}</span>
+      {/* MANIFEST links vom Schauglas — dominant, weiß+Schatten, vertikal zentriert,
+          zeilenweise (z. B. „Comfort/von/Stationen."). Blendet beim Ausfahren ein. */}
+      {manifest && manifest.length > 0 && (
+        <div aria-hidden style={{
+          position: 'absolute', top: '50%', right: W_EXP - L_GAP_EXP + 10, transform: 'translateY(-50%)',
+          textAlign: 'right', whiteSpace: 'nowrap', pointerEvents: 'none',
+          opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease',
+          color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
+          font: '800 15px/1.16 system-ui,sans-serif', letterSpacing: '0.01em',
+        }}>
+          {manifest.map((line, i) => <div key={i}>{line}</div>)}
         </div>
       )}
+
+      {/* KASKADE rechts vom Schauglas — je Wort auf seiner Stufen-Band-Höhe, weiß+Schatten. */}
+      {cascade && cascade.map((c, i) => c.word ? (
+        <span key={i} aria-hidden style={{
+          position: 'absolute', left: L_GAP_EXP + STRIP_W + 6, bottom: insetBottom(c.pos), transform: 'translateY(50%)',
+          whiteSpace: 'nowrap', pointerEvents: 'none',
+          opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease',
+          color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
+          font: '700 10.5px/1 system-ui,sans-serif', letterSpacing: '0.02em',
+        }}>{c.word}</span>
+      ) : null)}
 
       {!expanded && (
         <div onPointerDown={() => { onExpandChange(true); scheduleCollapse(); }} style={{ position: 'absolute', inset: 0, cursor: 'pointer', touchAction: 'none' }} />
@@ -149,23 +171,36 @@ interface Props {
   loadLevel?: number;
   /** Rest-Pegel (0..1, areal) — bleicht den RAST-Gradienten darüber aus. */
   stayLoadLevel?: number;
-  /** Wert → Comfort-Wort + -Farbe (für den Status-Text links vom Schauglas). */
+  /** Wert → Comfort-Wort + -Farbe; speist die Kaskade rechts (je Wort auf Schauglas-Höhe). */
   labelOf?: (value: number) => { word: string; color: string };
+  /** Manifest LINKS je Slider (zeilenweise, weiß+Schatten, dominant). */
+  stayManifest?: string[];
+  movementManifest?: string[];
+  /** Expand-Meldung nach oben (für die Sichtbarkeits-Maschine: WEG offen → nur Ziel-POIs). */
+  onMovementExpandChange?: (expanded: boolean) => void;
+  onStayExpandChange?: (expanded: boolean) => void;
 }
 
-export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale, loadLevel, stayLoadLevel, labelOf }: Props) {
+export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale, loadLevel, stayLoadLevel, labelOf, stayManifest, movementManifest, onMovementExpandChange, onStayExpandChange }: Props) {
   const gradient = gradientFromScale(scale);
   const [movExpanded, setMovExpanded] = useState(false);
   const [stayExpanded, setStayExpanded] = useState(false);
+  const setMov = (e: boolean) => { setMovExpanded(e); onMovementExpandChange?.(e); };
+  const setStay = (e: boolean) => { setStayExpanded(e); onStayExpandChange?.(e); };
+
+  // Kaskade (gleich für beide Slider): je Stufe ein Wort auf seiner Band-Mitte.
+  const cascade = (labelOf && scale)
+    ? bandCenters(scale, scale.stops.length).map((pos) => ({ word: labelOf(pos).word, pos }))
+    : undefined;
 
   // Beide Slider permanent; jeder klappt unabhängig auf. Reihenfolge: RAST OBEN, WEG UNTEN
   // (die POI-/Rast-Hinweise sitzen oben, der Rast-Slider gehört daneben).
   return (
     <div style={{ position: 'absolute', right: 0, top: 62, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, zIndex: 600 }}>
       {step2Active && (
-        <SliderStrip value={stayValue} maxValue={stayMaxValue} onChange={onStayChange} expanded={stayExpanded} onExpandChange={setStayExpanded} labels={{ top: 'belebter', middle: 'RAST', bottom: 'ruhiger' }} gradient={gradient} loadLevel={stayLoadLevel} labelOf={labelOf} />
+        <SliderStrip value={stayValue} maxValue={stayMaxValue} onChange={onStayChange} expanded={stayExpanded} onExpandChange={setStay} manifest={stayManifest} cascade={cascade} gradient={gradient} loadLevel={stayLoadLevel} />
       )}
-      <SliderStrip value={movementValue} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={setMovExpanded} labels={{ top: 'belebter', middle: 'WEG', bottom: 'ruhiger' }} gradient={gradient} loadLevel={loadLevel} labelOf={labelOf} />
+      <SliderStrip value={movementValue} maxValue={1} onChange={onMovementChange} expanded={movExpanded} onExpandChange={setMov} manifest={movementManifest} cascade={cascade} gradient={gradient} loadLevel={loadLevel} />
     </div>
   );
 }

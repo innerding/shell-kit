@@ -12,11 +12,17 @@ interface Props {
     loadLevel?: number;
     /** Rest-Pegel (0..1, areal) — bleicht den RAST-Gradienten darüber aus. */
     stayLoadLevel?: number;
-    /** Wert → Comfort-Wort + -Farbe (für den Status-Text links vom Schauglas). */
+    /** Wert → Comfort-Wort + -Farbe; speist die Kaskade rechts (je Wort auf Schauglas-Höhe). */
     labelOf?: (value: number) => {
         word: string;
         color: string;
     };
+    /** Manifest LINKS je Slider (zeilenweise, weiß+Schatten, dominant). */
+    stayManifest?: string[];
+    movementManifest?: string[];
+    /** Expand-Meldung nach oben (für die Sichtbarkeits-Maschine: WEG offen → nur Ziel-POIs). */
+    onMovementExpandChange?: (expanded: boolean) => void;
+    onStayExpandChange?: (expanded: boolean) => void;
 }
-export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active, scale, loadLevel, stayLoadLevel, labelOf }: Props): import("react").JSX.Element;
+export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active, scale, loadLevel, stayLoadLevel, labelOf, stayManifest, movementManifest, onMovementExpandChange, onStayExpandChange }: Props): import("react").JSX.Element;
 export {};
