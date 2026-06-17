@@ -81,7 +81,7 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, grad
                     // — die volle Mesh-Farbe bleibt links sichtbar; der Bleach deutet den Pegel an.
                     _jsx("div", { style: { position: 'absolute', left: STRIP_W - 4, right: 1, top: 1, bottom: insetBottom(loadLevel), borderRadius: 1, background: 'rgba(255,255,255,0.62)' } })), maxValue < 0.99 && (_jsx("div", { style: { position: 'absolute', left: 0, right: 0, bottom: insetBottom(maxValue), height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' } })), _jsx("div", { style: { position: 'absolute', left: 0, right: 0, bottom: insetBottom(linePos), height: expanded ? 3 : 2, background: '#fff', boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 2 } })] }), manifest && manifest.length > 0 && (_jsx("div", { "aria-hidden": true, style: {
                     position: 'absolute', top: '50%', right: W_EXP - L_GAP_EXP + 10, transform: 'translateY(-50%)',
-                    textAlign: 'right', whiteSpace: 'nowrap', pointerEvents: 'none',
+                    textAlign: 'center', whiteSpace: 'nowrap', pointerEvents: 'none',
                     opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease',
                     color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
                     font: '800 15px/1.16 system-ui,sans-serif', letterSpacing: '0.01em',
