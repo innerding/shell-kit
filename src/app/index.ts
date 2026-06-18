@@ -3,6 +3,11 @@ export { default as ComfortSliders } from './ComfortSliders';
 export { default as RouteComfortBanner } from './RouteComfortBanner';  // bak-test-Banner
 export { default as ComfortDiode } from './ComfortDiode';   // Last-Diode (Comfort-Wort, pulst)
 export { default as WarnTriangle } from './WarnTriangle';   // Achtung-Wasserzeichen (über Comfort)
+export { default as FlapClock, themeFromTint, clockWidthPx, type FlapTheme } from './FlapClock';  // Klappuhr H:MM
+export { default as FlapDelta } from './FlapDelta';         // Klapp-Delta ±MM
+export { default as FlapGuide } from './FlapGuide';         // Klapp-Wegweiser (Meter + Pfeil)
+// flapGlyphs/arrowGlyphs bleiben INTERN (relativ importiert) — FLAP_DIGITS würde sonst
+// mit flap.ts (Ziffern-String) kollidieren.
 export * from './geometry';     // Geometrie-Vokabular (Formen) + geometryOf
 export * from './decorations';  // Deco-Typen
 export * from './render';       // Render-Kern: Container/Composite + RenderAssets + mergeOverlapping
