@@ -15,3 +15,4 @@ export * from './poiDompteur'; // POI-Dompteur: dompteurPick/dompteurPicks (Filt
 export * from './poiVisual'; // POI-Gestalt: poiVisualState/poiBreaches (Step 4a, ann_126)
 export * from './detour'; // Path-Detour-Generator: detourPicks (Geschwister von poiDompteur, ann_138)
 export * from './flap'; // Split-Flap-Sequenz: flapSteps/rollSteps/flapDirection (Klappuhr)
+export * from './glass'; // Glass-Look: GLASS (geteilte Frost-Optik der schwebenden Flächen)
