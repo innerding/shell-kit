@@ -19,6 +19,9 @@ export function renderColorMesh(
     dimmedStretchIds?: Set<string>;
     /** Statische Sackgassen — komplett unsichtbar (nicht gerendert). */
     hiddenStretchIds?: Set<string>;
+    /** Einfarbig (z. B. Spar-Modus): ALLE Segmente in dieser Farbe, KEIN weißer Rand,
+     *  dünn — die Last-Schicht ist „aus", das Netz bleibt neutral sichtbar. */
+    mono?: string;
   } = {},
 ): void {
   layer.clearLayers();
@@ -26,6 +29,19 @@ export function renderColorMesh(
   const scale = opts.scale ?? DEFAULT_SCALE;
   const hidden = (id: string) => opts.hiddenStretchIds?.has(id) ?? false;
   const dimmed = (id: string) => !hidden(id) && (opts.dimmedStretchIds?.has(id) ?? false);
+
+  // Einfarbig (Spar-Modus): ein Grau, kein weißer Rand, dünn — sonst nichts.
+  if (opts.mono) {
+    const mw = Math.max(2, weight - 1);
+    for (const s of net.stretches) {
+      if (hidden(s.id)) continue;
+      for (let i = 0; i < s.points.length - 1; i++) {
+        L.polyline([s.points[i], s.points[i + 1]] as L.LatLngExpression[],
+          { color: opts.mono, weight: mw, opacity: 0.85, lineCap: 'round' }).addTo(layer);
+      }
+    }
+    return;
+  }
 
   // Pass 1: weißer Rand (Unterlage) — nur für sichtbare, nicht gedimmte Segmente.
   for (const s of net.stretches) {

@@ -13,6 +13,18 @@ export function renderColorMesh(layer, net, loads, opts = {}) {
     const scale = opts.scale ?? DEFAULT_SCALE;
     const hidden = (id) => opts.hiddenStretchIds?.has(id) ?? false;
     const dimmed = (id) => !hidden(id) && (opts.dimmedStretchIds?.has(id) ?? false);
+    // Einfarbig (Spar-Modus): ein Grau, kein weißer Rand, dünn — sonst nichts.
+    if (opts.mono) {
+        const mw = Math.max(2, weight - 1);
+        for (const s of net.stretches) {
+            if (hidden(s.id))
+                continue;
+            for (let i = 0; i < s.points.length - 1; i++) {
+                L.polyline([s.points[i], s.points[i + 1]], { color: opts.mono, weight: mw, opacity: 0.85, lineCap: 'round' }).addTo(layer);
+            }
+        }
+        return;
+    }
     // Pass 1: weißer Rand (Unterlage) — nur für sichtbare, nicht gedimmte Segmente.
     for (const s of net.stretches) {
         if (hidden(s.id) || dimmed(s.id))
