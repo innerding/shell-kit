@@ -20,3 +20,4 @@ export * from './poiVisual';
 export * from './detour';
 export * from './flap';
 export * from './glass';
+export * from './langStore';

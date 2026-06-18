@@ -23,3 +23,4 @@ export * from './poiVisual'; // POI-Gestalt: poiVisualState/poiBreaches (Step 4a
 export * from './detour'; // Path-Detour-Generator: detourPicks (Geschwister von poiDompteur, ann_138)
 export * from './flap'; // Split-Flap-Sequenz: flapSteps/rollSteps/flapDirection (Klappuhr)
 export * from './glass'; // Glass-Look: GLASS (geteilte Frost-Optik der schwebenden Flächen)
+export * from './langStore'; // i18n-Store (Mechanik): Lang/useLang/setLang/getLang (Texte bleiben app-seitig)
