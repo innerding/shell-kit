@@ -1,5 +1,7 @@
 export { default as ComfortSliders } from './ComfortSliders';
 export { default as RouteComfortBanner } from './RouteComfortBanner';
+export { default as ComfortDiode } from './ComfortDiode';
+export { default as WarnTriangle } from './WarnTriangle';
 export * from './geometry';
 export * from './decorations';
 export * from './render';
