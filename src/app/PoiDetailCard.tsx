@@ -47,7 +47,7 @@ export default function PoiDetailCard({
         // Achtung-Modal: rechts den offenen Slider freihalten (+ links etwas Luft).
         paddingLeft: clearRight ? 12 : undefined, paddingRight: clearRight || undefined,
         backdropFilter: 'blur(1.5px)', WebkitBackdropFilter: 'blur(1.5px)',   // nur Blur, kein Abdunkeln
-        fontFamily: 'system-ui,-apple-system,sans-serif',
+        fontFamily: 'Polarstern, system-ui,-apple-system,sans-serif',
       }}
     >
       <div
@@ -87,7 +87,7 @@ export default function PoiDetailCard({
               ? <span style={{ flexShrink: 0, width: 48, height: 48, lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: svgHtml }} />
               : <span style={{ flexShrink: 0, width: 48, height: 48, borderRadius: '50%', background: 'rgba(20,34,62,0.08)' }} />}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, font: '700 16px/1.3 system-ui,sans-serif' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, font: '700 16px/1.3 Polarstern, system-ui,sans-serif' }}>
                 <span>{title}</span>
                 {arrival && flagSvg ? (
                   /* Ziel erreicht: die Ziel-Flagge (×1.6, 32px) STATT einer POI-Last-Anzeige,
@@ -108,28 +108,28 @@ export default function PoiDetailCard({
 
           <div style={{ padding: '2px 16px 14px' }}>
             {description
-              ? <p style={{ margin: 0, font: '400 13.5px/1.5 system-ui,sans-serif', color: '#33415c' }}>{description}</p>
-              : <p style={{ margin: 0, font: 'italic 400 12.5px/1.5 system-ui,sans-serif', color: '#9aa6bd' }}>{labels.noDescription}</p>}
+              ? <p style={{ margin: 0, font: '400 13.5px/1.5 Polarstern, system-ui,sans-serif', color: '#33415c' }}>{description}</p>
+              : <p style={{ margin: 0, font: 'italic 400 12.5px/1.5 Polarstern, system-ui,sans-serif', color: '#9aa6bd' }}>{labels.noDescription}</p>}
             {link && (
               <a href={link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                style={{ display: 'inline-block', marginTop: 8, font: '600 12.5px/1 system-ui,sans-serif', color: NAVY, textDecoration: 'none' }}>
+                style={{ display: 'inline-block', marginTop: 8, font: '600 12.5px/1 Polarstern, system-ui,sans-serif', color: NAVY, textDecoration: 'none' }}>
                 {labels.learnMore}
               </a>
             )}
             {members && members.length > 0 && (
               <div style={{ marginTop: 10 }}>
-                <div style={{ font: '700 10px/1 system-ui,sans-serif', letterSpacing: '0.06em', color: '#9aa6bd', marginBottom: 6 }}>
+                <div style={{ font: '700 10px/1 Polarstern, system-ui,sans-serif', letterSpacing: '0.06em', color: '#9aa6bd', marginBottom: 6 }}>
                   {labels.targets(members.length)}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {members.map((m, i) => (
-                    <span key={i} style={{ font: '500 11.5px/1.1 system-ui,sans-serif', color: '#33415c', background: 'rgba(20,34,62,0.06)', borderRadius: 6, padding: '3px 7px' }}>{m}</span>
+                    <span key={i} style={{ font: '500 11.5px/1.1 Polarstern, system-ui,sans-serif', color: '#33415c', background: 'rgba(20,34,62,0.06)', borderRadius: 6, padding: '3px 7px' }}>{m}</span>
                   ))}
                 </div>
               </div>
             )}
             {hint && (
-              <div style={{ marginTop: 12, font: '600 12px/1.3 system-ui,sans-serif', color: NAVY, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ marginTop: 12, font: '600 12px/1.3 Polarstern, system-ui,sans-serif', color: NAVY, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span aria-hidden style={{ fontSize: 14 }}>⊕</span>{hint}
               </div>
             )}

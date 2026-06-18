@@ -21,7 +21,7 @@ export default function FlapDelta({ minutes, dockHeight, tint, blink, onCommit }
             // Blink: orange → voll transparent (nicht dunkel), Timing wie gehabt.
             animation: blink ? 'flapDeltaBlink 1.1s ease-in-out infinite' : undefined,
         }, children: [_jsx("style", { children: '@keyframes flapDeltaBlink{0%,100%{opacity:1}50%{opacity:0}}' }), _jsx("span", { style: {
-                    fontFamily: 'system-ui, sans-serif', fontWeight: 600, fontSize: signSize, lineHeight: 0.84,
+                    fontFamily: 'Polarstern, system-ui, sans-serif', fontWeight: 600, fontSize: signSize, lineHeight: 0.84,
                     color: theme.face, textShadow: '0 1px 2px rgba(255,255,255,0.9), 0 0 2px rgba(255,255,255,0.85)',
                 }, children: sign }), _jsx(FlapClock, { value: digits, height: boxH, tint: tint })] }));
 }

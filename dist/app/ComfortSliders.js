@@ -84,13 +84,13 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, grad
                     textAlign: 'center', whiteSpace: 'nowrap', pointerEvents: 'none',
                     opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease',
                     color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
-                    font: '800 15px/1.16 system-ui,sans-serif', letterSpacing: '0.01em',
+                    font: '800 15px/1.16 Polarstern, system-ui,sans-serif', letterSpacing: '0.01em',
                 }, children: manifest.map((line, i) => _jsx("div", { children: line }, i)) })), cascade && cascade.map((c, i) => c.word ? (_jsx("span", { "aria-hidden": true, style: {
                     position: 'absolute', left: L_GAP_EXP + STRIP_W + 6, bottom: insetBottom(c.pos), transform: 'translateY(50%)',
                     whiteSpace: 'nowrap', pointerEvents: 'none',
                     opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease',
                     color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
-                    font: '700 10.5px/1 system-ui,sans-serif', letterSpacing: '0.02em',
+                    font: '700 10.5px/1 Polarstern, system-ui,sans-serif', letterSpacing: '0.02em',
                 }, children: c.word }, i)) : null), !expanded && (_jsx("div", { onPointerDown: () => { onExpandChange(true); scheduleCollapse(); }, style: { position: 'absolute', inset: 0, cursor: 'pointer', touchAction: 'none' } })), expanded && (_jsxs(_Fragment, { children: [_jsx("div", { onPointerDown: (e) => { dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); readPosition(e.clientY); }, onPointerMove: (e) => { if (dragging.current)
                             readPosition(e.clientY); }, onPointerUp: () => { dragging.current = false; }, style: { position: 'absolute', left: 0, top: 0, bottom: 0, width: L_GAP_EXP + STRIP_W + RIGHT_GAP, cursor: 'ns-resize', touchAction: 'none' } }), _jsx("div", { onPointerDown: () => onExpandChange(false), style: { position: 'absolute', right: 0, top: 0, bottom: 0, width: COL_W, cursor: 'pointer', touchAction: 'none' } })] }))] }));
 }

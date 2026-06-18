@@ -22,3 +22,4 @@ export * from './detour';
 export * from './flap';
 export * from './glass';
 export * from './langStore';
+export { installPolarsternFont, POLARSTERN_STACK } from './polarstern';

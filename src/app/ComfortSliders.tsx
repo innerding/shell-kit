@@ -123,7 +123,7 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, grad
           textAlign: 'center', whiteSpace: 'nowrap', pointerEvents: 'none',
           opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease',
           color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
-          font: '800 15px/1.16 system-ui,sans-serif', letterSpacing: '0.01em',
+          font: '800 15px/1.16 Polarstern, system-ui,sans-serif', letterSpacing: '0.01em',
         }}>
           {manifest.map((line, i) => <div key={i}>{line}</div>)}
         </div>
@@ -136,7 +136,7 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, grad
           whiteSpace: 'nowrap', pointerEvents: 'none',
           opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease',
           color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
-          font: '700 10.5px/1 system-ui,sans-serif', letterSpacing: '0.02em',
+          font: '700 10.5px/1 Polarstern, system-ui,sans-serif', letterSpacing: '0.02em',
         }}>{c.word}</span>
       ) : null)}
 

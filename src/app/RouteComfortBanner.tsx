@@ -22,7 +22,7 @@ export default function RouteComfortBanner({ breach, message = DEFAULT_MESSAGE }
         background: 'rgba(210,80,42,0.95)', color: '#fff',
         padding: '10px 14px', borderRadius: 10,
         boxShadow: '0 3px 14px rgba(0,0,0,0.3)',
-        font: '600 13px/1.35 system-ui,-apple-system,sans-serif',
+        font: '600 13px/1.35 Polarstern, system-ui,-apple-system,sans-serif',
       }}
     >
       <span style={{ fontSize: 18, flexShrink: 0, lineHeight: 1 }} aria-hidden>⚠</span>

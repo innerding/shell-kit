@@ -33,7 +33,7 @@ export default function ComfortDiode({ color, word, intensity, textColor, size =
     const fontPx = size === 'sm' ? 10.5 : 11.5;
     const boxStyle = {
         display: 'inline-flex', alignItems: 'center', background: color, color: fg,
-        borderRadius: 999, padding: pad, font: `700 ${fontPx}px/1 system-ui,sans-serif`,
+        borderRadius: 999, padding: pad, font: `700 ${fontPx}px/1 Polarstern, system-ui,sans-serif`,
         letterSpacing: '0.02em', boxShadow: '0 1px 2px rgba(0,0,0,0.18)', whiteSpace: 'nowrap',
         ...(pulsing ? { ['--glow']: color, animation: `scim-diode-glow ${dur}s ease-in-out infinite` } : {}),
     };
