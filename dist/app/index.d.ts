@@ -5,6 +5,7 @@ export { default as WarnTriangle } from './WarnTriangle';
 export { default as FlapClock, themeFromTint, clockWidthPx, type FlapTheme } from './FlapClock';
 export { default as FlapDelta } from './FlapDelta';
 export { default as FlapGuide } from './FlapGuide';
+export { default as PoiDetailCard } from './PoiDetailCard';
 export * from './geometry';
 export * from './decorations';
 export * from './render';

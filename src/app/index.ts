@@ -6,6 +6,7 @@ export { default as WarnTriangle } from './WarnTriangle';   // Achtung-Wasserzei
 export { default as FlapClock, themeFromTint, clockWidthPx, type FlapTheme } from './FlapClock';  // Klappuhr H:MM
 export { default as FlapDelta } from './FlapDelta';         // Klapp-Delta ±MM
 export { default as FlapGuide } from './FlapGuide';         // Klapp-Wegweiser (Meter + Pfeil)
+export { default as PoiDetailCard } from './PoiDetailCard'; // POI-Modal (i18n-agnostisch: labels-Prop)
 // flapGlyphs/arrowGlyphs bleiben INTERN (relativ importiert) — FLAP_DIGITS würde sonst
 // mit flap.ts (Ziffern-String) kollidieren.
 export * from './geometry';     // Geometrie-Vokabular (Formen) + geometryOf
