@@ -16,9 +16,15 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+// Strich-Kalibrierung (an fontforge weitergereicht): Polarstern ist Display-kalibriert
+// (Editor = absoluter non-scaling-Strich); proportional gebacken wäre er bei UI-Größen
+// ~7× zu dünn. ×3.5 = der abgenommene UI-Wert. Override per Env für Experimente.
+process.env.POLAR_STROKE_MULT = process.env.POLAR_STROKE_MULT || '3.5';
 const R2 = 'https://scim3-package-worker.jkygrbh6md.workers.dev/api/fonts/polarstern';
-// Stroke-Gewicht (Name) → CSS font-weight; so greift vorhandene font-weight automatisch.
-const WEIGHT_CLASS = { thin: 100, regular: 400, medium: 500, bold: 700, heavy: 900 };
+// Stroke-Gewicht (Name) → CSS font-weight-Bereich; so greift vorhandene font-weight
+// automatisch. Bold deckt 700–800 ab, damit font-weight:800 NICHT auf Heavy (nur
+// Versalien) fällt; Heavy bleibt opt-in über genau 900.
+const WEIGHT_CLASS = { thin: 100, regular: 400, medium: 500, bold: '700 800', heavy: 900 };
 const ORDER = ['thin', 'regular', 'medium', 'bold', 'heavy'];
 
 const work = mkdtempSync(join(tmpdir(), 'polarstern-'));
@@ -59,8 +65,8 @@ const out = `// AUTO-GENERIERT von scripts/build-polarstern.mjs — NICHT von Ha
 /** Font-Stack: Polarstern voran, system-ui als Fallback (Ladephase / fehlende Glyphen). */
 export const POLARSTERN_STACK = "'Polarstern', system-ui, -apple-system, sans-serif";
 
-const FACES: { weight: number; b64: string }[] = [
-${faces.map((f) => `  { weight: ${f.weight}, b64: '${f.b64}' },`).join('\n')}
+const FACES: { weight: number | string; b64: string }[] = [
+${faces.map((f) => `  { weight: ${JSON.stringify(f.weight)}, b64: '${f.b64}' },`).join('\n')}
 ];
 
 let installed = false;

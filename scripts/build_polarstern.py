@@ -10,6 +10,13 @@
 import fontforge, json, sys, os, re
 
 SRC = sys.argv[1]; OUT = sys.argv[2]
+# Strich-Kalibrierung. Der Editor (renderText) nutzt non-scaling-stroke = ABSOLUTE
+# Pixel-Breite (größenunabhängig); ein Webfont bäckt den Strich PROPORTIONAL in die
+# Kontur (skaliert mit der Größe). 1:1 zur 100er-Box stimmt nur bei ~100 px — bei UI-
+# Größen (14 px) ~7× zu dünn. MULT skaliert die Strichstärke (hält die Gewichts-
+# Verhältnisse); BOOST = additiver Feinschliff danach. pen = (stroke·MULT + BOOST)·S.
+MULT  = float(os.environ.get('POLAR_STROKE_MULT', '1'))
+BOOST = float(os.environ.get('POLAR_BOOST', '0'))
 os.makedirs(OUT, exist_ok=True)
 font = json.load(open(SRC))
 M = font['metrics']; BOX = M['boxHeight']; BASE = M['baselineY']
@@ -50,7 +57,7 @@ for w in font['weights']:
     f.weight = name; f.os2_weight = WEIGHT_CLASS.get(name, 400)
     f.copyright = 'Polarstern · Dietmar Broda · SCIM3 internal'
 
-    pen_w = stroke * S
+    pen_w = (stroke * MULT + BOOST) * S
     built = 0
     for ch, gdef in GLYPHS.items():
         if len(ch) != 1: continue
