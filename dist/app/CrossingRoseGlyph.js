@@ -23,5 +23,5 @@ export default function CrossingRose({ state, size = 56 }) {
     return (_jsxs("svg", { width: size, height: size, viewBox: `0 0 ${size} ${size}`, "aria-hidden": true, style: { display: 'block', overflow: 'visible', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))' }, children: [p > 0.01 && stubAnglesRel.map((ang, i) => {
                 const [x, y] = at(c, c, stubLen * p, ang);
                 return _jsx("line", { x1: c, y1: c, x2: x, y2: y, stroke: stubColor, strokeWidth: sw, strokeLinecap: "round", opacity: 0.5 + 0.5 * p }, i);
-            }), p > 0.01 && _jsx("line", { x1: c, y1: c, x2: enx, y2: eny, stroke: color, strokeWidth: sw, strokeLinecap: "round" }), _jsx("line", { x1: c, y1: c, x2: bcx, y2: bcy, stroke: color, strokeWidth: sw, strokeLinecap: "round" }), _jsx("path", { d: tipPath, fill: color, opacity: tipOpacity })] }));
+            }), p > 0.01 && _jsx("line", { x1: c, y1: c, x2: enx, y2: eny, stroke: color, strokeWidth: sw, strokeLinecap: "round" }), _jsx("line", { x1: c, y1: c, x2: bcx, y2: bcy, stroke: color, strokeWidth: sw, strokeLinecap: "round" }), _jsx("path", { d: tipPath, fill: color, stroke: color, strokeWidth: sw * 0.55, strokeLinejoin: "round", strokeLinecap: "round", opacity: tipOpacity })] }));
 }

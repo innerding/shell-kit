@@ -46,8 +46,9 @@ export default function CrossingRose({ state, size = 56 }: {
       {p > 0.01 && <line x1={c} y1={c} x2={enx} y2={eny} stroke={color} strokeWidth={sw} strokeLinecap="round" />}
       {/* Austritts-Linie (immer) — endet an der Spitzen-Basis, damit die Spitze scharf bleibt */}
       <line x1={c} y1={c} x2={bcx} y2={bcy} stroke={color} strokeWidth={sw} strokeLinecap="round" />
-      {/* Spitze (gefülltes Dreieck, scharfe Ecken) — fadet beim Wegschauen */}
-      <path d={tipPath} fill={color} opacity={tipOpacity} />
+      {/* Spitze (gefülltes Dreieck, gerundete Ecken via Stroke) — fadet beim Wegschauen.
+          Schaft endet an der Basis (oben) → kein Überschießen über die Spitze. */}
+      <path d={tipPath} fill={color} stroke={color} strokeWidth={sw * 0.55} strokeLinejoin="round" strokeLinecap="round" opacity={tipOpacity} />
     </svg>
   );
 }
