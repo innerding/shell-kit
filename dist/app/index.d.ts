@@ -15,6 +15,7 @@ export * from './scale';
 export * from './graph';
 export * from './bak';
 export * from './walker';
+export * from './crossingRose';
 export * from './similarity';
 export * from './poiDompteur';
 export * from './poiVisual';

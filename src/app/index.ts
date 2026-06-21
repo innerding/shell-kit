@@ -18,6 +18,7 @@ export * from './scale';        // Skalen-Modell: colorAt/posForLoad/loadForPos 
 export * from './graph';        // Netz-Graph: buildNodeStretchMap/buildProtectedNodes/pruneDeadEnds
 export * from './bak';          // BAK: solveRoute/routeBreachesComfort/toggleWaypoint (bak-test)
 export * from './walker';       // Sim-Walker: walkAlong/nearestWaypoint/bearingDeg/distM (Guidance-Play S1)
+export * from './crossingRose';  // Kreuzungsrose: crossingRoseState (Wirbel-Abstufung + Morph, M-D)
 export * from './similarity';   // poi-circus-kinship: bucketOf/similarityTier (deskriptive Helfer)
 export * from './poiDompteur';  // POI-Dompteur: dompteurPick/dompteurPicks (Filter-Pipeline, B1/Stufe-3)
 export * from './poiVisual';    // POI-Gestalt: poiVisualState/poiBreaches (Step 4a, ann_126)
