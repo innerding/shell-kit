@@ -16,8 +16,8 @@ export default function CrossingRose({ state, size = 56 }: {
   state: CrossingRoseState;
   size?: number;
 }) {
-  // Narration: viele Wege, keiner schlecht → gleiche Rampe; der richtige (Austritt) ist
-  // der RÖTESTE (exitColor), Eintritt + andere Arme eine Stufe heller (restColor).
+  // Route (Eintritt + Austritt) = Meter-Farbe (an der Kreuzung rot); die anderen Arme
+  // = fester Gelbton (restColor). Spitze nur am Austritt.
   const { p, entryAngleRel, exitAngleRel, stubAnglesRel, tipOpacity, exitColor: color, restColor: stubColor } = state;
   const c = size / 2;
   const full = size * 0.42;          // Arm-Länge
@@ -40,8 +40,8 @@ export default function CrossingRose({ state, size = 56 }: {
         return <line key={i} x1={c} y1={c} x2={x} y2={y}
           stroke={stubColor} strokeWidth={sw} strokeLinecap="round" opacity={0.5 + 0.5 * p} />;
       })}
-      {/* Eintritts-Linie (woher du kamst) — heller (restColor), wächst mit p */}
-      {p > 0.01 && <line x1={c} y1={c} x2={enx} y2={eny} stroke={stubColor} strokeWidth={sw} strokeLinecap="round" />}
+      {/* Eintritts-Linie (zweite Hälfte des Route-„V") — Meter-Farbe, wächst mit p */}
+      {p > 0.01 && <line x1={c} y1={c} x2={enx} y2={eny} stroke={color} strokeWidth={sw} strokeLinecap="round" />}
       {/* Austritts-Linie (immer) */}
       <line x1={c} y1={c} x2={ex} y2={ey} stroke={color} strokeWidth={sw} strokeLinecap="round" />
       {/* Spitze — fadet beim Wegschauen */}

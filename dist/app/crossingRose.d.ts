@@ -4,7 +4,7 @@ export declare const ROSE_TUNING: {
     levelThresholds: [number, number, number];
     onsetWindowM: [number, number, number, number];
     tipFadeDeg: number;
-    restColorOffsetM: number;
+    stubColor: string;
 };
 export declare function meterColor(m: number): string;
 export type RoseLevel = 0 | 1 | 2 | 3;

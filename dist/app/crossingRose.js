@@ -10,7 +10,7 @@ export const ROSE_TUNING = {
     levelThresholds: [0.20, 0.45, 0.70], // ruhig|leicht|heikel|kritisch
     onsetWindowM: [0, 15, 30, 45], // Morph-Fenster ±W je Stufe (ruhig=0)
     tipFadeDeg: 90, // Spitze fadet 0°→tipFadeDeg (wegschauen → weg)
-    restColorOffsetM: 50, // „andere Wege": gleiche Rampe, aber um diesen Versatz HELLER (nie so rot wie der richtige)
+    stubColor: '#caa01c', // „andere Wege" (Stubs): fester warmer Gelbton, eigenständig (nicht auf der Meter-Rampe)
 };
 // Meter-Farbe: an der Kreuzung rot → weit weg weiß (gleiche Rampe wie FlapGuide).
 // Narration: viele Wege, keiner schlecht → gleiche Rampe; der richtige ist der röteste.
@@ -45,7 +45,7 @@ export function crossingRoseState(inp) {
     const { arms, entryBearing, exitBearing, heading, distanceM } = inp;
     const T = ROSE_TUNING;
     const exitColor = meterColor(distanceM);
-    const restColor = meterColor(distanceM + T.restColorOffsetM);
+    const restColor = T.stubColor;
     // Ohne Arm-Daten (alter Bundle / Korridor): schlichter Abbiege-Pfeil, keine Rose.
     if (arms.length < 2) {
         return {
