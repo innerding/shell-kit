@@ -14,8 +14,8 @@ export default function CrossingRose({ state, size = 56 }) {
     const sw = Math.max(2, size * 0.11); // Strichstärke
     const [ex, ey] = at(c, c, full, exitAngleRel); // Austritts-Ende (Spitze)
     const [enx, eny] = at(c, c, full * p, entryAngleRel); // Eintritts-Ende (wächst mit p)
-    // Pfeilspitze: gefülltes Dreieck am Austritts-Ende — klar als Spitze lesbar.
-    const headLen = sw * 2.2, headW = sw * 1.5;
+    // Pfeilspitze: gefülltes Dreieck am Austritts-Ende — klar als Spitze lesbar (≈ f0.66).
+    const headLen = sw * 1.6, headW = sw * 1.0;
     const [bcx, bcy] = at(ex, ey, headLen, exitAngleRel + 180); // Basis-Mitte (zurück)
     const [t1x, t1y] = at(bcx, bcy, headW, exitAngleRel + 90);
     const [t2x, t2y] = at(bcx, bcy, headW, exitAngleRel - 90);
