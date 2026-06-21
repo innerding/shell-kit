@@ -18,7 +18,7 @@ export default function CrossingRose({ state, size = 56 }: {
 }) {
   // Route (Eintritt + Austritt) = Meter-Farbe (an der Kreuzung rot); die anderen Arme
   // = fester Gelbton (restColor). Spitze nur am Austritt.
-  const { p, entryAngleRel, exitAngleRel, stubAnglesRel, tipOpacity, exitColor: color, restColor: stubColor } = state;
+  const { p, entryAngleRel, exitAngleRel, stubAnglesRel, bloomOpacity, tipOpacity, exitColor: color, restColor: stubColor } = state;
   const c = size / 2;
   const full = size * 0.42;          // Arm-Länge
   const stubLen = full * (2 / 3);    // andere Arme: 2/3
@@ -36,14 +36,14 @@ export default function CrossingRose({ state, size = 56 }: {
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden
       style={{ display: 'block', overflow: 'visible', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))' }}>
-      {/* andere Arme (Stubs) — wachsen mit p */}
-      {p > 0.01 && stubAnglesRel.map((ang, i) => {
+      {/* andere Arme (Stubs) — wachsen mit p, faden an der Kreuzung aus (bloomOpacity) */}
+      {p > 0.01 && bloomOpacity > 0.01 && stubAnglesRel.map((ang, i) => {
         const [x, y] = at(c, c, stubLen * p, ang);
         return <line key={i} x1={c} y1={c} x2={x} y2={y}
-          stroke={stubColor} strokeWidth={sw} strokeLinecap="round" opacity={0.5 + 0.5 * p} />;
+          stroke={stubColor} strokeWidth={sw} strokeLinecap="round" opacity={(0.5 + 0.5 * p) * bloomOpacity} />;
       })}
-      {/* Eintritts-Linie (zweite Hälfte des Route-„V") — Meter-Farbe, wächst mit p */}
-      {p > 0.01 && <line x1={c} y1={c} x2={enx} y2={eny} stroke={color} strokeWidth={sw} strokeLinecap="round" />}
+      {/* Eintritts-Linie (zweite Hälfte des Route-„V") — Meter-Farbe, wächst mit p, fadet aus */}
+      {p > 0.01 && bloomOpacity > 0.01 && <line x1={c} y1={c} x2={enx} y2={eny} stroke={color} strokeWidth={sw} strokeLinecap="round" opacity={bloomOpacity} />}
       {/* Austritts-Linie (immer) — endet an der Spitzen-Basis, damit die Spitze scharf bleibt */}
       <line x1={c} y1={c} x2={bcx} y2={bcy} stroke={color} strokeWidth={sw} strokeLinecap="round" />
       {/* Spitze (gefülltes Dreieck, gerundete Ecken via Stroke) — fadet beim Wegschauen.

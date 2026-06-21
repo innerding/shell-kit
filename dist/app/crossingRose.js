@@ -11,6 +11,8 @@ export const ROSE_TUNING = {
     onsetWindowM: [0, 15, 30, 45], // Morph-Fenster ±W je Stufe (ruhig=0)
     // Spitze: IMMER solide. Kein Abdimmen, kein Wegschauen-Fade — das sah übel aus und der
     // Wirbel-/Morph-Effekt trägt die Information bereits. (Beschluss 2026-06-22.)
+    bloomFadeOutM: 8, // „kein Drehen"-Modell: die Rosen-Blüte (Stubs+Eintritt) fadet in den letzten
+    // Metern vor der Kreuzungs-Mitte aus → an der Kreuzung bleibt nur der Hoch-Pfeil.
     stubColor: '#caa01c', // „andere Wege" (Stubs): fester warmer Gelbton, eigenständig (nicht auf der Meter-Rampe)
 };
 // Meter-Farbe: an der Kreuzung rot → weit weg weiß (gleiche Rampe wie FlapGuide).
@@ -52,8 +54,9 @@ export function crossingRoseState(inp) {
         return {
             wirbel: 0, level: 0, p: 0,
             entryAngleRel: angleDelta((entryBearing + 180) % 360, heading),
-            exitAngleRel: 0, // ohne Morph (p=0): schlichter Pfeil zeigt GERADEAUS (= DU-Richtung), keine Spreizung
+            exitAngleRel: 0, // Vorwärts-Pfeil: immer senkrecht hoch
             stubAnglesRel: [],
+            bloomOpacity: 1,
             tipOpacity: 1, // Spitze immer solide
             exitColor, restColor,
         };
@@ -91,11 +94,12 @@ export function crossingRoseState(inp) {
     const W = T.onsetWindowM[level];
     // Morph p (ruhig → 0; sonst stetig über ±W).
     const p = W <= 0 ? 0 : 1 - Math.max(0, Math.min(1, distanceM / W));
-    // Relative Winkel (oben = Heading). Arme = echte Wegrichtungen.
-    // Der begangene Pfeil zeigt GERADEAUS (= DU-Richtung), solange du weit weg bist (p=0),
-    // und dreht erst beim Heranmorphen auf den echten Austritts-Arm (p=1). So decken sich
-    // DU und Pfeil bis zur Kreuzung — die Abbiegung kündigt sich erst dort an (keine Spreizung).
-    const exitAngleRel = angleDelta(arms[exitI], heading) * p;
+    // „Kein Drehen"-Modell (Beschluss 2026-06-22): der Vorwärts-Pfeil zeigt IMMER senkrecht
+    // hoch (= deine Laufrichtung), er dreht nie. Oben = stabile Anflug-Richtung (vom Aufrufer
+    // als heading übergeben) → kein Zappeln. Die anderen Arme + der Eintritt blühen als Rose
+    // auf (Achtung-Hinweis) und faden an der Kreuzung wieder aus; die Abbiegung selbst zeigt
+    // die Route auf der Karte.
+    const exitAngleRel = 0;
     const entryAngleRel = angleDelta(arms[entryI], heading);
     const stubAnglesRel = [];
     for (let i = 0; i < arms.length; i++) {
@@ -103,6 +107,9 @@ export function crossingRoseState(inp) {
             continue;
         stubAnglesRel.push(angleDelta(arms[i], heading));
     }
+    // Blüten-Deckkraft: in den letzten bloomFadeOutM vor der Kreuzungs-Mitte stetig auf 0
+    // → die Rose „fadet aus", übrig bleibt der Hoch-Pfeil fürs nächste Wegstück.
+    const bloomOpacity = Math.max(0, Math.min(1, distanceM / T.bloomFadeOutM));
     const tipOpacity = 1; // Spitze immer solide (kein Abdimmen/Wegschauen-Fade)
-    return { wirbel, level, p, entryAngleRel, exitAngleRel, stubAnglesRel, tipOpacity, exitColor, restColor };
+    return { wirbel, level, p, entryAngleRel, exitAngleRel, stubAnglesRel, bloomOpacity, tipOpacity, exitColor, restColor };
 }

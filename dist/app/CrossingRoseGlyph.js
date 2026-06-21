@@ -7,7 +7,7 @@ function at(cx, cy, len, deg) {
 export default function CrossingRose({ state, size = 56 }) {
     // Route (Eintritt + Austritt) = Meter-Farbe (an der Kreuzung rot); die anderen Arme
     // = fester Gelbton (restColor). Spitze nur am Austritt.
-    const { p, entryAngleRel, exitAngleRel, stubAnglesRel, tipOpacity, exitColor: color, restColor: stubColor } = state;
+    const { p, entryAngleRel, exitAngleRel, stubAnglesRel, bloomOpacity, tipOpacity, exitColor: color, restColor: stubColor } = state;
     const c = size / 2;
     const full = size * 0.42; // Arm-Länge
     const stubLen = full * (2 / 3); // andere Arme: 2/3
@@ -20,8 +20,8 @@ export default function CrossingRose({ state, size = 56 }) {
     const [t1x, t1y] = at(bcx, bcy, headW, exitAngleRel + 90);
     const [t2x, t2y] = at(bcx, bcy, headW, exitAngleRel - 90);
     const tipPath = `M ${ex.toFixed(1)} ${ey.toFixed(1)} L ${t1x.toFixed(1)} ${t1y.toFixed(1)} L ${t2x.toFixed(1)} ${t2y.toFixed(1)} Z`;
-    return (_jsxs("svg", { width: size, height: size, viewBox: `0 0 ${size} ${size}`, "aria-hidden": true, style: { display: 'block', overflow: 'visible', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))' }, children: [p > 0.01 && stubAnglesRel.map((ang, i) => {
+    return (_jsxs("svg", { width: size, height: size, viewBox: `0 0 ${size} ${size}`, "aria-hidden": true, style: { display: 'block', overflow: 'visible', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))' }, children: [p > 0.01 && bloomOpacity > 0.01 && stubAnglesRel.map((ang, i) => {
                 const [x, y] = at(c, c, stubLen * p, ang);
-                return _jsx("line", { x1: c, y1: c, x2: x, y2: y, stroke: stubColor, strokeWidth: sw, strokeLinecap: "round", opacity: 0.5 + 0.5 * p }, i);
-            }), p > 0.01 && _jsx("line", { x1: c, y1: c, x2: enx, y2: eny, stroke: color, strokeWidth: sw, strokeLinecap: "round" }), _jsx("line", { x1: c, y1: c, x2: bcx, y2: bcy, stroke: color, strokeWidth: sw, strokeLinecap: "round" }), _jsx("path", { d: tipPath, fill: color, stroke: color, strokeWidth: sw * 0.55, strokeLinejoin: "round", strokeLinecap: "round", opacity: tipOpacity })] }));
+                return _jsx("line", { x1: c, y1: c, x2: x, y2: y, stroke: stubColor, strokeWidth: sw, strokeLinecap: "round", opacity: (0.5 + 0.5 * p) * bloomOpacity }, i);
+            }), p > 0.01 && bloomOpacity > 0.01 && _jsx("line", { x1: c, y1: c, x2: enx, y2: eny, stroke: color, strokeWidth: sw, strokeLinecap: "round", opacity: bloomOpacity }), _jsx("line", { x1: c, y1: c, x2: bcx, y2: bcy, stroke: color, strokeWidth: sw, strokeLinecap: "round" }), _jsx("path", { d: tipPath, fill: color, stroke: color, strokeWidth: sw * 0.55, strokeLinejoin: "round", strokeLinecap: "round", opacity: tipOpacity })] }));
 }

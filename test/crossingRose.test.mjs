@@ -53,11 +53,13 @@ test('ohne Arm-Daten ⇒ schlichter Pfeil (level 0), zeigt geradeaus (= DU-Richt
   assert.deepEqual(r.stubAnglesRel, []);
 });
 
-test('Pfeil deckt sich mit DU bis zur Kreuzung: exit dreht erst mit dem Morph (p)', () => {
-  // Abbiegung nach Ost (exit 90), heikel (W=30). Weit weg (p≈0) → Pfeil geradeaus;
-  // an der Kreuzung (p=1) → Pfeil voll auf den Austritts-Arm.
+test('kein Drehen: Vorwärts-Pfeil immer senkrecht (exitAngleRel=0), Blüte fadet an der Kreuzung', () => {
+  // Abbiegung nach Ost (exit 90), heikel. Der Pfeil dreht NICHT mit — er bleibt senkrecht;
+  // die Rosen-Blüte (Stubs+Eintritt) ist weit weg voll und fadet an der Kreuzung aus.
   const far = crossingRoseState({ arms: T_ARMS, entryBearing: 0, exitBearing: 90, heading: 0, distanceM: 30 });
   const near = crossingRoseState({ arms: T_ARMS, entryBearing: 0, exitBearing: 90, heading: 0, distanceM: 0 });
-  assert.ok(Math.abs(far.exitAngleRel) <= 5, `far=${far.exitAngleRel}`);     // weit: geradeaus
-  assert.equal(Math.round(near.exitAngleRel), 90);                            // nah: voller Austritt
+  assert.equal(far.exitAngleRel, 0);
+  assert.equal(near.exitAngleRel, 0);
+  assert.ok(far.bloomOpacity > 0.95, `far=${far.bloomOpacity}`);   // weit weg: Blüte voll
+  assert.equal(near.bloomOpacity, 0);                              // an der Kreuzung: ausgefadet
 });

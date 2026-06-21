@@ -3,6 +3,7 @@ export declare const ROSE_TUNING: {
     manyArmsWeight: number;
     levelThresholds: [number, number, number];
     onsetWindowM: [number, number, number, number];
+    bloomFadeOutM: number;
     stubColor: string;
 };
 export declare function meterColor(m: number): string;
@@ -14,6 +15,7 @@ export interface CrossingRoseState {
     entryAngleRel: number;
     exitAngleRel: number;
     stubAnglesRel: number[];
+    bloomOpacity: number;
     tipOpacity: number;
     exitColor: string;
     restColor: string;
