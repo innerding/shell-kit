@@ -44,10 +44,10 @@ export default function CrossingRose({ state, size = 56 }: {
       })}
       {/* Eintritts-Linie (zweite Hälfte des Route-„V") — Meter-Farbe, wächst mit p */}
       {p > 0.01 && <line x1={c} y1={c} x2={enx} y2={eny} stroke={color} strokeWidth={sw} strokeLinecap="round" />}
-      {/* Austritts-Linie (immer) */}
-      <line x1={c} y1={c} x2={ex} y2={ey} stroke={color} strokeWidth={sw} strokeLinecap="round" />
-      {/* Spitze (gefülltes Dreieck) — fadet beim Wegschauen */}
-      <path d={tipPath} fill={color} stroke={color} strokeWidth={sw * 0.5} strokeLinejoin="round" opacity={tipOpacity} />
+      {/* Austritts-Linie (immer) — endet an der Spitzen-Basis, damit die Spitze scharf bleibt */}
+      <line x1={c} y1={c} x2={bcx} y2={bcy} stroke={color} strokeWidth={sw} strokeLinecap="round" />
+      {/* Spitze (gefülltes Dreieck, scharfe Ecken) — fadet beim Wegschauen */}
+      <path d={tipPath} fill={color} opacity={tipOpacity} />
     </svg>
   );
 }

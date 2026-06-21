@@ -38,11 +38,12 @@ test('Morph p wächst zur Kreuzungs-Mitte (heikel, W=30)', () => {
   assert.ok(near.p >= 0.95);
 });
 
-test('Spitze fadet beim Wegschauen (0° voll, ≥90° weg)', () => {
-  const facing = crossingRoseState({ arms: T_ARMS, entryBearing: 0, exitBearing: 90, heading: 90, distanceM: 0 }); // Heading = Austritt
-  const away = crossingRoseState({ arms: T_ARMS, entryBearing: 0, exitBearing: 90, heading: 270, distanceM: 0 });  // 180° weg
-  assert.ok(facing.tipOpacity > 0.95);
-  assert.equal(away.tipOpacity, 0);
+test('Spitze hängt an der GEH-Richtung, nicht am Abbiegewinkel', () => {
+  // Abbiegung nach Ost (exit 90) aus Süd kommend (entry 0). Vorn = Heading 0.
+  const fwd = crossingRoseState({ arms: T_ARMS, entryBearing: 0, exitBearing: 90, heading: 0, distanceM: 0 });   // schaust nach vorn
+  const away = crossingRoseState({ arms: T_ARMS, entryBearing: 0, exitBearing: 90, heading: 180, distanceM: 0 }); // umgedreht
+  assert.ok(fwd.tipOpacity > 0.95, `fwd=${fwd.tipOpacity}`);   // Spitze BLEIBT beim normalen Abbiegen
+  assert.equal(away.tipOpacity, 0);                            // nur echtes Wegschauen lässt sie verschwinden
 });
 
 test('ohne Arm-Daten ⇒ schlichter Abbiege-Pfeil (level 0), exit relativ zum Heading', () => {

@@ -10,7 +10,7 @@ export const ROSE_TUNING = {
   manyArmsWeight: 0.15,   // Zuschlag für viele Arme (n>3)
   levelThresholds: [0.20, 0.45, 0.70] as [number, number, number], // ruhig|leicht|heikel|kritisch
   onsetWindowM: [0, 15, 30, 45] as [number, number, number, number], // Morph-Fenster ±W je Stufe (ruhig=0)
-  tipFadeDeg: 90,         // Spitze fadet 0°→tipFadeDeg (wegschauen → weg)
+  tipFadeDeg: 90,         // Spitze fadet, je weiter das Heading von der GEH-Richtung abweicht (≥ tipFadeDeg → weg). NICHT vom Abbiegewinkel.
   stubColor: '#caa01c',   // „andere Wege" (Stubs): fester warmer Gelbton, eigenständig (nicht auf der Meter-Rampe)
 };
 
@@ -81,7 +81,7 @@ export function crossingRoseState(inp: CrossingRoseInput): CrossingRoseState {
       entryAngleRel: angleDelta((entryBearing + 180) % 360, heading),
       exitAngleRel: angleDelta(exitBearing, heading),
       stubAnglesRel: [],
-      tipOpacity: Math.max(0, 1 - angleDist(exitBearing, heading) / T.tipFadeDeg),
+      tipOpacity: Math.max(0, 1 - angleDist(entryBearing, heading) / T.tipFadeDeg),
       exitColor, restColor,
     };
   }
@@ -123,8 +123,10 @@ export function crossingRoseState(inp: CrossingRoseInput): CrossingRoseState {
   const stubAnglesRel: number[] = [];
   for (let i = 0; i < arms.length; i++) { if (i === exitI || i === entryI) continue; stubAnglesRel.push(angleDelta(arms[i], heading)); }
 
-  // Spitze fadet, je weiter du vom Austritt wegschaust.
-  const tipOpacity = Math.max(0, 1 - angleDist(arms[exitI], heading) / T.tipFadeDeg);
+  // Spitze fadet, je weiter dein Heading von der GEH-Richtung (Eintritt/Route) abweicht
+  // — NICHT vom Abbiegewinkel. So bleibt die Spitze beim normalen Abbiegen, und nur
+  // echtes Wegschauen (Heading dreht weg) lässt sie verschwinden.
+  const tipOpacity = Math.max(0, 1 - angleDist(entryBearing, heading) / T.tipFadeDeg);
 
   return { wirbel, level, p, entryAngleRel, exitAngleRel, stubAnglesRel, tipOpacity, exitColor, restColor };
 }
