@@ -26,10 +26,12 @@ export default function CrossingRose({ state, size = 56 }: {
 
   const [ex, ey] = at(c, c, full, exitAngleRel);            // Austritts-Ende (Spitze)
   const [enx, eny] = at(c, c, full * p, entryAngleRel);     // Eintritts-Ende (wächst mit p)
-  // Pfeilspitze: zwei Barbs, die am Austritts-Ende zusammentreffen.
-  const [b1x, b1y] = at(ex, ey, sw * 1.9, exitAngleRel + 150);
-  const [b2x, b2y] = at(ex, ey, sw * 1.9, exitAngleRel - 150);
-  const tipPath = `M ${b1x.toFixed(1)} ${b1y.toFixed(1)} L ${ex.toFixed(1)} ${ey.toFixed(1)} L ${b2x.toFixed(1)} ${b2y.toFixed(1)}`;
+  // Pfeilspitze: gefülltes Dreieck am Austritts-Ende — klar als Spitze lesbar.
+  const headLen = sw * 2.2, headW = sw * 1.5;
+  const [bcx, bcy] = at(ex, ey, headLen, exitAngleRel + 180);     // Basis-Mitte (zurück)
+  const [t1x, t1y] = at(bcx, bcy, headW, exitAngleRel + 90);
+  const [t2x, t2y] = at(bcx, bcy, headW, exitAngleRel - 90);
+  const tipPath = `M ${ex.toFixed(1)} ${ey.toFixed(1)} L ${t1x.toFixed(1)} ${t1y.toFixed(1)} L ${t2x.toFixed(1)} ${t2y.toFixed(1)} Z`;
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden
@@ -44,8 +46,8 @@ export default function CrossingRose({ state, size = 56 }: {
       {p > 0.01 && <line x1={c} y1={c} x2={enx} y2={eny} stroke={color} strokeWidth={sw} strokeLinecap="round" />}
       {/* Austritts-Linie (immer) */}
       <line x1={c} y1={c} x2={ex} y2={ey} stroke={color} strokeWidth={sw} strokeLinecap="round" />
-      {/* Spitze — fadet beim Wegschauen */}
-      <path d={tipPath} stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" fill="none" opacity={tipOpacity} />
+      {/* Spitze (gefülltes Dreieck) — fadet beim Wegschauen */}
+      <path d={tipPath} fill={color} stroke={color} strokeWidth={sw * 0.5} strokeLinejoin="round" opacity={tipOpacity} />
     </svg>
   );
 }
