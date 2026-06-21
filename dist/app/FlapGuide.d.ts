@@ -1,7 +1,9 @@
 import { type ArrowDir } from './arrowGlyphs';
-export default function FlapGuide({ meters, direction, dockHeight, offRoute }: {
+import type { CrossingRoseState } from './crossingRose';
+export default function FlapGuide({ meters, direction, dockHeight, offRoute, rose }: {
     meters: number;
     direction?: ArrowDir;
     dockHeight: number;
     offRoute?: boolean;
+    rose?: CrossingRoseState | null;
 }): import("react").JSX.Element;

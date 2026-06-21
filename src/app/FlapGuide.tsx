@@ -6,6 +6,8 @@
 // Pfeil, als Strich in der Meterfarbe, deutlich größer als die Ziffern.
 import { FLAP_DIGITS } from './flapGlyphs';
 import { ARROW_GLYPHS, type ArrowDir } from './arrowGlyphs';
+import CrossingRose from './CrossingRoseGlyph';
+import type { CrossingRoseState } from './crossingRose';
 
 // Stetiger Verlauf über 0–150 m: jeder Meterwert hat seine eigene Farbe (rot am Abzweig
 // → orange → gelb → beige → weiß weit weg). Linear im RGB zwischen den Stützstellen.
@@ -40,8 +42,9 @@ function Glyph({ d, advance, h, color }: { d: string; advance: number; h: number
   );
 }
 
-export default function FlapGuide({ meters, direction = 'left', dockHeight, offRoute }: {
+export default function FlapGuide({ meters, direction = 'left', dockHeight, offRoute, rose }: {
   meters: number; direction?: ArrowDir; dockHeight: number; offRoute?: boolean;
+  rose?: CrossingRoseState | null;   // wenn gesetzt: Kreuzungsrose statt schlichtem Pfeil (M-D.3)
 }) {
   const m = Math.max(0, Math.round(meters));
   const color = offRoute ? '#df2e1f' : meterColor(m);   // off-route → zwingend rot (zurück zum Weg)
@@ -57,10 +60,14 @@ export default function FlapGuide({ meters, direction = 'left', dockHeight, offR
       width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap,
       filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))',
     }}>
-      <svg width={aSize} height={aSize} viewBox="20 20 60 60" aria-hidden
-        style={{ display: 'block', flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }}>
-        <path d={ARROW_GLYPHS[direction]} stroke={color} strokeWidth={8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      {rose
+        ? <div style={{ flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }}>
+            <CrossingRose state={rose} size={aSize} />
+          </div>
+        : <svg width={aSize} height={aSize} viewBox="20 20 60 60" aria-hidden
+            style={{ display: 'block', flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }}>
+            <path d={ARROW_GLYPHS[direction]} stroke={color} strokeWidth={8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>}
       <div style={{ width: slotW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }}>
         {[...String(m)].map((ch, i) => {
           const g = FLAP_DIGITS[ch];
