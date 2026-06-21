@@ -4,7 +4,9 @@ export declare const ROSE_TUNING: {
     levelThresholds: [number, number, number];
     onsetWindowM: [number, number, number, number];
     tipFadeDeg: number;
+    restColorOffsetM: number;
 };
+export declare function meterColor(m: number): string;
 export type RoseLevel = 0 | 1 | 2 | 3;
 export interface CrossingRoseState {
     wirbel: number;
@@ -14,6 +16,8 @@ export interface CrossingRoseState {
     exitAngleRel: number;
     stubAnglesRel: number[];
     tipOpacity: number;
+    exitColor: string;
+    restColor: string;
 }
 export interface CrossingRoseInput {
     arms: number[];

@@ -4,8 +4,10 @@ function at(cx, cy, len, deg) {
     const a = (deg * Math.PI) / 180;
     return [cx + len * Math.sin(a), cy - len * Math.cos(a)];
 }
-export default function CrossingRose({ state, size = 56, color = '#ffffff', stubColor = '#ecc21f', }) {
-    const { p, entryAngleRel, exitAngleRel, stubAnglesRel, tipOpacity } = state;
+export default function CrossingRose({ state, size = 56 }) {
+    // Narration: viele Wege, keiner schlecht → gleiche Rampe; der richtige (Austritt) ist
+    // der RÖTESTE (exitColor), Eintritt + andere Arme eine Stufe heller (restColor).
+    const { p, entryAngleRel, exitAngleRel, stubAnglesRel, tipOpacity, exitColor: color, restColor: stubColor } = state;
     const c = size / 2;
     const full = size * 0.42; // Arm-Länge
     const stubLen = full * (2 / 3); // andere Arme: 2/3
@@ -19,5 +21,5 @@ export default function CrossingRose({ state, size = 56, color = '#ffffff', stub
     return (_jsxs("svg", { width: size, height: size, viewBox: `0 0 ${size} ${size}`, "aria-hidden": true, style: { display: 'block', overflow: 'visible', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))' }, children: [p > 0.01 && stubAnglesRel.map((ang, i) => {
                 const [x, y] = at(c, c, stubLen * p, ang);
                 return _jsx("line", { x1: c, y1: c, x2: x, y2: y, stroke: stubColor, strokeWidth: sw, strokeLinecap: "round", opacity: 0.5 + 0.5 * p }, i);
-            }), p > 0.01 && _jsx("line", { x1: c, y1: c, x2: enx, y2: eny, stroke: color, strokeWidth: sw, strokeLinecap: "round" }), _jsx("line", { x1: c, y1: c, x2: ex, y2: ey, stroke: color, strokeWidth: sw, strokeLinecap: "round" }), _jsx("path", { d: tipPath, stroke: color, strokeWidth: sw, strokeLinecap: "round", strokeLinejoin: "round", fill: "none", opacity: tipOpacity })] }));
+            }), p > 0.01 && _jsx("line", { x1: c, y1: c, x2: enx, y2: eny, stroke: stubColor, strokeWidth: sw, strokeLinecap: "round" }), _jsx("line", { x1: c, y1: c, x2: ex, y2: ey, stroke: color, strokeWidth: sw, strokeLinecap: "round" }), _jsx("path", { d: tipPath, stroke: color, strokeWidth: sw, strokeLinecap: "round", strokeLinejoin: "round", fill: "none", opacity: tipOpacity })] }));
 }

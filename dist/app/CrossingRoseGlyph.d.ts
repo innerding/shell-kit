@@ -1,7 +1,5 @@
 import type { CrossingRoseState } from './crossingRose';
-export default function CrossingRose({ state, size, color, stubColor, }: {
+export default function CrossingRose({ state, size }: {
     state: CrossingRoseState;
     size?: number;
-    color?: string;
-    stubColor?: string;
 }): import("react").JSX.Element;
