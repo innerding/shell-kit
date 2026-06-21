@@ -42,12 +42,14 @@ function Glyph({ d, advance, h, color }: { d: string; advance: number; h: number
   );
 }
 
-export default function FlapGuide({ meters, direction = 'left', dockHeight, offRoute, rose }: {
+export default function FlapGuide({ meters, direction = 'left', dockHeight, offRoute, rose, colorMeters }: {
   meters: number; direction?: ArrowDir; dockHeight: number; offRoute?: boolean;
   rose?: CrossingRoseState | null;   // wenn gesetzt: Kreuzungsrose statt schlichtem Pfeil (M-D.3)
+  colorMeters?: number;              // Distanz NUR für die Farbe (geglättet); Ziffern bleiben `meters`
 }) {
   const m = Math.max(0, Math.round(meters));
-  const color = offRoute ? '#df2e1f' : meterColor(m);   // off-route → zwingend rot (zurück zum Weg)
+  const cm = Math.max(0, colorMeters ?? m);             // Farb-Distanz (eased) — entkoppelt vom Ziffern-Sprung
+  const color = offRoute ? '#df2e1f' : meterColor(cm);  // off-route → zwingend rot (zurück zum Weg)
   const hM = Math.round(dockHeight * 0.66);            // = Größe der ±-Delta-Ziffern
   const dgap = Math.max(2, Math.round(hM * 0.045));
   const gap = Math.max(2, Math.round(hM * 0.06));

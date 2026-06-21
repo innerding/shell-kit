@@ -35,9 +35,10 @@ function Glyph({ d, advance, h, color }) {
     const tx = (92 - advance) / 2;
     return (_jsx("svg", { width: w, height: h, viewBox: "0 0 92 102", style: { display: 'block' }, "aria-hidden": true, children: _jsx("path", { d: d, fill: color, transform: `translate(${tx.toFixed(2)},0)` }) }));
 }
-export default function FlapGuide({ meters, direction = 'left', dockHeight, offRoute, rose }) {
+export default function FlapGuide({ meters, direction = 'left', dockHeight, offRoute, rose, colorMeters }) {
     const m = Math.max(0, Math.round(meters));
-    const color = offRoute ? '#df2e1f' : meterColor(m); // off-route → zwingend rot (zurück zum Weg)
+    const cm = Math.max(0, colorMeters ?? m); // Farb-Distanz (eased) — entkoppelt vom Ziffern-Sprung
+    const color = offRoute ? '#df2e1f' : meterColor(cm); // off-route → zwingend rot (zurück zum Weg)
     const hM = Math.round(dockHeight * 0.66); // = Größe der ±-Delta-Ziffern
     const dgap = Math.max(2, Math.round(hM * 0.045));
     const gap = Math.max(2, Math.round(hM * 0.06));

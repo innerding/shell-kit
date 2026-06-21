@@ -9,11 +9,8 @@ export const ROSE_TUNING = {
     manyArmsWeight: 0.15, // Zuschlag für viele Arme (n>3)
     levelThresholds: [0.20, 0.45, 0.70], // ruhig|leicht|heikel|kritisch
     onsetWindowM: [0, 15, 30, 45], // Morph-Fenster ±W je Stufe (ruhig=0)
-    // Spitze: VOLL solange du grob in Geh-Richtung schaust (≤ tipFullBelowDeg → opazität 1),
-    // erst danach fadet sie, ganz weg ab tipGoneAtDeg. So gibt es im normalen Vorwärtsgehen
-    // KEIN sichtbares Abdimmen (Ästhetik) — nur echtes Wegschauen/Umdrehen lässt sie verschwinden.
-    tipFullBelowDeg: 100,
-    tipGoneAtDeg: 170,
+    // Spitze: IMMER solide. Kein Abdimmen, kein Wegschauen-Fade — das sah übel aus und der
+    // Wirbel-/Morph-Effekt trägt die Information bereits. (Beschluss 2026-06-22.)
     stubColor: '#caa01c', // „andere Wege" (Stubs): fester warmer Gelbton, eigenständig (nicht auf der Meter-Rampe)
 };
 // Meter-Farbe: an der Kreuzung rot → weit weg weiß (gleiche Rampe wie FlapGuide).
@@ -45,13 +42,6 @@ function angleDelta(a, b) {
 function angleDist(a, b) {
     return Math.abs(angleDelta(a, b));
 }
-// Spitzen-Deckkraft: 1 solange Heading ≤ tipFullBelowDeg von der GEH-Richtung weg ist,
-// dann linear bis 0 bei tipGoneAtDeg. Im Vorwärtsgehen (Winkel ≈ 0) immer voll.
-function tipOpacityFor(entryBearing, heading) {
-    const a = angleDist(entryBearing, heading);
-    const { tipFullBelowDeg, tipGoneAtDeg } = ROSE_TUNING;
-    return Math.max(0, Math.min(1, (tipGoneAtDeg - a) / (tipGoneAtDeg - tipFullBelowDeg)));
-}
 export function crossingRoseState(inp) {
     const { arms, entryBearing, exitBearing, heading, distanceM } = inp;
     const T = ROSE_TUNING;
@@ -64,7 +54,7 @@ export function crossingRoseState(inp) {
             entryAngleRel: angleDelta((entryBearing + 180) % 360, heading),
             exitAngleRel: 0, // ohne Morph (p=0): schlichter Pfeil zeigt GERADEAUS (= DU-Richtung), keine Spreizung
             stubAnglesRel: [],
-            tipOpacity: tipOpacityFor(entryBearing, heading),
+            tipOpacity: 1, // Spitze immer solide
             exitColor, restColor,
         };
     }
@@ -113,8 +103,6 @@ export function crossingRoseState(inp) {
             continue;
         stubAnglesRel.push(angleDelta(arms[i], heading));
     }
-    // Spitze: voll im Vorwärtsgehen, fadet erst spät (s. tipOpacityFor) — kein sichtbares
-    // Abdimmen, nur echtes Wegschauen lässt sie verschwinden.
-    const tipOpacity = tipOpacityFor(entryBearing, heading);
+    const tipOpacity = 1; // Spitze immer solide (kein Abdimmen/Wegschauen-Fade)
     return { wirbel, level, p, entryAngleRel, exitAngleRel, stubAnglesRel, tipOpacity, exitColor, restColor };
 }
