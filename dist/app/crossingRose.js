@@ -9,7 +9,11 @@ export const ROSE_TUNING = {
     manyArmsWeight: 0.15, // Zuschlag für viele Arme (n>3)
     levelThresholds: [0.20, 0.45, 0.70], // ruhig|leicht|heikel|kritisch
     onsetWindowM: [0, 15, 30, 45], // Morph-Fenster ±W je Stufe (ruhig=0)
-    tipFadeDeg: 90, // Spitze fadet, je weiter das Heading von der GEH-Richtung abweicht (≥ tipFadeDeg → weg). NICHT vom Abbiegewinkel.
+    // Spitze: VOLL solange du grob in Geh-Richtung schaust (≤ tipFullBelowDeg → opazität 1),
+    // erst danach fadet sie, ganz weg ab tipGoneAtDeg. So gibt es im normalen Vorwärtsgehen
+    // KEIN sichtbares Abdimmen (Ästhetik) — nur echtes Wegschauen/Umdrehen lässt sie verschwinden.
+    tipFullBelowDeg: 100,
+    tipGoneAtDeg: 170,
     stubColor: '#caa01c', // „andere Wege" (Stubs): fester warmer Gelbton, eigenständig (nicht auf der Meter-Rampe)
 };
 // Meter-Farbe: an der Kreuzung rot → weit weg weiß (gleiche Rampe wie FlapGuide).
@@ -41,6 +45,13 @@ function angleDelta(a, b) {
 function angleDist(a, b) {
     return Math.abs(angleDelta(a, b));
 }
+// Spitzen-Deckkraft: 1 solange Heading ≤ tipFullBelowDeg von der GEH-Richtung weg ist,
+// dann linear bis 0 bei tipGoneAtDeg. Im Vorwärtsgehen (Winkel ≈ 0) immer voll.
+function tipOpacityFor(entryBearing, heading) {
+    const a = angleDist(entryBearing, heading);
+    const { tipFullBelowDeg, tipGoneAtDeg } = ROSE_TUNING;
+    return Math.max(0, Math.min(1, (tipGoneAtDeg - a) / (tipGoneAtDeg - tipFullBelowDeg)));
+}
 export function crossingRoseState(inp) {
     const { arms, entryBearing, exitBearing, heading, distanceM } = inp;
     const T = ROSE_TUNING;
@@ -51,9 +62,9 @@ export function crossingRoseState(inp) {
         return {
             wirbel: 0, level: 0, p: 0,
             entryAngleRel: angleDelta((entryBearing + 180) % 360, heading),
-            exitAngleRel: angleDelta(exitBearing, heading),
+            exitAngleRel: 0, // ohne Morph (p=0): schlichter Pfeil zeigt GERADEAUS (= DU-Richtung), keine Spreizung
             stubAnglesRel: [],
-            tipOpacity: Math.max(0, 1 - angleDist(entryBearing, heading) / T.tipFadeDeg),
+            tipOpacity: tipOpacityFor(entryBearing, heading),
             exitColor, restColor,
         };
     }
@@ -91,7 +102,10 @@ export function crossingRoseState(inp) {
     // Morph p (ruhig → 0; sonst stetig über ±W).
     const p = W <= 0 ? 0 : 1 - Math.max(0, Math.min(1, distanceM / W));
     // Relative Winkel (oben = Heading). Arme = echte Wegrichtungen.
-    const exitAngleRel = angleDelta(arms[exitI], heading);
+    // Der begangene Pfeil zeigt GERADEAUS (= DU-Richtung), solange du weit weg bist (p=0),
+    // und dreht erst beim Heranmorphen auf den echten Austritts-Arm (p=1). So decken sich
+    // DU und Pfeil bis zur Kreuzung — die Abbiegung kündigt sich erst dort an (keine Spreizung).
+    const exitAngleRel = angleDelta(arms[exitI], heading) * p;
     const entryAngleRel = angleDelta(arms[entryI], heading);
     const stubAnglesRel = [];
     for (let i = 0; i < arms.length; i++) {
@@ -99,9 +113,8 @@ export function crossingRoseState(inp) {
             continue;
         stubAnglesRel.push(angleDelta(arms[i], heading));
     }
-    // Spitze fadet, je weiter dein Heading von der GEH-Richtung (Eintritt/Route) abweicht
-    // — NICHT vom Abbiegewinkel. So bleibt die Spitze beim normalen Abbiegen, und nur
-    // echtes Wegschauen (Heading dreht weg) lässt sie verschwinden.
-    const tipOpacity = Math.max(0, 1 - angleDist(entryBearing, heading) / T.tipFadeDeg);
+    // Spitze: voll im Vorwärtsgehen, fadet erst spät (s. tipOpacityFor) — kein sichtbares
+    // Abdimmen, nur echtes Wegschauen lässt sie verschwinden.
+    const tipOpacity = tipOpacityFor(entryBearing, heading);
     return { wirbel, level, p, entryAngleRel, exitAngleRel, stubAnglesRel, tipOpacity, exitColor, restColor };
 }

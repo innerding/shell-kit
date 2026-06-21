@@ -46,10 +46,19 @@ test('Spitze hängt an der GEH-Richtung, nicht am Abbiegewinkel', () => {
   assert.equal(away.tipOpacity, 0);                            // nur echtes Wegschauen lässt sie verschwinden
 });
 
-test('ohne Arm-Daten ⇒ schlichter Abbiege-Pfeil (level 0), exit relativ zum Heading', () => {
+test('ohne Arm-Daten ⇒ schlichter Pfeil (level 0), zeigt geradeaus (= DU-Richtung)', () => {
   const r = crossingRoseState({ arms: [], entryBearing: 0, exitBearing: 90, heading: 0, distanceM: 5 });
   assert.equal(r.level, 0);
   assert.equal(r.p, 0);
-  assert.equal(Math.round(r.exitAngleRel), 90);
+  assert.equal(Math.round(r.exitAngleRel), 0);   // p=0 → kein Vor-Drehen, deckt sich mit DU
   assert.deepEqual(r.stubAnglesRel, []);
+});
+
+test('Pfeil deckt sich mit DU bis zur Kreuzung: exit dreht erst mit dem Morph (p)', () => {
+  // Abbiegung nach Ost (exit 90), heikel (W=30). Weit weg (p≈0) → Pfeil geradeaus;
+  // an der Kreuzung (p=1) → Pfeil voll auf den Austritts-Arm.
+  const far = crossingRoseState({ arms: T_ARMS, entryBearing: 0, exitBearing: 90, heading: 0, distanceM: 30 });
+  const near = crossingRoseState({ arms: T_ARMS, entryBearing: 0, exitBearing: 90, heading: 0, distanceM: 0 });
+  assert.ok(Math.abs(far.exitAngleRel) <= 5, `far=${far.exitAngleRel}`);     // weit: geradeaus
+  assert.equal(Math.round(near.exitAngleRel), 90);                            // nah: voller Austritt
 });

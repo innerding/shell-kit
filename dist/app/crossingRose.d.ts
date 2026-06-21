@@ -3,7 +3,8 @@ export declare const ROSE_TUNING: {
     manyArmsWeight: number;
     levelThresholds: [number, number, number];
     onsetWindowM: [number, number, number, number];
-    tipFadeDeg: number;
+    tipFullBelowDeg: number;
+    tipGoneAtDeg: number;
     stubColor: string;
 };
 export declare function meterColor(m: number): string;
