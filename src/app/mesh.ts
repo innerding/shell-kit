@@ -29,12 +29,21 @@ export function renderColorMesh(
   const scale = opts.scale ?? DEFAULT_SCALE;
   const hidden = (id: string) => opts.hiddenStretchIds?.has(id) ?? false;
   const dimmed = (id: string) => !hidden(id) && (opts.dimmedStretchIds?.has(id) ?? false);
+  const corridor = (s: { inBoundary?: boolean }) => s.inBoundary === false;
+
+  // Korridor (inBoundary:false = außerhalb der Boundary, kein Lastbild): schlichte
+  // graue, gestrichelte Linie — kein Colour-Mesh. In beiden Modi gezeichnet, in den
+  // Last-Pässen übersprungen. Grau ~1.2× dunkler als das frühere #9aa5b1.
+  for (const s of net.stretches) {
+    if (!corridor(s) || s.points.length < 2) continue;
+    L.polyline(s.points as L.LatLngExpression[], { color: '#808993', weight: 3, opacity: 0.7, dashArray: '6 5', lineCap: 'round' }).addTo(layer);
+  }
 
   // Einfarbig (Spar-Modus): ein Grau, kein weißer Rand, dünn — sonst nichts.
   if (opts.mono) {
     const mw = Math.max(2, weight - 1);
     for (const s of net.stretches) {
-      if (hidden(s.id)) continue;
+      if (hidden(s.id) || corridor(s)) continue;
       for (let i = 0; i < s.points.length - 1; i++) {
         L.polyline([s.points[i], s.points[i + 1]] as L.LatLngExpression[],
           { color: opts.mono, weight: mw, opacity: 0.85, lineCap: 'round' }).addTo(layer);
@@ -45,7 +54,7 @@ export function renderColorMesh(
 
   // Pass 1: weißer Rand (Unterlage) — nur für sichtbare, nicht gedimmte Segmente.
   for (const s of net.stretches) {
-    if (hidden(s.id) || dimmed(s.id)) continue;
+    if (hidden(s.id) || dimmed(s.id) || corridor(s)) continue;
     for (let i = 0; i < s.points.length - 1; i++) {
       L.polyline(
         [s.points[i], s.points[i + 1]] as L.LatLngExpression[],
@@ -59,6 +68,7 @@ export function renderColorMesh(
   // sichtbar, aber zurückhaltend; das Zappeln gehört an die aktive Route.
   let idx = 0;
   for (const s of net.stretches) {
+    if (corridor(s)) continue;   // Korridor oben separat (kein Lastbild) — liegt am Netz-Ende, idx bleibt aligned
     const segCount = s.points.length - 1;
     const isHidden = hidden(s.id);
     const isDimmed = dimmed(s.id);

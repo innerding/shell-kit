@@ -44,3 +44,14 @@ export declare function nextWaypointAhead(polyline: LatLng[], waypoints: LatLng[
     idx: number;
     distM: number;
 };
+/** Kreuzung gilt als „auf der Route", wenn ihr Lot ≤ dieser Toleranz ist (m). */
+export declare const CROSSING_ON_ROUTE_TOL_M = 20;
+/** Projektion eines Punktes auf die Polylinie: along-Distanz (m ab Start) + Lot (m). */
+export declare function projectAlong(poly: readonly LatLng[], p: LatLng): {
+    along: number;
+    perp: number;
+};
+/** Kreuzungen auf die Route projizieren → sortierte along-Distanzen der nahen (≤ TOL). */
+export declare function crossingsAlong(poly: readonly LatLng[], crossings: readonly LatLng[]): number[];
+/** Distanz bis zur nächsten Kreuzung VORAUS (along > doneM + eps), oder null wenn keine mehr. */
+export declare function nextCrossingAhead(alongs: readonly number[], doneM: number): number | null;

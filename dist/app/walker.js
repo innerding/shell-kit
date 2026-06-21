@@ -173,3 +173,48 @@ export function nextWaypointAhead(polyline, waypoints, doneM, epsM = 5) {
     }
     return { idx: bestIdx, distM: Math.max(0, bestAlong - doneM) };
 }
+// ── „bis nächste Kreuzung" (Guidance-OSM-Kopplung) ───────────────────────────
+// Die Shell hat kein OSM, nur das Berechnungsmodell: sie projiziert die via Origin
+// mitgereisten Kreuzungen (origin-crossings) auf die aktive Route und rechnet die
+// Distanz bis zur nächsten voraus. Getrennt vom Netz/Mesh (unabhängig von der
+// reduzierten Struktur).
+/** Kreuzung gilt als „auf der Route", wenn ihr Lot ≤ dieser Toleranz ist (m). */
+export const CROSSING_ON_ROUTE_TOL_M = 20;
+/** Projektion eines Punktes auf die Polylinie: along-Distanz (m ab Start) + Lot (m). */
+export function projectAlong(poly, p) {
+    let acc = 0, bestPerp = Infinity, bestAlong = 0;
+    for (let i = 1; i < poly.length; i++) {
+        const a = poly[i - 1], b = poly[i];
+        const latRef = toRad(a[0]);
+        const bx = toRad(b[1] - a[1]) * Math.cos(latRef) * EARTH_R, by = toRad(b[0] - a[0]) * EARTH_R;
+        const px = toRad(p[1] - a[1]) * Math.cos(latRef) * EARTH_R, py = toRad(p[0] - a[0]) * EARTH_R;
+        const segLen2 = bx * bx + by * by || 1e-9;
+        const t = Math.max(0, Math.min(1, (px * bx + py * by) / segLen2));
+        const perp = Math.hypot(px - bx * t, py - by * t);
+        if (perp < bestPerp) {
+            bestPerp = perp;
+            bestAlong = acc + t * Math.sqrt(segLen2);
+        }
+        acc += Math.sqrt(segLen2);
+    }
+    return { along: bestAlong, perp: bestPerp };
+}
+/** Kreuzungen auf die Route projizieren → sortierte along-Distanzen der nahen (≤ TOL). */
+export function crossingsAlong(poly, crossings) {
+    if (poly.length < 2)
+        return [];
+    const out = [];
+    for (const c of crossings) {
+        const r = projectAlong(poly, c);
+        if (r.perp <= CROSSING_ON_ROUTE_TOL_M)
+            out.push(r.along);
+    }
+    return out.sort((a, b) => a - b);
+}
+/** Distanz bis zur nächsten Kreuzung VORAUS (along > doneM + eps), oder null wenn keine mehr. */
+export function nextCrossingAhead(alongs, doneM) {
+    for (const a of alongs)
+        if (a > doneM + 4)
+            return a - doneM;
+    return null;
+}

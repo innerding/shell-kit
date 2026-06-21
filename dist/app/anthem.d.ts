@@ -4,6 +4,7 @@ export interface SegmentedNet {
     stretches: Array<{
         id: string;
         points: LatLng[];
+        inBoundary?: boolean;
     }>;
 }
 export declare function simSegmentLoads(net: SegmentedNet): number[];

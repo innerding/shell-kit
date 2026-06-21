@@ -13,7 +13,9 @@ const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 // Minimale Netz-Form, strukturell kompatibel zum resampelten Origin-Netz (~10 m).
 export type LatLng = [number, number];
 export interface SegmentedNet {
-  stretches: Array<{ id: string; points: LatLng[] }>;
+  // inBoundary:false = Korridor außerhalb der Rep-Boundary (kein Lastbild) —
+  // Guidance-OSM-Kopplung. Fehlt/true = Teil des gemessenen Innen-Netzes.
+  stretches: Array<{ id: string; points: LatLng[]; inBoundary?: boolean }>;
 }
 
 // Glattes, deterministisches Last-Feld am Segment-Mittelpunkt.
