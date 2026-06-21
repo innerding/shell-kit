@@ -42,16 +42,17 @@ export default function FlapGuide({ meters, direction = 'left', dockHeight, offR
     const hM = Math.round(dockHeight * 0.66); // = Größe der ±-Delta-Ziffern
     const dgap = Math.max(2, Math.round(hM * 0.045));
     const gap = Math.max(2, Math.round(hM * 0.06));
-    const aSize = Math.round(hM * 1.8); // Pfeil deutlich größer als die Ziffern
+    const aSize = Math.round(hM * 1.8 * 1.33); // Pfeil/Rose ×1.33 größer (Nutzerwunsch 2026-06-22)
     const isH = direction === 'left' || direction === 'right';
     const digitW = Math.round((hM * 92) / 100);
-    const slotW = 3 * digitW + 2 * dgap; // IMMER 3-Stellen-Raum (Pfeil fix ganz links)
+    const slotW = 3 * digitW + 2 * dgap; // IMMER 3-Stellen-Raum (Ziffern rechtsbündig, Einer fix)
+    const boxW = aSize + gap + slotW; // FESTE Gesamtbreite → Pfeil klebt links, wandert NICHT mit den Ziffern
     return (_jsxs("div", { style: {
-            width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap,
+            width: boxW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', gap,
             filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))',
         }, children: [rose
                 ? _jsx("div", { style: { flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }, children: _jsx(CrossingRose, { state: rose, size: aSize }) })
-                : _jsx("svg", { width: aSize, height: aSize, viewBox: "20 20 60 60", "aria-hidden": true, style: { display: 'block', flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }, children: _jsx("path", { d: ARROW_GLYPHS[direction], stroke: color, strokeWidth: 8, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }) }), _jsx("div", { style: { width: slotW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }, children: [...String(m)].map((ch, i) => {
+                : _jsx("svg", { width: aSize, height: aSize, viewBox: "20 20 60 60", "aria-hidden": true, style: { display: 'block', flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }, children: _jsx("path", { d: ARROW_GLYPHS[direction], stroke: color, strokeWidth: 8, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }) }), _jsx("div", { style: { width: slotW, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }, children: [...String(m)].map((ch, i) => {
                     const g = FLAP_DIGITS[ch];
                     return g ? _jsx(Glyph, { d: g.d, advance: g.advance, h: hM, color: color }, i) : null;
                 }) })] }));

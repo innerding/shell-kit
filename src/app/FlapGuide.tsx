@@ -53,13 +53,14 @@ export default function FlapGuide({ meters, direction = 'left', dockHeight, offR
   const hM = Math.round(dockHeight * 0.66);            // = Größe der ±-Delta-Ziffern
   const dgap = Math.max(2, Math.round(hM * 0.045));
   const gap = Math.max(2, Math.round(hM * 0.06));
-  const aSize = Math.round(hM * 1.8);                  // Pfeil deutlich größer als die Ziffern
+  const aSize = Math.round(hM * 1.8 * 1.33);           // Pfeil/Rose ×1.33 größer (Nutzerwunsch 2026-06-22)
   const isH = direction === 'left' || direction === 'right';
   const digitW = Math.round((hM * 92) / 100);
-  const slotW = 3 * digitW + 2 * dgap;                // IMMER 3-Stellen-Raum (Pfeil fix ganz links)
+  const slotW = 3 * digitW + 2 * dgap;                // IMMER 3-Stellen-Raum (Ziffern rechtsbündig, Einer fix)
+  const boxW = aSize + gap + slotW;                   // FESTE Gesamtbreite → Pfeil klebt links, wandert NICHT mit den Ziffern
   return (
     <div style={{
-      width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap,
+      width: boxW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', gap,
       filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))',
     }}>
       {rose
@@ -70,7 +71,7 @@ export default function FlapGuide({ meters, direction = 'left', dockHeight, offR
             style={{ display: 'block', flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }}>
             <path d={ARROW_GLYPHS[direction]} stroke={color} strokeWidth={8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
           </svg>}
-      <div style={{ width: slotW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }}>
+      <div style={{ width: slotW, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }}>
         {[...String(m)].map((ch, i) => {
           const g = FLAP_DIGITS[ch];
           return g ? <Glyph key={i} d={g.d} advance={g.advance} h={hM} color={color} /> : null;
