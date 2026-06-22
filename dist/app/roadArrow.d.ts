@@ -4,4 +4,6 @@ export interface TurnHint {
     side: TurnSideHint;
     degree?: TurnDegreeHint;
 }
-export declare function roadArrowPath(hint: TurnHint): string;
+export declare function roadArrowPath(hint: TurnHint, opts?: {
+    center?: boolean;
+}): string;

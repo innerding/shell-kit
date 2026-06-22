@@ -11,7 +11,11 @@ export interface TurnHint { side: TurnSideHint; degree?: TurnDegreeHint; }
 const BEND_DEG: Record<TurnDegreeHint, number> = { bearing: 30, hard: 66 };
 
 // SVG-Pfad des Pfeils für viewBox "0 0 100 110".
-export function roadArrowPath(hint: TurnHint): string {
+//   center=true (Default): der Umriss wird horizontal zentriert (für die Lehr-Boxen — Pfeil
+//     sitzt mittig in seiner Box).
+//   center=false: der senkrechte Schaft (Basis) hält seine Position bei x=50, nur der OBERE
+//     Teil + Spitze knickt — für den lebenden Dock-Pfeil.
+export function roadArrowPath(hint: TurnHint, opts?: { center?: boolean }): string {
   const dir = hint.side === 'left' ? -1 : hint.side === 'right' ? 1 : 0;
   const bend = hint.side === 'straight' ? 0 : BEND_DEG[hint.degree ?? 'bearing'];
   const B = [50, 99], J = [50, 57], seg = 27, hw = 8, headHw = 16, headLen = 17;
@@ -27,12 +31,15 @@ export function roadArrowPath(hint: TurnHint): string {
   const Tl = [Tb[0] + n2[0] * hw, Tb[1] + n2[1] * hw], Tr = [Tb[0] - n2[0] * hw, Tb[1] - n2[1] * hw];
   const bL = [Tb[0] + n2[0] * headHw, Tb[1] + n2[1] * headHw], bR = [Tb[0] - n2[0] * headHw, Tb[1] - n2[1] * headHw];
   const tip = [Tb[0] + d2[0] * headLen, Tb[1] + d2[1] * headLen];
-  // Den Umriss horizontal in die viewBox zentrieren — sonst „läuft" der Pfeil bei scharfem
-  // Knick zur Seite aus dem Bild. So bleibt links wie rechts gleich viel Luft.
-  const pts = [Bl, Jl, Tl, bL, tip, bR, Tr, Jr, Br];
-  let minX = Infinity, maxX = -Infinity;
-  for (const p of pts) { if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0]; }
-  const shift = 50 - (minX + maxX) / 2;
+  // Optional horizontal zentrieren (Lehr-Boxen). Beim Dock-Pfeil NICHT: dann hält der
+  // Schaft (Basis x=50) seine Position, nur der obere Teil + Spitze knickt zur Seite.
+  let shift = 0;
+  if (opts?.center ?? true) {
+    const pts = [Bl, Jl, Tl, bL, tip, bR, Tr, Jr, Br];
+    let minX = Infinity, maxX = -Infinity;
+    for (const p of pts) { if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0]; }
+    shift = 50 - (minX + maxX) / 2;
+  }
   const P = (p: number[]) => `${(p[0] + shift).toFixed(1)} ${p[1].toFixed(1)}`;
   return `M ${P(Bl)} L ${P(Jl)} L ${P(Tl)} L ${P(bL)} L ${P(tip)} L ${P(bR)} L ${P(Tr)} L ${P(Jr)} L ${P(Br)} Z`;
 }
