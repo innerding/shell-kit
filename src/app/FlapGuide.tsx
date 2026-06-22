@@ -5,9 +5,7 @@
 // gelb/orange, am Abzweig rot). Ohne Einheit/„m". Pfeil = hand-gezeichneter Polarstern-
 // Pfeil, als Strich in der Meterfarbe, deutlich größer als die Ziffern.
 import { FLAP_DIGITS } from './flapGlyphs';
-import { ARROW_GLYPHS, type ArrowDir } from './arrowGlyphs';
-import CrossingRose from './CrossingRoseGlyph';
-import type { CrossingRoseState } from './crossingRose';
+import { roadArrowPath, type TurnHint } from './roadArrow';
 
 // Stetiger Verlauf über 0–150 m: jeder Meterwert hat seine eigene Farbe (rot am Abzweig
 // → orange → gelb → beige → weiß weit weg). Linear im RGB zwischen den Stützstellen.
@@ -42,11 +40,10 @@ function Glyph({ d, advance, h, color }: { d: string; advance: number; h: number
   );
 }
 
-export default function FlapGuide({ meters, direction = 'left', dockHeight, offRoute, rose, colorMeters, hideArrow }: {
-  meters: number; direction?: ArrowDir; dockHeight: number; offRoute?: boolean;
-  rose?: CrossingRoseState | null;   // wenn gesetzt: Kreuzungsrose statt schlichtem Pfeil (M-D.3)
+export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters, turn }: {
+  meters: number; dockHeight: number; offRoute?: boolean;
   colorMeters?: number;              // Distanz NUR für die Farbe (geglättet); Ziffern bleiben `meters`
-  hideArrow?: boolean;               // nur die Meter-Zahl, kein Pfeil/keine Rose (Karte führt selbst)
+  turn?: TurnHint | null;            // kommende Abbiegung → Grad-Lehrer-Pfeil; fehlt/null → geradeaus
 }) {
   const m = Math.max(0, Math.round(meters));
   const cm = Math.max(0, colorMeters ?? m);             // Farb-Distanz (eased) — entkoppelt vom Ziffern-Sprung
@@ -54,28 +51,27 @@ export default function FlapGuide({ meters, direction = 'left', dockHeight, offR
   const hM = Math.round(dockHeight * 0.66);            // = Größe der ±-Delta-Ziffern
   const dgap = Math.max(2, Math.round(hM * 0.045));
   const gap = Math.max(2, Math.round(hM * 0.06));
-  const aSize = Math.round(hM * 1.8 * 1.33);           // Pfeil/Rose ×1.33 größer (Nutzerwunsch 2026-06-22)
-  const isH = direction === 'left' || direction === 'right';
+  const aW = Math.round(hM * 1.8 * 1.33);              // Pfeil-Breite
+  const aH = Math.round(aW * 1.1);                     // Pfeil etwas höher (viewBox 100×110)
   const digitW = Math.round((hM * 92) / 100);
-  const slotW = 3 * digitW + 2 * dgap;                // IMMER 3-Stellen-Raum (Ziffern rechtsbündig, Einer fix)
-  const boxW = hideArrow ? slotW : aSize + gap + slotW;  // FESTE Gesamtbreite → Pfeil klebt links, wandert NICHT mit den Ziffern
+  const slotW = 3 * digitW + 2 * dgap;                // IMMER 3-Stellen-Raum (Pfeil klebt links, Einer fix)
+  const boxW = aW + gap + slotW;                      // feste Gesamtbreite → Pfeil wandert NICHT mit den Ziffern
+  const digits = String(m);
+  const dh = digits.length > 3 ? Math.round((hM * 3) / digits.length) : hM;  // ab 4 Stellen schrumpfen
   return (
     <div style={{
       width: boxW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', gap,
       filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))',
     }}>
-      {!hideArrow && (rose
-        ? <div style={{ flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }}>
-            <CrossingRose state={rose} size={aSize} />
-          </div>
-        : <svg width={aSize} height={aSize} viewBox="20 20 60 60" aria-hidden
-            style={{ display: 'block', flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }}>
-            <path d={ARROW_GLYPHS[direction]} stroke={color} strokeWidth={8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>)}
+      {/* Straßenmarkierungs-Pfeil: ein Körper, schwarzer Stroke / weiße Fill, ein Gelenk = Grad.
+          Keine eigene Farbe (die trägt die Meter-Zahl). */}
+      <svg width={aW} height={aH} viewBox="0 0 100 110" aria-hidden style={{ display: 'block', flexShrink: 0 }}>
+        <path d={roadArrowPath(turn ?? { side: 'straight' })} fill="#ffffff" stroke="#111111" strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
       <div style={{ width: slotW, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }}>
-        {[...String(m)].map((ch, i) => {
+        {[...digits].map((ch, i) => {
           const g = FLAP_DIGITS[ch];
-          return g ? <Glyph key={i} d={g.d} advance={g.advance} h={hM} color={color} /> : null;
+          return g ? <Glyph key={i} d={g.d} advance={g.advance} h={dh} color={color} /> : null;
         })}
       </div>
     </div>

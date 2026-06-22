@@ -5,6 +5,7 @@ export { default as WarnTriangle } from './WarnTriangle';
 export { default as FlapClock, themeFromTint, clockWidthPx, type FlapTheme } from './FlapClock';
 export { default as FlapDelta } from './FlapDelta';
 export { default as FlapGuide } from './FlapGuide';
+export * from './roadArrow';
 export { default as CrossingRose } from './CrossingRoseGlyph';
 export { default as PoiDetailCard } from './PoiDetailCard';
 export * from './geometry';

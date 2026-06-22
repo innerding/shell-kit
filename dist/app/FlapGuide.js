@@ -6,8 +6,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // gelb/orange, am Abzweig rot). Ohne Einheit/„m". Pfeil = hand-gezeichneter Polarstern-
 // Pfeil, als Strich in der Meterfarbe, deutlich größer als die Ziffern.
 import { FLAP_DIGITS } from './flapGlyphs';
-import { ARROW_GLYPHS } from './arrowGlyphs';
-import CrossingRose from './CrossingRoseGlyph';
+import { roadArrowPath } from './roadArrow';
 // Stetiger Verlauf über 0–150 m: jeder Meterwert hat seine eigene Farbe (rot am Abzweig
 // → orange → gelb → beige → weiß weit weg). Linear im RGB zwischen den Stützstellen.
 const METER_STOPS = [
@@ -35,25 +34,25 @@ function Glyph({ d, advance, h, color }) {
     const tx = (92 - advance) / 2;
     return (_jsx("svg", { width: w, height: h, viewBox: "0 0 92 102", style: { display: 'block' }, "aria-hidden": true, children: _jsx("path", { d: d, fill: color, transform: `translate(${tx.toFixed(2)},0)` }) }));
 }
-export default function FlapGuide({ meters, direction = 'left', dockHeight, offRoute, rose, colorMeters, hideArrow }) {
+export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters, turn }) {
     const m = Math.max(0, Math.round(meters));
     const cm = Math.max(0, colorMeters ?? m); // Farb-Distanz (eased) — entkoppelt vom Ziffern-Sprung
     const color = offRoute ? '#df2e1f' : meterColor(cm); // off-route → zwingend rot (zurück zum Weg)
     const hM = Math.round(dockHeight * 0.66); // = Größe der ±-Delta-Ziffern
     const dgap = Math.max(2, Math.round(hM * 0.045));
     const gap = Math.max(2, Math.round(hM * 0.06));
-    const aSize = Math.round(hM * 1.8 * 1.33); // Pfeil/Rose ×1.33 größer (Nutzerwunsch 2026-06-22)
-    const isH = direction === 'left' || direction === 'right';
+    const aW = Math.round(hM * 1.8 * 1.33); // Pfeil-Breite
+    const aH = Math.round(aW * 1.1); // Pfeil etwas höher (viewBox 100×110)
     const digitW = Math.round((hM * 92) / 100);
-    const slotW = 3 * digitW + 2 * dgap; // IMMER 3-Stellen-Raum (Ziffern rechtsbündig, Einer fix)
-    const boxW = hideArrow ? slotW : aSize + gap + slotW; // FESTE Gesamtbreite → Pfeil klebt links, wandert NICHT mit den Ziffern
+    const slotW = 3 * digitW + 2 * dgap; // IMMER 3-Stellen-Raum (Pfeil klebt links, Einer fix)
+    const boxW = aW + gap + slotW; // feste Gesamtbreite → Pfeil wandert NICHT mit den Ziffern
+    const digits = String(m);
+    const dh = digits.length > 3 ? Math.round((hM * 3) / digits.length) : hM; // ab 4 Stellen schrumpfen
     return (_jsxs("div", { style: {
             width: boxW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', gap,
             filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))',
-        }, children: [!hideArrow && (rose
-                ? _jsx("div", { style: { flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }, children: _jsx(CrossingRose, { state: rose, size: aSize }) })
-                : _jsx("svg", { width: aSize, height: aSize, viewBox: "20 20 60 60", "aria-hidden": true, style: { display: 'block', flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }, children: _jsx("path", { d: ARROW_GLYPHS[direction], stroke: color, strokeWidth: 8, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }) })), _jsx("div", { style: { width: slotW, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }, children: [...String(m)].map((ch, i) => {
+        }, children: [_jsx("svg", { width: aW, height: aH, viewBox: "0 0 100 110", "aria-hidden": true, style: { display: 'block', flexShrink: 0 }, children: _jsx("path", { d: roadArrowPath(turn ?? { side: 'straight' }), fill: "#ffffff", stroke: "#111111", strokeWidth: 4, strokeLinejoin: "round", strokeLinecap: "round" }) }), _jsx("div", { style: { width: slotW, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }, children: [...digits].map((ch, i) => {
                     const g = FLAP_DIGITS[ch];
-                    return g ? _jsx(Glyph, { d: g.d, advance: g.advance, h: hM, color: color }, i) : null;
+                    return g ? _jsx(Glyph, { d: g.d, advance: g.advance, h: dh, color: color }, i) : null;
                 }) })] }));
 }

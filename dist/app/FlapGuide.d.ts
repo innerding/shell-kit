@@ -1,11 +1,8 @@
-import { type ArrowDir } from './arrowGlyphs';
-import type { CrossingRoseState } from './crossingRose';
-export default function FlapGuide({ meters, direction, dockHeight, offRoute, rose, colorMeters, hideArrow }: {
+import { type TurnHint } from './roadArrow';
+export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters, turn }: {
     meters: number;
-    direction?: ArrowDir;
     dockHeight: number;
     offRoute?: boolean;
-    rose?: CrossingRoseState | null;
     colorMeters?: number;
-    hideArrow?: boolean;
+    turn?: TurnHint | null;
 }): import("react").JSX.Element;
