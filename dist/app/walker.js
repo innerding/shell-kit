@@ -24,6 +24,17 @@ export function bearingDeg([lat1, lng1], [lat2, lng2]) {
     const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLng);
     return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
+// Route-Richtung (Grad) an einer along-Distanz (Segment, das die Distanz enthält).
+export function routeBearingAtAlong(poly, targetM) {
+    let acc = 0;
+    for (let i = 1; i < poly.length; i++) {
+        const d = distM(poly[i - 1], poly[i]);
+        if (acc + d >= targetM)
+            return bearingDeg(poly[i - 1], poly[i]);
+        acc += d;
+    }
+    return poly.length >= 2 ? bearingDeg(poly[poly.length - 2], poly[poly.length - 1]) : 0;
+}
 /**
  * Position entlang der Polylinie nach `elapsedSec` bei `speedMps` (m/s).
  * Linear interpoliert auf dem aktuellen Segment. `speedMps` darf einen

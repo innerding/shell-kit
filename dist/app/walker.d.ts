@@ -5,6 +5,7 @@ export declare function distM([lat1, lng1]: LatLng, [lat2, lng2]: LatLng): numbe
 export declare function polylineLengthM(pts: LatLng[]): number;
 /** Peilung in Grad (0 = Nord, im Uhrzeigersinn) von a nach b. */
 export declare function bearingDeg([lat1, lng1]: LatLng, [lat2, lng2]: LatLng): number;
+export declare function routeBearingAtAlong(poly: readonly LatLng[], targetM: number): number;
 export interface WalkState {
     pos: LatLng;
     bearing: number;

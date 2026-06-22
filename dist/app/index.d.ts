@@ -17,6 +17,7 @@ export * from './graph';
 export * from './bak';
 export * from './walker';
 export * from './crossingRose';
+export * from './acousticGuidance';
 export * from './similarity';
 export * from './poiDompteur';
 export * from './poiVisual';

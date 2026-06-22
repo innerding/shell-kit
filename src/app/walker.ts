@@ -40,6 +40,17 @@ export function bearingDeg([lat1, lng1]: LatLng, [lat2, lng2]: LatLng): number {
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
+// Route-Richtung (Grad) an einer along-Distanz (Segment, das die Distanz enthält).
+export function routeBearingAtAlong(poly: readonly LatLng[], targetM: number): number {
+  let acc = 0;
+  for (let i = 1; i < poly.length; i++) {
+    const d = distM(poly[i - 1], poly[i]);
+    if (acc + d >= targetM) return bearingDeg(poly[i - 1], poly[i]);
+    acc += d;
+  }
+  return poly.length >= 2 ? bearingDeg(poly[poly.length - 2], poly[poly.length - 1]) : 0;
+}
+
 export interface WalkState {
   pos: LatLng;       // aktuelle Position auf der Route
   bearing: number;   // Grad (0 = Nord) — Richtung des aktuellen Segments
