@@ -1,12 +1,11 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-// FlapGuide — linke Begehungs-Anzeige: Richtung + Meter bis zur nächsten Entscheidung.
-// BOXLOSE, STATISCHE Ziffern (kein Klappen — das verträgt sich nicht mit transparentem
-// Hintergrund, gibt Geister-Fragmente). Gleiche Inter-Glyphen, gleiche Größe + Position
-// wie die ±-Delta-Ziffern, nur ohne Box und farbig nach Nähe (weit = weiß, dann beige/
-// gelb/orange, am Abzweig rot). Ohne Einheit/„m". Pfeil = hand-gezeichneter Polarstern-
-// Pfeil, als Strich in der Meterfarbe, deutlich größer als die Ziffern.
+import { jsx as _jsx } from "react/jsx-runtime";
+// FlapGuide — die Meter-Anzeige (Distanz bis zur nächsten Entscheidung) im Dock.
+// BOXLOSE, STATISCHE Ziffern (kein Klappen — das gibt auf transparentem Grund Geister-
+// Fragmente). Farbig nach Nähe (weit = weiß → beige/gelb/orange → am Abzweig rot), ohne
+// Einheit. Der Richtungs-Pfeil ist NICHT mehr Teil hiervon — er wird vom Aufrufer separat
+// positioniert (roadArrow), entkoppelt von der Uhr-Breite. Ab 4 Stellen schrumpfen die
+// Ziffern in den festen 3-Stellen-Platz.
 import { FLAP_DIGITS } from './flapGlyphs';
-import { roadArrowPath } from './roadArrow';
 // Stetiger Verlauf über 0–150 m: jeder Meterwert hat seine eigene Farbe (rot am Abzweig
 // → orange → gelb → beige → weiß weit weg). Linear im RGB zwischen den Stützstellen.
 const METER_STOPS = [
@@ -34,25 +33,21 @@ function Glyph({ d, advance, h, color }) {
     const tx = (92 - advance) / 2;
     return (_jsx("svg", { width: w, height: h, viewBox: "0 0 92 102", style: { display: 'block' }, "aria-hidden": true, children: _jsx("path", { d: d, fill: color, transform: `translate(${tx.toFixed(2)},0)` }) }));
 }
-export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters, turn }) {
+export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters }) {
     const m = Math.max(0, Math.round(meters));
-    const cm = Math.max(0, colorMeters ?? m); // Farb-Distanz (eased) — entkoppelt vom Ziffern-Sprung
-    const color = offRoute ? '#df2e1f' : meterColor(cm); // off-route → zwingend rot (zurück zum Weg)
+    const cm = Math.max(0, colorMeters ?? m);
+    const color = offRoute ? '#df2e1f' : meterColor(cm);
     const hM = Math.round(dockHeight * 0.66); // = Größe der ±-Delta-Ziffern
     const dgap = Math.max(2, Math.round(hM * 0.045));
-    const gap = Math.max(2, Math.round(hM * 0.06));
-    const aW = Math.round(hM * 1.8 * 1.33); // Pfeil-Breite
-    const aH = Math.round(aW * 1.1); // Pfeil etwas höher (viewBox 100×110)
     const digitW = Math.round((hM * 92) / 100);
-    const slotW = 3 * digitW + 2 * dgap; // IMMER 3-Stellen-Raum (Pfeil klebt links, Einer fix)
-    const boxW = aW + gap + slotW; // feste Gesamtbreite → Pfeil wandert NICHT mit den Ziffern
+    const slotW = 3 * digitW + 2 * dgap; // IMMER 3-Stellen-Raum (Einer rechtsbündig fix)
     const digits = String(m);
     const dh = digits.length > 3 ? Math.round((hM * 3) / digits.length) : hM; // ab 4 Stellen schrumpfen
-    return (_jsxs("div", { style: {
-            width: boxW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', gap,
+    return (_jsx("div", { style: {
+            width: slotW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap,
             filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))',
-        }, children: [_jsx("svg", { width: aW, height: aH, viewBox: "0 0 100 110", "aria-hidden": true, style: { display: 'block', flexShrink: 0 }, children: _jsx("path", { d: roadArrowPath(turn ?? { side: 'straight' }, { center: false }), fill: "#ffffff", stroke: "#111111", strokeWidth: 3.2, strokeLinejoin: "round", strokeLinecap: "round" }) }), _jsx("div", { style: { width: slotW, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }, children: [...digits].map((ch, i) => {
-                    const g = FLAP_DIGITS[ch];
-                    return g ? _jsx(Glyph, { d: g.d, advance: g.advance, h: dh, color: color }, i) : null;
-                }) })] }));
+        }, children: [...digits].map((ch, i) => {
+            const g = FLAP_DIGITS[ch];
+            return g ? _jsx(Glyph, { d: g.d, advance: g.advance, h: dh, color: color }, i) : null;
+        }) }));
 }
