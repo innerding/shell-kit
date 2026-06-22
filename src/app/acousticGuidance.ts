@@ -109,7 +109,7 @@ export interface AcousticGuide {
 // Browser brauchen eine User-Geste zum Start → die Runtime erzeugt ihn an der Play-Geste).
 export function createAcousticGuide(ctx: AudioContext): AcousticGuide {
   const master = ctx.createGain();
-  master.gain.value = 0.6;
+  master.gain.value = 0.9;   // Handy-Lautsprecher sind leise — Grundpegel höher
   master.connect(ctx.destination);
   let base = 0.45;
 
@@ -129,7 +129,9 @@ export function createAcousticGuide(ctx: AudioContext): AcousticGuide {
     o.connect(ga).connect(master); o.start(t); o.stop(t + dur + 0.04);
   };
   // links = Herz („lub-dub")
-  const heartbeat = (t: number, g: number) => { thump(t, 80, g, 0.16); thump(t + 0.15, 62, g * 0.8, 0.20); };
+  // Herz höher gelegt (110/86 statt 80/62 Hz) — sonst auf Handy-Lautsprechern unhörbarer Bass;
+  // bleibt „lub-dub", trägt aber auf kleinen Speakern. (Kopfhörer/Bone-Conduction vertragen tiefer.)
+  const heartbeat = (t: number, g: number) => { thump(t, 110, g, 0.16); thump(t + 0.15, 86, g * 0.8, 0.20); };
   // rechts = Schlag (heller Klack + Noise-Tick)
   const tock = (t: number, g: number, f: number) => {
     const o = ctx.createOscillator(); o.type = 'triangle';
