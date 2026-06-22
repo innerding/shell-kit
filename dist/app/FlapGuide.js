@@ -51,7 +51,7 @@ export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters, t
     return (_jsxs("div", { style: {
             width: boxW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', gap,
             filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))',
-        }, children: [_jsx("svg", { width: aW, height: aH, viewBox: "0 0 100 110", "aria-hidden": true, style: { display: 'block', flexShrink: 0 }, children: _jsx("path", { d: roadArrowPath(turn ?? { side: 'straight' }), fill: "#ffffff", stroke: "#111111", strokeWidth: 1.6, strokeLinejoin: "round", strokeLinecap: "round" }) }), _jsx("div", { style: { width: slotW, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }, children: [...digits].map((ch, i) => {
+        }, children: [_jsx("svg", { width: aW, height: aH, viewBox: "0 0 100 110", "aria-hidden": true, style: { display: 'block', flexShrink: 0 }, children: _jsx("path", { d: roadArrowPath(turn ?? { side: 'straight' }), fill: "#ffffff", stroke: "#111111", strokeWidth: 3.2, strokeLinejoin: "round", strokeLinecap: "round" }) }), _jsx("div", { style: { width: slotW, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }, children: [...digits].map((ch, i) => {
                     const g = FLAP_DIGITS[ch];
                     return g ? _jsx(Glyph, { d: g.d, advance: g.advance, h: dh, color: color }, i) : null;
                 }) })] }));
