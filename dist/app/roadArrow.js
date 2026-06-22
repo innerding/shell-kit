@@ -12,7 +12,7 @@ const BEND_DEG = { bearing: 30, hard: 66 };
 export function roadArrowPath(hint, opts) {
     const dir = hint.side === 'left' ? -1 : hint.side === 'right' ? 1 : 0;
     const bend = hint.side === 'straight' ? 0 : BEND_DEG[hint.degree ?? 'bearing'];
-    const B = [50, 99], J = [50, 57], seg = 27, hw = 8, headHw = 17.2, headLen = 17;
+    const B = [50, 98], J = [50, 57], seg = 27, hw = 8, headHw = 17.2, headLen = 17;
     const a = (dir * bend) * Math.PI / 180;
     const d2 = [Math.sin(a), -Math.cos(a)]; // obere Richtung (a=0 → hoch)
     const Tb = [J[0] + d2[0] * seg, J[1] + d2[1] * seg]; // Spitzen-Basis

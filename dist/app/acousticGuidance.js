@@ -92,18 +92,42 @@ export function createAcousticGuide(ctx) {
             d[i] = Math.random() * 2 - 1;
         return b;
     };
+    // „Handtrommel"-Schlag: Membran-Körper (Pitch-Drop) + Oberton + kurzer Anschlag-Klick.
+    // Auf Handy-Lautsprechern deutlich lauter/klarer als ein reiner tiefer Sinus; Charakter bleibt „Puls".
     const thump = (t, f, g, dur) => {
-        const o = ctx.createOscillator();
-        o.type = 'sine';
-        o.frequency.setValueAtTime(f, t);
-        o.frequency.exponentialRampToValueAtTime(Math.max(20, f * 0.7), t + dur);
-        const ga = ctx.createGain();
-        ga.gain.setValueAtTime(0.0001, t);
-        ga.gain.exponentialRampToValueAtTime(g, t + 0.012);
-        ga.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-        o.connect(ga).connect(master);
-        o.start(t);
-        o.stop(t + dur + 0.04);
+        const body = ctx.createOscillator();
+        body.type = 'triangle';
+        body.frequency.setValueAtTime(f * 1.5, t);
+        body.frequency.exponentialRampToValueAtTime(Math.max(30, f * 0.7), t + dur * 0.5);
+        const bg = ctx.createGain();
+        bg.gain.setValueAtTime(0.0001, t);
+        bg.gain.exponentialRampToValueAtTime(g, t + 0.006);
+        bg.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        body.connect(bg).connect(master);
+        body.start(t);
+        body.stop(t + dur + 0.03);
+        const ov = ctx.createOscillator();
+        ov.type = 'sine';
+        ov.frequency.setValueAtTime(f * 2.6, t);
+        ov.frequency.exponentialRampToValueAtTime(Math.max(45, f * 1.2), t + dur * 0.4);
+        const og = ctx.createGain();
+        og.gain.setValueAtTime(0.0001, t);
+        og.gain.exponentialRampToValueAtTime(g * 0.4, t + 0.005);
+        og.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.6);
+        ov.connect(og).connect(master);
+        ov.start(t);
+        ov.stop(t + dur * 0.7 + 0.03);
+        const ns = ctx.createBufferSource();
+        ns.buffer = noiseBuf(0.03);
+        const hp = ctx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = 1100;
+        const ng = ctx.createGain();
+        ng.gain.setValueAtTime(g * 0.5, t);
+        ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.02);
+        ns.connect(hp).connect(ng).connect(master);
+        ns.start(t);
+        ns.stop(t + 0.04);
     };
     // links = Herz („lub-dub")
     // Herz höher gelegt (110/86 statt 80/62 Hz) — sonst auf Handy-Lautsprechern unhörbarer Bass;
