@@ -92,42 +92,32 @@ export function createAcousticGuide(ctx) {
             d[i] = Math.random() * 2 - 1;
         return b;
     };
-    // „Handtrommel"-Schlag: Membran-Körper (Pitch-Drop) + Oberton + kurzer Anschlag-Klick.
-    // Auf Handy-Lautsprechern deutlich lauter/klarer als ein reiner tiefer Sinus; Charakter bleibt „Puls".
+    // „Handtrommel"-Schlag: Membran-Körper (Triangle = Obertöne, Pitch-Drop) + Anschlag-Klick.
+    // LINEARE Hüllkurven (dürfen auf 0) — robust, keine exponentiellen Null-Fallen. Auf Handy-
+    // Lautsprechern deutlich lauter/klarer als ein reiner tiefer Sinus; Charakter bleibt „Puls".
     const thump = (t, f, g, dur) => {
-        const body = ctx.createOscillator();
-        body.type = 'triangle';
-        body.frequency.setValueAtTime(f * 1.5, t);
-        body.frequency.exponentialRampToValueAtTime(Math.max(30, f * 0.7), t + dur * 0.5);
-        const bg = ctx.createGain();
-        bg.gain.setValueAtTime(0.0001, t);
-        bg.gain.exponentialRampToValueAtTime(g, t + 0.006);
-        bg.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-        body.connect(bg).connect(master);
-        body.start(t);
-        body.stop(t + dur + 0.03);
-        const ov = ctx.createOscillator();
-        ov.type = 'sine';
-        ov.frequency.setValueAtTime(f * 2.6, t);
-        ov.frequency.exponentialRampToValueAtTime(Math.max(45, f * 1.2), t + dur * 0.4);
-        const og = ctx.createGain();
-        og.gain.setValueAtTime(0.0001, t);
-        og.gain.exponentialRampToValueAtTime(g * 0.4, t + 0.005);
-        og.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.6);
-        ov.connect(og).connect(master);
-        ov.start(t);
-        ov.stop(t + dur * 0.7 + 0.03);
+        const o = ctx.createOscillator();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(f * 1.4, t);
+        o.frequency.linearRampToValueAtTime(Math.max(45, f * 0.85), t + dur * 0.6);
+        const ga = ctx.createGain();
+        ga.gain.setValueAtTime(0, t);
+        ga.gain.linearRampToValueAtTime(g, t + 0.006);
+        ga.gain.linearRampToValueAtTime(0, t + dur);
+        o.connect(ga).connect(master);
+        o.start(t);
+        o.stop(t + dur + 0.02);
         const ns = ctx.createBufferSource();
         ns.buffer = noiseBuf(0.03);
         const hp = ctx.createBiquadFilter();
         hp.type = 'highpass';
-        hp.frequency.value = 1100;
+        hp.frequency.value = 900;
         const ng = ctx.createGain();
-        ng.gain.setValueAtTime(g * 0.5, t);
-        ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.02);
+        ng.gain.setValueAtTime(g * 0.6, t);
+        ng.gain.linearRampToValueAtTime(0, t + 0.025);
         ns.connect(hp).connect(ng).connect(master);
         ns.start(t);
-        ns.stop(t + 0.04);
+        ns.stop(t + 0.045);
     };
     // links = Herz („lub-dub")
     // Herz höher gelegt (110/86 statt 80/62 Hz) — sonst auf Handy-Lautsprechern unhörbarer Bass;
@@ -206,11 +196,14 @@ export function createAcousticGuide(ctx) {
         cs.stop(tStop + 0.12);
         dirAt(tStop + 0.14, side, degree, level);
     };
+    // Browser suspendieren den Context (Lock/Hintergrund/iOS) — vor jedem Cue aufwecken, sonst Stille.
+    const wake = () => { if (ctx.state === 'suspended')
+        void ctx.resume(); };
     return {
         setIntensity(v01) { base = 0.08 + Math.max(0, Math.min(1, v01)) * 0.62; },
-        approachTurn(side, degree) { approach(ctx.currentTime + 0.02, 1.24, base, side, degree); },
-        direction(side, degree) { dirAt(ctx.currentTime, side, degree, base); },
-        alarm() { const t = ctx.currentTime; for (let i = 0; i < 7; i++)
+        approachTurn(side, degree) { wake(); approach(ctx.currentTime + 0.02, 1.24, base, side, degree); },
+        direction(side, degree) { wake(); dirAt(ctx.currentTime, side, degree, base); },
+        alarm() { wake(); const t = ctx.currentTime; for (let i = 0; i < 7; i++)
             thump(t + i * (0.24 - i * 0.018), 95 + i * 5, 0.7, 0.13); },
     };
 }
