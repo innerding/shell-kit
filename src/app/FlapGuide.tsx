@@ -42,10 +42,11 @@ function Glyph({ d, advance, h, color }: { d: string; advance: number; h: number
   );
 }
 
-export default function FlapGuide({ meters, direction = 'left', dockHeight, offRoute, rose, colorMeters }: {
+export default function FlapGuide({ meters, direction = 'left', dockHeight, offRoute, rose, colorMeters, hideArrow }: {
   meters: number; direction?: ArrowDir; dockHeight: number; offRoute?: boolean;
   rose?: CrossingRoseState | null;   // wenn gesetzt: Kreuzungsrose statt schlichtem Pfeil (M-D.3)
   colorMeters?: number;              // Distanz NUR für die Farbe (geglättet); Ziffern bleiben `meters`
+  hideArrow?: boolean;               // nur die Meter-Zahl, kein Pfeil/keine Rose (Karte führt selbst)
 }) {
   const m = Math.max(0, Math.round(meters));
   const cm = Math.max(0, colorMeters ?? m);             // Farb-Distanz (eased) — entkoppelt vom Ziffern-Sprung
@@ -57,20 +58,20 @@ export default function FlapGuide({ meters, direction = 'left', dockHeight, offR
   const isH = direction === 'left' || direction === 'right';
   const digitW = Math.round((hM * 92) / 100);
   const slotW = 3 * digitW + 2 * dgap;                // IMMER 3-Stellen-Raum (Ziffern rechtsbündig, Einer fix)
-  const boxW = aSize + gap + slotW;                   // FESTE Gesamtbreite → Pfeil klebt links, wandert NICHT mit den Ziffern
+  const boxW = hideArrow ? slotW : aSize + gap + slotW;  // FESTE Gesamtbreite → Pfeil klebt links, wandert NICHT mit den Ziffern
   return (
     <div style={{
       width: boxW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', gap,
       filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))',
     }}>
-      {rose
+      {!hideArrow && (rose
         ? <div style={{ flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }}>
             <CrossingRose state={rose} size={aSize} />
           </div>
         : <svg width={aSize} height={aSize} viewBox="20 20 60 60" aria-hidden
             style={{ display: 'block', flexShrink: 0, transform: isH ? `translateY(${Math.round((aSize - hM) / 2)}px)` : undefined }}>
             <path d={ARROW_GLYPHS[direction]} stroke={color} strokeWidth={8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>}
+          </svg>)}
       <div style={{ width: slotW, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }}>
         {[...String(m)].map((ch, i) => {
           const g = FLAP_DIGITS[ch];
