@@ -28,8 +28,12 @@ export function roadArrowPath(hint: TurnHint, opts?: { center?: boolean }): stri
   const den = Math.max(0.45, mm[0] * n1[0] + mm[1] * n1[1]), sc = hw / den;
   const Jl = [J[0] + mm[0] * sc, J[1] + mm[1] * sc], Jr = [J[0] - mm[0] * sc, J[1] - mm[1] * sc];
   const Bl = [B[0] + n1[0] * hw, B[1]], Br = [B[0] - n1[0] * hw, B[1]];
-  const Tl = [Tb[0] + n2[0] * hw, Tb[1] + n2[1] * hw], Tr = [Tb[0] - n2[0] * hw, Tb[1] - n2[1] * hw];
-  const bL = [Tb[0] + n2[0] * headHw, Tb[1] + n2[1] * headHw], bR = [Tb[0] - n2[0] * headHw, Tb[1] - n2[1] * headHw];
+  // Kopf-Basis tiefer ziehen (barbDrop) → die zwei Querkanten der Spitze gehen runter, der Kopf
+  // wird größer; die Spitze selbst bleibt oben (Größenordnung ~3× Strokestärke).
+  const barbDrop = 10;
+  const Hb = [Tb[0] - d2[0] * barbDrop, Tb[1] - d2[1] * barbDrop];
+  const Tl = [Hb[0] + n2[0] * hw, Hb[1] + n2[1] * hw], Tr = [Hb[0] - n2[0] * hw, Hb[1] - n2[1] * hw];
+  const bL = [Hb[0] + n2[0] * headHw, Hb[1] + n2[1] * headHw], bR = [Hb[0] - n2[0] * headHw, Hb[1] - n2[1] * headHw];
   const tip = [Tb[0] + d2[0] * headLen, Tb[1] + d2[1] * headLen];
   // Optional horizontal zentrieren (Lehr-Boxen). Beim Dock-Pfeil NICHT: dann hält der
   // Schaft (Basis x=50) seine Position, nur der obere Teil + Spitze knickt zur Seite.
