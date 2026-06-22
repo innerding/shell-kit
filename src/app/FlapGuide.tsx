@@ -33,7 +33,7 @@ function Glyph({ d, advance, h, color }: { d: string; advance: number; h: number
   const w = Math.round((h * 92) / 100);
   const tx = (92 - advance) / 2;
   return (
-    <svg width={w} height={h} viewBox="0 0 92 102" style={{ display: 'block' }} aria-hidden>
+    <svg width={w} height={h} viewBox="0 0 92 102" style={{ display: 'block', filter: 'drop-shadow(0 1.5px 1px rgba(0,0,0,0.7))' }} aria-hidden>
       <path d={d} fill={color} transform={`translate(${tx.toFixed(2)},0)`} />
     </svg>
   );
@@ -55,7 +55,6 @@ export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters }:
   return (
     <div style={{
       width: slotW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap,
-      filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.9))',   // weiche Kontur zur Lesbarkeit (kein „Box"-Schatten)
     }}>
       {[...digits].map((ch, i) => {
         const g = FLAP_DIGITS[ch];

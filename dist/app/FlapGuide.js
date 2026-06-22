@@ -31,7 +31,7 @@ function meterColor(m) {
 function Glyph({ d, advance, h, color }) {
     const w = Math.round((h * 92) / 100);
     const tx = (92 - advance) / 2;
-    return (_jsx("svg", { width: w, height: h, viewBox: "0 0 92 102", style: { display: 'block' }, "aria-hidden": true, children: _jsx("path", { d: d, fill: color, transform: `translate(${tx.toFixed(2)},0)` }) }));
+    return (_jsx("svg", { width: w, height: h, viewBox: "0 0 92 102", style: { display: 'block', filter: 'drop-shadow(0 1.5px 1px rgba(0,0,0,0.7))' }, "aria-hidden": true, children: _jsx("path", { d: d, fill: color, transform: `translate(${tx.toFixed(2)},0)` }) }));
 }
 export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters }) {
     const m = Math.max(0, Math.round(meters));
@@ -45,7 +45,6 @@ export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters })
     const dh = digits.length > 3 ? Math.round((hM * 3) / digits.length) : hM; // ab 4 Stellen schrumpfen
     return (_jsx("div", { style: {
             width: slotW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap,
-            filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.9))', // weiche Kontur zur Lesbarkeit (kein „Box"-Schatten)
         }, children: [...digits].map((ch, i) => {
             const g = FLAP_DIGITS[ch];
             return g ? _jsx(Glyph, { d: g.d, advance: g.advance, h: dh, color: color }, i) : null;
