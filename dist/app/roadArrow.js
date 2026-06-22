@@ -22,6 +22,17 @@ export function roadArrowPath(hint) {
     const Tl = [Tb[0] + n2[0] * hw, Tb[1] + n2[1] * hw], Tr = [Tb[0] - n2[0] * hw, Tb[1] - n2[1] * hw];
     const bL = [Tb[0] + n2[0] * headHw, Tb[1] + n2[1] * headHw], bR = [Tb[0] - n2[0] * headHw, Tb[1] - n2[1] * headHw];
     const tip = [Tb[0] + d2[0] * headLen, Tb[1] + d2[1] * headLen];
-    const P = (p) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`;
+    // Den Umriss horizontal in die viewBox zentrieren — sonst „läuft" der Pfeil bei scharfem
+    // Knick zur Seite aus dem Bild. So bleibt links wie rechts gleich viel Luft.
+    const pts = [Bl, Jl, Tl, bL, tip, bR, Tr, Jr, Br];
+    let minX = Infinity, maxX = -Infinity;
+    for (const p of pts) {
+        if (p[0] < minX)
+            minX = p[0];
+        if (p[0] > maxX)
+            maxX = p[0];
+    }
+    const shift = 50 - (minX + maxX) / 2;
+    const P = (p) => `${(p[0] + shift).toFixed(1)} ${p[1].toFixed(1)}`;
     return `M ${P(Bl)} L ${P(Jl)} L ${P(Tl)} L ${P(bL)} L ${P(tip)} L ${P(bR)} L ${P(Tr)} L ${P(Jr)} L ${P(Br)} Z`;
 }

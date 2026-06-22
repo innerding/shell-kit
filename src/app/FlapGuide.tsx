@@ -66,7 +66,7 @@ export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters, t
       {/* Straßenmarkierungs-Pfeil: ein Körper, schwarzer Stroke / weiße Fill, ein Gelenk = Grad.
           Keine eigene Farbe (die trägt die Meter-Zahl). */}
       <svg width={aW} height={aH} viewBox="0 0 100 110" aria-hidden style={{ display: 'block', flexShrink: 0 }}>
-        <path d={roadArrowPath(turn ?? { side: 'straight' })} fill="#ffffff" stroke="#111111" strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />
+        <path d={roadArrowPath(turn ?? { side: 'straight' })} fill="#ffffff" stroke="#111111" strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round" />
       </svg>
       <div style={{ width: slotW, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap }}>
         {[...digits].map((ch, i) => {
