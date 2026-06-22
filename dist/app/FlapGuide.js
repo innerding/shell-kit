@@ -45,7 +45,6 @@ export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters })
     const dh = digits.length > 3 ? Math.round((hM * 3) / digits.length) : hM; // ab 4 Stellen schrumpfen
     return (_jsx("div", { style: {
             width: slotW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap,
-            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))',
         }, children: [...digits].map((ch, i) => {
             const g = FLAP_DIGITS[ch];
             return g ? _jsx(Glyph, { d: g.d, advance: g.advance, h: dh, color: color }, i) : null;

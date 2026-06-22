@@ -55,7 +55,6 @@ export default function FlapGuide({ meters, dockHeight, offRoute, colorMeters }:
   return (
     <div style={{
       width: slotW, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: dgap,
-      filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.45))',
     }}>
       {[...digits].map((ch, i) => {
         const g = FLAP_DIGITS[ch];
