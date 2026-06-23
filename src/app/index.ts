@@ -6,6 +6,9 @@ export { default as WarnTriangle } from './WarnTriangle';   // Achtung-Wasserzei
 export { default as FlapClock, themeFromTint, clockWidthPx, type FlapTheme } from './FlapClock';  // Klappuhr H:MM
 export { default as FlapDelta } from './FlapDelta';         // Klapp-Delta ±MM
 export { default as FlapGuide } from './FlapGuide';         // Klapp-Wegweiser (Meter + Pfeil)
+export { default as ClockDock } from './ClockDock';         // Dock unten rechts (Play + Uhr + linke Region)
+export { default as GuidanceArrow } from './GuidanceArrow'; // Grad-Lehrer-Pfeil (türkis · weißer Stroke · Shadow)
+export * from './dock';                                     // Dock-Höhe: dockHeight (pure) + useDockHeight (Hook)
 export * from './roadArrow';                                // Straßen-Pfeil: roadArrowPath + TurnHint (Grad-Lehrer)
 export { default as CrossingRose } from './CrossingRoseGlyph';   // Kreuzungsrose-Glyph (Arme/Stubs/Pfeil + Morph, M-D.2)
 export { default as PoiDetailCard } from './PoiDetailCard'; // POI-Modal (i18n-agnostisch: labels-Prop)
