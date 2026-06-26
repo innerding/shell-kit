@@ -1,66 +1,52 @@
 #!/usr/bin/env node
-// Polarstern-WOFF-Pipeline (wiederholbar) — eine Quelle, ein Befehl:
-//   node scripts/build-polarstern.mjs            # holt die kanonische Schrift aus Cassiopeia (R2)
-//   node scripts/build-polarstern.mjs <font.json> # oder eine lokale JSON-Quelle
+// Polarstern-WOFF-Pipeline — holt das fertige WOFF-ARTEFAKT aus Cassiopeia (R2)
+// und bettet es (TTF→WOFF2 komprimiert) in src/app/polarstern.ts.
+//   node scripts/build-polarstern.mjs                 # holt polarstern-woff aus R2
+//   node scripts/build-polarstern.mjs <artifact.json> # oder lokales Artefakt
 //
-// Kette: Cassiopeia (R2, Stroke-JSON, 112 Glyphen)
-//   → fontforge (scripts/build_polarstern.py): Mittellinie → matrix(0.76923) → 100-Box
-//     → ×10 → EM 1000 → stroke('circular', Gewicht×10, round) = Kontur. Heavy = capsOnly,
-//     Tracking pro Gewicht ins advance, Kerning als kern-Paare.
-//   → 5× WOFF2 → base64 → src/app/polarstern.ts (installPolarsternFont, @font-face je Gewicht).
-// Erfordert fontforge im PATH (brew install fontforge).
-import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdtempSync, readdirSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+// Das Artefakt wird im Kleinen Bären (η „Anwar", opentype.js) gebacken & publiziert
+// — EINE Engine. Hier wird nur noch TTF→WOFF2 komprimiert (wawoff2) und eingebettet.
+// fontforge/Python entfallen (build_polarstern.py = Alt-Pfad, nicht mehr aufgerufen).
+import { compress } from 'wawoff2';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-// Strich-Kalibrierung (an fontforge weitergereicht): Polarstern ist Display-kalibriert
-// (Editor = absoluter non-scaling-Strich); proportional gebacken wäre er bei UI-Größen
-// ~7× zu dünn. ×3.5 = der abgenommene UI-Wert. Override per Env für Experimente.
-process.env.POLAR_STROKE_MULT = process.env.POLAR_STROKE_MULT || '3.5';
-const R2 = 'https://scim3-package-worker.jkygrbh6md.workers.dev/api/fonts/polarstern';
-// Stroke-Gewicht (Name) → CSS font-weight-Bereich; so greift vorhandene font-weight
-// automatisch. Bold deckt 700–800 ab, damit font-weight:800 NICHT auf Heavy (nur
-// Versalien) fällt; Heavy bleibt opt-in über genau 900.
-const WEIGHT_CLASS = { thin: 100, regular: 400, medium: 500, bold: '700 800', heavy: 900 };
-const ORDER = ['thin', 'regular', 'medium', 'bold', 'heavy'];
-
-const work = mkdtempSync(join(tmpdir(), 'polarstern-'));
+const R2 = 'https://scim3-package-worker.jkygrbh6md.workers.dev/api/fonts/polarstern-woff';
 const srcArg = process.argv[2];
 
-async function loadFont() {
-  if (srcArg) { console.log('Quelle: lokal', srcArg); return readFileSync(srcArg, 'utf8'); }
-  console.log('Quelle: Cassiopeia (R2)');
+async function loadArtifact() {
+  if (srcArg) { console.log('Quelle: lokal', srcArg); return JSON.parse(readFileSync(srcArg, 'utf8')); }
+  console.log('Quelle: Cassiopeia (R2) · polarstern-woff');
   const res = await fetch(R2);
   if (!res.ok) throw new Error(`R2 ${res.status}`);
-  return await res.text();
+  return await res.json();
 }
 
-const json = await loadFont();
-const fontPath = join(work, 'polarstern.json');
-writeFileSync(fontPath, json);
-const meta = JSON.parse(json);
-console.log(`  ${Object.keys(meta.glyphs || {}).length} Glyphen · ${(meta.weights || []).length} Gewichte`);
+const art = await loadArtifact();
+if (!Array.isArray(art.faces) || !art.faces.length) throw new Error('Kein WOFF-Artefakt (faces fehlen)');
+console.log(`  ${art.faces.length} Schnitte · ${art.glyphCount ?? '?'} Glyphen · Quelle ${art.source ?? '?'} ${art.createdAt ?? ''}`);
 
-console.log('fontforge → WOFF2 …');
-execFileSync('fontforge', ['-lang=py', '-script', join(HERE, 'build_polarstern.py'), fontPath, work],
-  { stdio: ['ignore', 'inherit', 'ignore'] });  // fontforge-„overlap"-Geschwätz auf stderr unterdrückt
+// CSS font-weight je Schnitt; SemiBold (600) deckt 600–700 ab, damit font-weight:bold
+// (=700) auf den schwersten gemischt-tauglichen Schnitt fällt, NICHT auf ExtraBold.
+const weightCss = (w) => (w === 600 ? '600 700' : String(w));
 
 const faces = [];
-for (const nm of ORDER) {
-  const p = join(work, `polarstern-${nm}.woff2`);
-  const b64 = readFileSync(p).toString('base64');
-  faces.push({ weight: WEIGHT_CLASS[nm], name: nm, b64 });
-  console.log(`  ${nm.padEnd(8)} weight=${WEIGHT_CLASS[nm]}  ${(b64.length / 1024).toFixed(1)} KB b64`);
+for (const f of art.faces) {
+  const ttf = new Uint8Array(Buffer.from(f.b64, 'base64'));
+  const woff2 = await compress(ttf);
+  const b64 = Buffer.from(woff2).toString('base64');
+  faces.push({ weight: weightCss(f.cssWeight), b64 });
+  console.log(`  ${String(f.name || f.cssWeight).padEnd(12)} weight=${weightCss(f.cssWeight)}  TTF ${(ttf.length / 1024).toFixed(0)} → WOFF2 ${(woff2.length / 1024).toFixed(0)} KB`);
 }
 
 const out = `// AUTO-GENERIERT von scripts/build-polarstern.mjs — NICHT von Hand ändern.
-// Polarstern (Stroke→Kontur, 5 Gewichte) als base64-WOFF2, einmal in den <head>.
-// Quelle = Cassiopeia (R2). Gewicht mappt automatisch auf vorhandene font-weight
-// (Thin 100 · Regular 400 · Medium 500 · Bold 700 · Heavy 900 = nur Versal).
-// Neu bauen: \`node scripts/build-polarstern.mjs\` (holt die Schrift aus R2).
+// Polarstern als base64-WOFF2, einmal in den <head>. Quelle = WOFF-Artefakt
+// 'polarstern-woff' aus Cassiopeia (R2), im Kleinen Bären (η Anwar, opentype.js)
+// gebacken; hier nur TTF→WOFF2 komprimiert. font-weight greift automatisch
+// (200/400/500 · 600 deckt bold/700 · 800 · 900 = nur Versal).
+// Neu bauen: \`node scripts/build-polarstern.mjs\` (holt das Artefakt aus R2).
 
 /** Font-Stack: Polarstern voran, system-ui als Fallback (Ladephase / fehlende Glyphen). */
 export const POLARSTERN_STACK = "'Polarstern', system-ui, -apple-system, sans-serif";
