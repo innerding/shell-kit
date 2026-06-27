@@ -25,6 +25,14 @@ export declare function solveRoute(net: SegmentedNet, waypoints: LatLng[]): Rout
  */
 export declare function solveRouteAvoiding(net: SegmentedNet, waypoints: LatLng[], dimmedStretchIds: Set<string>, penalty?: number): Route | null;
 /**
+ * Comfort-Route (ann_#2): wie solveRoute, aber jedes Bein darf höchstens `maxRatio`
+ * mal so lang wie der kürzeste Weg werden und minimiert in dieser Spanne die über
+ * belebtes (ausgedimmtes) Netz gelaufene Gesamtlänge. So überbrückt die Route keine
+ * langen Lücken mehr „souverän", sondern weicht ihnen aus, wo es bezahlbar ist —
+ * und nimmt die Lücke nur, wo kein Umweg im Budget liegt. Null wie solveRoute.
+ */
+export declare function solveRouteComfort(net: SegmentedNet, waypoints: LatLng[], dimmedStretchIds: Set<string>, maxRatio?: number): Route | null;
+/**
  * BAK-Stufe 2 — Engpass-Suche: routet jedes Bein (POI→POI) einzeln und summiert
  * die Länge des ausgedimmten Netzes je Bein. Liefert das Ziel-Waypoint-Index des
  * am stärksten belebten Beins (= der POI, dessen Zuweg klemmt) — damit die Shell

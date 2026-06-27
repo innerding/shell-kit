@@ -58,9 +58,11 @@ export interface Route {
 
 interface Edge {
   to: string;       // Ziel-Knoten-Schlüssel
-  weight: number;   // Streckenlänge (m)
+  weight: number;   // Streckenlänge (m) × penalty (Wegwahl-Gewicht)
   stretchId: string;
   pts: LatLng[];    // Strecken-Punkte in DIESER Reise-Richtung (start→to)
+  lenM: number;     // echte Streckenlänge (m) — für das Comfort-Routing-Budget
+  dimM: number;     // ausgedimmte Länge (= lenM, wenn Strecke belebt; sonst 0)
 }
 
 interface RouteGraph {
@@ -92,9 +94,12 @@ function buildRouteGraph(net: SegmentedNet, dimmed?: Set<string>, penalty = 1): 
     if (sk === ek) continue; // entartete Schleife — nicht routbar
     if (!coordOf.has(sk)) coordOf.set(sk, a);
     if (!coordOf.has(ek)) coordOf.set(ek, b);
-    const w = stretchLength(pts) * (dimmed && dimmed.has(s.id) ? penalty : 1);
-    add(sk, { to: ek, weight: w, stretchId: s.id, pts });
-    add(ek, { to: sk, weight: w, stretchId: s.id, pts: [...pts].reverse() });
+    const realLen = stretchLength(pts);
+    const isDim = !!(dimmed && dimmed.has(s.id));
+    const w = realLen * (isDim ? penalty : 1);
+    const dimM = isDim ? realLen : 0;
+    add(sk, { to: ek, weight: w, stretchId: s.id, pts, lenM: realLen, dimM });
+    add(ek, { to: sk, weight: w, stretchId: s.id, pts: [...pts].reverse(), lenM: realLen, dimM });
   }
   return { adj, coordOf };
 }
@@ -216,6 +221,117 @@ function solveChain(g: RouteGraph, waypoints: LatLng[]): Route | null {
   for (let i = 1; i < nodes.length; i++) {
     if (nodes[i] === nodes[i - 1]) continue; // gleicher Knoten → kein Bein
     const edges = shortestPath(g, nodes[i - 1], nodes[i]);
+    if (edges == null) return null;
+    for (const e of edges) appendEdge(points, stretchIds, legs, e);
+  }
+  if (stretchIds.length === 0) return null;
+  return { stretchIds, points, legs };
+}
+
+// ── BAK Comfort-Routing (ann_#2) ──────────────────────────────────────────────
+// Dijkstra mit λ-gewichteten Kanten: Kosten(e) = lenM + λ·dimM. λ=0 → kürzester Weg
+// (comfort-blind); λ→∞ → minimale ausgedimmte Länge (ungeachtet der Mehrlänge).
+function shortestPathW(g: RouteGraph, from: string, to: string, lambda: number): Edge[] | null {
+  if (from === to) return [];
+  const dist = new Map<string, number>([[from, 0]]);
+  const prev = new Map<string, { node: string; edge: Edge }>();
+  const visited = new Set<string>();
+  const frontier = new Set<string>([from]);
+  while (frontier.size > 0) {
+    let u: string | null = null;
+    let ud = Infinity;
+    for (const n of frontier) { const d = dist.get(n) ?? Infinity; if (d < ud) { ud = d; u = n; } }
+    if (u == null) break;
+    frontier.delete(u);
+    if (u === to) break;
+    visited.add(u);
+    for (const e of g.adj.get(u) ?? []) {
+      if (visited.has(e.to)) continue;
+      const nd = ud + e.lenM + lambda * e.dimM;
+      if (nd < (dist.get(e.to) ?? Infinity)) {
+        dist.set(e.to, nd);
+        prev.set(e.to, { node: u, edge: e });
+        frontier.add(e.to);
+      }
+    }
+  }
+  if (!prev.has(to) && from !== to) return null;
+  const edges: Edge[] = [];
+  let cur = to;
+  while (cur !== from) {
+    const p = prev.get(cur);
+    if (!p) return null;
+    edges.unshift(p.edge);
+    cur = p.node;
+  }
+  return edges;
+}
+
+function legMetrics(edges: Edge[]): { lenM: number; dimM: number } {
+  let lenM = 0, dimM = 0;
+  for (const e of edges) { lenM += e.lenM; dimM += e.dimM; }
+  return { lenM, dimM };
+}
+
+// Ein Bein comfort-optimal: die Länge darf maxRatio × den kürzesten Weg nicht
+// überschreiten; INNERHALB dieser Spanne die minimale ausgedimmte Gesamtlänge.
+// Lagrange-Suche über λ: das größte λ (= stärkste Meidung), dessen Weg noch im
+// Budget liegt, liefert die wenigst-belebte erlaubte Route.
+function solveLegComfort(g: RouteGraph, from: string, to: string, maxRatio: number): Edge[] | null {
+  const shortest = shortestPathW(g, from, to, 0);
+  if (shortest == null) return null;
+  const base = legMetrics(shortest);
+  if (base.lenM === 0 || base.dimM === 0) return shortest;   // nichts zu meiden
+  const budget = maxRatio * base.lenM;
+  let best = shortest;
+  let bestDim = base.dimM;
+  let bestLen = base.lenM;
+  let lo = 0, hi = 1e5;
+  for (let it = 0; it < 24; it++) {
+    const lambda = (lo + hi) / 2;
+    const path = shortestPathW(g, from, to, lambda);
+    if (path == null) { hi = lambda; continue; }
+    const m = legMetrics(path);
+    if (m.lenM <= budget + 1e-6) {
+      // im Budget → besser, wenn weniger belebt (oder gleich belebt, aber kürzer)
+      if (m.dimM < bestDim - 1e-6 || (Math.abs(m.dimM - bestDim) < 1e-6 && m.lenM < bestLen - 1e-6)) {
+        best = path; bestDim = m.dimM; bestLen = m.lenM;
+      }
+      lo = lambda;   // mehr Meidung wagen
+    } else {
+      hi = lambda;   // zu lang → Meidung lockern
+    }
+  }
+  return best;
+}
+
+/**
+ * Comfort-Route (ann_#2): wie solveRoute, aber jedes Bein darf höchstens `maxRatio`
+ * mal so lang wie der kürzeste Weg werden und minimiert in dieser Spanne die über
+ * belebtes (ausgedimmtes) Netz gelaufene Gesamtlänge. So überbrückt die Route keine
+ * langen Lücken mehr „souverän", sondern weicht ihnen aus, wo es bezahlbar ist —
+ * und nimmt die Lücke nur, wo kein Umweg im Budget liegt. Null wie solveRoute.
+ */
+export function solveRouteComfort(
+  net: SegmentedNet,
+  waypoints: LatLng[],
+  dimmedStretchIds: Set<string>,
+  maxRatio = 2,
+): Route | null {
+  if (waypoints.length < 2) return null;
+  const g = buildRouteGraph(net, dimmedStretchIds);
+  const nodes: string[] = [];
+  for (const w of waypoints) {
+    const n = nearestNode(g, w);
+    if (!n) return null;
+    nodes.push(n);
+  }
+  const points: LatLng[] = [];
+  const stretchIds: string[] = [];
+  const legs: RouteLeg[] = [];
+  for (let i = 1; i < nodes.length; i++) {
+    if (nodes[i] === nodes[i - 1]) continue;
+    const edges = solveLegComfort(g, nodes[i - 1], nodes[i], maxRatio);
     if (edges == null) return null;
     for (const e of edges) appendEdge(points, stretchIds, legs, e);
   }
