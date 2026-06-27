@@ -11,6 +11,7 @@ export * from './dock';
 export * from './roadArrow';
 export { default as CrossingRose } from './CrossingRoseGlyph';
 export { default as PoiDetailCard } from './PoiDetailCard';
+export { default as ThresholdColumn, evenBorders, type ThresholdColumnSettings } from './ThresholdColumn';
 export * from './geometry';
 export * from './decorations';
 export * from './render';

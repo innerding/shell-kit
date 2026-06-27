@@ -12,6 +12,7 @@ export * from './dock';                                     // Dock-Höhe: dockH
 export * from './roadArrow';                                // Straßen-Pfeil: roadArrowPath + TurnHint (Grad-Lehrer)
 export { default as CrossingRose } from './CrossingRoseGlyph';   // Kreuzungsrose-Glyph (Arme/Stubs/Pfeil + Morph, M-D.2)
 export { default as PoiDetailCard } from './PoiDetailCard'; // POI-Modal (i18n-agnostisch: labels-Prop)
+export { default as ThresholdColumn, evenBorders, type ThresholdColumnSettings } from './ThresholdColumn'; // Skala-Grenzen-Editor (P01-Säule; Runtime-Farbwelt nutzt editable='borders')
 // flapGlyphs/arrowGlyphs bleiben INTERN (relativ importiert) — FLAP_DIGITS würde sonst
 // mit flap.ts (Ziffern-String) kollidieren.
 export * from './geometry';     // Geometrie-Vokabular (Formen) + geometryOf
