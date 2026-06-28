@@ -8,7 +8,7 @@
 // Mehrere Umwege entstehen durch progressiv strengeres Meiden: bei `comfort` nur die
 // breachenden Stretches (kürzester-gerade-noch-komfortabel), tiefer → mehr gemieden
 // (ruhiger, länger). solveRouteAvoiding meidet per PENALTY (weich), darum die Filterung.
-import { solveRoute, solveRouteAvoiding, type Route, type RouteLeg } from './bak.js';
+import { solveRoute, solveRouteAvoiding, solveRoundComfort, type Route, type RouteLeg } from './bak.js';
 import { polylineLengthM } from './walker.js';
 import { similarityTier } from './similarity.js';
 import type { CircusPoi } from './poiDompteur.js';
@@ -170,4 +170,81 @@ export function suggestForTarget(
     if (hasComfortable(s, comfort)) return { targetId: c.id, substituted: true, suggestions: s };
   }
   return { targetId: target.id, substituted: false, suggestions: own };   // best effort
+}
+
+// ── Sechsermischung (ann_z) ───────────────────────────────────────────────────
+// Aus den vier Engine-Teilen ein Karussell von ≤ max Vorschlägen über DREI Achsen
+// (POI · Duration · Comfort), je bis zu 2 Schwerpunkte — dedupliziert (real oft < 6).
+// Keine Präferenz-Abfrage: das Karussell SPANNT den Raum auf, der Tap verrät die Wahl.
+export type Emphasis = 'poi' | 'duration' | 'comfort';
+
+export interface MixSuggestion {
+  route: Route;
+  lengthM: number;
+  peakLoad: number;
+  stage: number;
+  deltaM: number;
+  targetId: string;      // bedientes Ziel (evtl. kinship-Alternative)
+  isRound: boolean;      // Rundtour?
+  emphases: Emphasis[];  // welche Achse(n) dieser Vorschlag verkörpert
+}
+
+export function sixMix(
+  net: SegmentedNet,
+  start: LatLng,
+  target: CircusPoi,
+  candidates: CircusPoi[],
+  avgById: Map<string, number>,
+  scale: ScaleSpec,
+  comfort: number,
+  dimmedStretchIds: Set<string>,
+  maxRatio = 2,
+  max = 6,
+): MixSuggestion[] {
+  const served = suggestForTarget(net, start, target, candidates, avgById, scale, comfort, max);
+  const fan = served.suggestions;
+  if (fan.length === 0) return [];
+  const servedId = served.targetId;
+  const servedPoi = candidates.find((c) => c.id === servedId) ?? target;
+  const directLen = fan[0].lengthM;   // fan ist nach Länge aufsteigend → [0] = kürzeste
+
+  const acc = new Map<string, MixSuggestion>();
+  const add = (s: { route: Route; lengthM: number; peakLoad: number; stage: number; deltaM: number },
+               targetId: string, isRound: boolean, emphasis: Emphasis) => {
+    if (acc.size >= max) return;
+    const key = (isRound ? 'R|' : '') + targetId + '|' + s.route.stretchIds.join(',');
+    const ex = acc.get(key);
+    if (ex) { if (!ex.emphases.includes(emphasis)) ex.emphases.push(emphasis); return; }
+    acc.set(key, { ...s, targetId, isRound, emphases: [emphasis] });
+  };
+  const calmestOf = (list: RouteSuggestion[]) => list.reduce((m, s) => (s.peakLoad < m.peakLoad ? s : m), list[0]);
+  const bestInBudget = (list: RouteSuggestion[]) => {
+    const ib = list.filter((s) => s.peakLoad <= comfort);
+    return calmestOf(ib.length ? ib : list);
+  };
+
+  // Achsen-Champions (je Achse die Schwerpunkte):
+  add(fan[0], servedId, false, 'duration');                 // Duration: schnellste
+  add(calmestOf(fan), servedId, false, 'comfort');          // Comfort: ruhigste
+  add(bestInBudget(fan), servedId, false, 'poi');           // POI: dein Ziel, bester Weg
+  // Duration: längere Runde
+  const round = solveRoundComfort(net, start, servedPoi.coord, dimmedStretchIds, maxRatio);
+  if (round) {
+    const rl = polylineLengthM(round.points);
+    const rp = peakLoadOf(round.stretchIds, avgById);
+    add({ route: round, lengthM: rl, peakLoad: rp, stage: stageOf(rp, scale), deltaM: Math.max(0, rl - directLen) },
+        servedId, true, 'duration');
+  }
+  // POI: verwandtes (kinship) Alternativ-Ziel — nächstes zuerst
+  const kin = candidates
+    .filter((c) => c.id !== servedId && similarityTier(servedPoi.subcategory, c.subcategory) >= 1)
+    .sort((a, b) => haversineM(servedPoi.coord, a.coord) - haversineM(servedPoi.coord, b.coord));
+  if (kin.length) {
+    const ks = routeSuggestions(net, start, kin[0].coord, avgById, scale, comfort, max);
+    if (ks.length) add(bestInBudget(ks), kin[0].id, false, 'poi');
+  }
+  // Auffüllen aus dem Fan (Längen-Spreizung), bis max — Emphasis nach Natur.
+  for (const s of fan) add(s, servedId, false, s.peakLoad <= comfort ? 'comfort' : 'duration');
+
+  return [...acc.values()].sort((a, b) => a.lengthM - b.lengthM).slice(0, max);
 }
