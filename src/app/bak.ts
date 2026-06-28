@@ -339,6 +339,44 @@ export function solveRouteComfort(
   return { stretchIds, points, legs };
 }
 
+// Zwei Routen zu einer durchgehenden verketten (b beginnt, wo a endet → geteilten Punkt
+// nicht doppeln; legs/Indizes von b um a's Länge verschieben).
+function joinRoutes(a: Route, b: Route): Route {
+  const points = a.points.concat(b.points.slice(1));
+  const offset = a.points.length - 1;
+  const legs: RouteLeg[] = [
+    ...(a.legs ?? []),
+    ...(b.legs ?? []).map((l) => ({ stretchId: l.stretchId, from: l.from + offset, to: l.to + offset })),
+  ];
+  return { stretchIds: a.stretchIds.concat(b.stretchIds), points, legs };
+}
+
+/**
+ * Comfort-RUNDE (ann_onboarding): Hin- und Rückweg als Schleife Start→Ziel→Start, wobei der
+ * Rückweg den Hinweg MEIDET (keine Strecken-Doppelung) — beide Beine comfort-geroutet
+ * (`solveRouteComfort`). Gibt es keinen anderen Rückweg (Stichweg-Gipfel), fällt es bewusst auf
+ * den comfortablen Retrace zurück, statt „keine Runde" zu liefern. Null nur, wenn schon der
+ * Hinweg unmöglich ist.
+ */
+export function solveRoundComfort(
+  net: SegmentedNet,
+  start: LatLng,
+  target: LatLng,
+  dimmedStretchIds: Set<string>,
+  maxRatio = 2,
+): Route | null {
+  const outward = solveRouteComfort(net, [start, target], dimmedStretchIds, maxRatio);
+  if (!outward) return null;
+  const used = new Set(outward.stretchIds);
+  const netBack: SegmentedNet = { ...net, stretches: net.stretches.filter((s) => !used.has(s.id)) };
+  // Rückweg ohne die Hinweg-Strecken; klappt das nicht, comfortabler Retrace übers volle Netz.
+  const back =
+    solveRouteComfort(netBack, [target, start], dimmedStretchIds, maxRatio) ??
+    solveRouteComfort(net, [target, start], dimmedStretchIds, maxRatio);
+  if (!back) return null;
+  return joinRoutes(outward, back);
+}
+
 /**
  * BAK-Stufe 2 — Engpass-Suche: routet jedes Bein (POI→POI) einzeln und summiert
  * die Länge des ausgedimmten Netzes je Bein. Liefert das Ziel-Waypoint-Index des
