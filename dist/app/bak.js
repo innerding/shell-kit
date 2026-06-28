@@ -346,22 +346,39 @@ function joinRoutes(a, b) {
     return { stretchIds: a.stretchIds.concat(b.stretchIds), points, legs };
 }
 /**
- * Comfort-RUNDE (ann_onboarding): Hin- und Rückweg als Schleife Start→Ziel→Start, wobei der
- * Rückweg den Hinweg MEIDET (keine Strecken-Doppelung) — beide Beine comfort-geroutet
- * (`solveRouteComfort`). Gibt es keinen anderen Rückweg (Stichweg-Gipfel), fällt es bewusst auf
- * den comfortablen Retrace zurück, statt „keine Runde" zu liefern. Null nur, wenn schon der
- * Hinweg unmöglich ist.
+ * Comfort-RUNDE (ann_onboarding): Schleife Start→Ziel→Start. Der Rückweg MEIDET den Hinweg
+ * (zuerst ganz ohne Hinweg-Strecken = comfortabel; sonst penalisiert = reibt sie nur, wo nötig).
+ * **Überlappung ist bis `maxOverlap` (Default 25 %) der Gesamtlänge erlaubt** — doppelt begangene
+ * Segmente (z. B. ein geteilter Verbindungs-Stub). Liegt die Überlappung darüber (bis hin zum
+ * reinen Retrace), wird **null** geliefert (= keine sinnvolle Runde). Null auch, wenn der Hinweg
+ * unmöglich ist. (Regel: docs/karussell_auswahlregeln.md.)
  */
-export function solveRoundComfort(net, start, target, dimmedStretchIds, maxRatio = 2) {
+export function solveRoundComfort(net, start, target, dimmedStretchIds, maxRatio = 2, maxOverlap = 0.25) {
     const outward = solveRouteComfort(net, [start, target], dimmedStretchIds, maxRatio);
     if (!outward)
         return null;
     const used = new Set(outward.stretchIds);
     const netBack = { ...net, stretches: net.stretches.filter((s) => !used.has(s.id)) };
-    // Rückweg ohne die Hinweg-Strecken; klappt das nicht, comfortabler Retrace übers volle Netz.
+    // 1) Rückweg ganz ohne Hinweg-Strecken (comfortabel). 2) sonst: Hinweg penalisiert meiden
+    //    (solveRouteAvoiding) → reibt nur, wo unvermeidbar = minimale Überlappung.
     const back = solveRouteComfort(netBack, [target, start], dimmedStretchIds, maxRatio) ??
-        solveRouteComfort(net, [target, start], dimmedStretchIds, maxRatio);
+        solveRouteAvoiding(net, [target, start], used, 1000);
     if (!back)
+        return null;
+    // Überlappung nach LÄNGE: doppelt begangene Segmente (Hin ∩ Rück) zählen 2×.
+    const lens = buildStretchLengths(net);
+    const backSet = new Set(back.stretchIds);
+    let sharedLen = 0;
+    for (const id of used)
+        if (backSet.has(id))
+            sharedLen += lens.get(id) ?? 0;
+    let total = 0;
+    for (const id of outward.stretchIds)
+        total += lens.get(id) ?? 0;
+    for (const id of back.stretchIds)
+        total += lens.get(id) ?? 0;
+    const overlap = total > 0 ? (2 * sharedLen) / total : 1;
+    if (overlap > maxOverlap)
         return null;
     return joinRoutes(outward, back);
 }

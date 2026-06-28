@@ -33,13 +33,14 @@ export declare function solveRouteAvoiding(net: SegmentedNet, waypoints: LatLng[
  */
 export declare function solveRouteComfort(net: SegmentedNet, waypoints: LatLng[], dimmedStretchIds: Set<string>, maxRatio?: number): Route | null;
 /**
- * Comfort-RUNDE (ann_onboarding): Hin- und Rückweg als Schleife Start→Ziel→Start, wobei der
- * Rückweg den Hinweg MEIDET (keine Strecken-Doppelung) — beide Beine comfort-geroutet
- * (`solveRouteComfort`). Gibt es keinen anderen Rückweg (Stichweg-Gipfel), fällt es bewusst auf
- * den comfortablen Retrace zurück, statt „keine Runde" zu liefern. Null nur, wenn schon der
- * Hinweg unmöglich ist.
+ * Comfort-RUNDE (ann_onboarding): Schleife Start→Ziel→Start. Der Rückweg MEIDET den Hinweg
+ * (zuerst ganz ohne Hinweg-Strecken = comfortabel; sonst penalisiert = reibt sie nur, wo nötig).
+ * **Überlappung ist bis `maxOverlap` (Default 25 %) der Gesamtlänge erlaubt** — doppelt begangene
+ * Segmente (z. B. ein geteilter Verbindungs-Stub). Liegt die Überlappung darüber (bis hin zum
+ * reinen Retrace), wird **null** geliefert (= keine sinnvolle Runde). Null auch, wenn der Hinweg
+ * unmöglich ist. (Regel: docs/karussell_auswahlregeln.md.)
  */
-export declare function solveRoundComfort(net: SegmentedNet, start: LatLng, target: LatLng, dimmedStretchIds: Set<string>, maxRatio?: number): Route | null;
+export declare function solveRoundComfort(net: SegmentedNet, start: LatLng, target: LatLng, dimmedStretchIds: Set<string>, maxRatio?: number, maxOverlap?: number): Route | null;
 /**
  * BAK-Stufe 2 — Engpass-Suche: routet jedes Bein (POI→POI) einzeln und summiert
  * die Länge des ausgedimmten Netzes je Bein. Liefert das Ziel-Waypoint-Index des
