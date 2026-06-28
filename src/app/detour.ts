@@ -10,6 +10,8 @@
 // (ruhiger, länger). solveRouteAvoiding meidet per PENALTY (weich), darum die Filterung.
 import { solveRoute, solveRouteAvoiding, type Route, type RouteLeg } from './bak.js';
 import { polylineLengthM } from './walker.js';
+import { similarityTier } from './similarity.js';
+import type { CircusPoi } from './poiDompteur.js';
 import { stageOf, type ScaleSpec } from './scale.js';
 import type { SegmentedNet, LatLng } from './anthem';
 
@@ -121,4 +123,51 @@ export function routeSuggestions(
   }
   out.sort((a, b) => a.lengthM - b.lengthM);                      // Dauer aufsteigend (v1-Default)
   return out.slice(0, Math.max(1, max));
+}
+
+// Luftlinie (m) zwischen zwei [lat,lng] — für die „nächstes Kinship-POI"-Wahl.
+function haversineM([lat1, lng1]: LatLng, [lat2, lng2]: LatLng): number {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180, dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Gibt es unter den Vorschlägen mindestens einen comfortablen (peak ≤ comfort)?
+const hasComfortable = (sug: RouteSuggestion[], comfort: number) => sug.some((s) => s.peakLoad <= comfort);
+
+export interface TargetSuggestion {
+  targetId: string;                 // tatsächlich bedientes Ziel (evtl. das Substitut)
+  substituted: boolean;             // wurde das Wunsch-Ziel ersetzt?
+  suggestions: RouteSuggestion[];   // Routen-Fächer zu targetId
+}
+
+/**
+ * Vorschläge zu einem Wunsch-Ziel — mit KLASSEN-KONFORMER Substitution (ann_x). Hat das
+ * Wunsch-Ziel keinen comfortablen Weg, wird es durch das **nächstgelegene POI kompatibler
+ * Klasse** (`similarityTier ≥ 1`, dieselbe Kinship-Schranke wie der POI-Dompteur) ersetzt,
+ * das einen comfortablen Weg hat — Gipfel↛Café. Klappt keiner, kommt best-effort das
+ * Wunsch-Ziel zurück (evtl. belebt; nie „nichts").
+ */
+export function suggestForTarget(
+  net: SegmentedNet,
+  start: LatLng,
+  target: CircusPoi,
+  candidates: CircusPoi[],
+  avgById: Map<string, number>,
+  scale: ScaleSpec,
+  comfort: number,
+  max = 6,
+): TargetSuggestion {
+  const own = routeSuggestions(net, start, target.coord, avgById, scale, comfort, max);
+  if (hasComfortable(own, comfort)) return { targetId: target.id, substituted: false, suggestions: own };
+  // Kein comfortabler Weg → klassen-konforme Substitution, nächstes Kinship-POI zuerst.
+  const kin = candidates
+    .filter((c) => c.id !== target.id && similarityTier(target.subcategory, c.subcategory) >= 1)
+    .sort((a, b) => haversineM(target.coord, a.coord) - haversineM(target.coord, b.coord));
+  for (const c of kin) {
+    const s = routeSuggestions(net, start, c.coord, avgById, scale, comfort, max);
+    if (hasComfortable(s, comfort)) return { targetId: c.id, substituted: true, suggestions: s };
+  }
+  return { targetId: target.id, substituted: false, suggestions: own };   // best effort
 }
