@@ -23,7 +23,7 @@ export interface RouteSuggestion {
     stage: number;
     deltaM: number;
 }
-export declare function routeSuggestions(net: SegmentedNet, start: LatLng, target: LatLng, avgById: Map<string, number>, scale: ScaleSpec, comfort: number, max?: number): RouteSuggestion[];
+export declare function routeSuggestions(net: SegmentedNet, start: LatLng, target: LatLng, avgById: Map<string, number>, scale: ScaleSpec, comfort: number, max?: number, bandStages?: number): RouteSuggestion[];
 export interface TargetSuggestion {
     targetId: string;
     substituted: boolean;

@@ -68,28 +68,44 @@ export function detourPicks(net, waypoints, avgById, scale, comfort, limit = 4) 
     out.sort((a, b) => a.deltaM - b.deltaM); // kürzester komfortabler Umweg zuerst
     return out.slice(0, Math.max(1, limit));
 }
-export function routeSuggestions(net, start, target, avgById, scale, comfort, max = 6) {
+export function routeSuggestions(net, start, target, avgById, scale, comfort, max = 6, bandStages = 2) {
     const direct = solveRoute(net, [start, target]);
     if (!direct)
         return [];
     const directLen = polylineLengthM(direct.points);
-    const directPeak = peakLoadOf(direct.stretchIds, avgById);
-    const out = [{
-            route: direct, lengthM: directLen, peakLoad: directPeak, stage: stageOf(directPeak, scale), deltaM: 0,
-        }];
-    const seen = new Set([direct.stretchIds.join(',')]); // direkte Route ist schon drin
-    for (const d of detourPicks(net, [start, target], avgById, scale, comfort, max)) {
-        const sig = d.stretchIds.join(',');
+    const all = [];
+    const seen = new Set();
+    const add = (route, len) => {
+        const sig = route.stretchIds.join(',');
         if (seen.has(sig))
-            continue;
+            return;
         seen.add(sig);
-        out.push({
-            route: { stretchIds: d.stretchIds, points: d.points, legs: d.legs },
-            lengthM: directLen + d.deltaM, peakLoad: d.peakLoad, stage: d.stage, deltaM: d.deltaM,
-        });
+        const peak = peakLoadOf(route.stretchIds, avgById);
+        all.push({ route, lengthM: len, peakLoad: peak, stage: stageOf(peak, scale), deltaM: Math.max(0, len - directLen) });
+    };
+    add(direct, directLen);
+    // Ruhigere Varianten gestaffelt — unabhängig vom Breach (so entsteht der Fächer auch,
+    // wenn die kürzeste Route schon ruhig ist, sofern das Netz andere Wege hergibt).
+    for (const t of [comfort, comfort * 0.7, comfort * 0.45]) {
+        if (t <= 0)
+            continue;
+        const avoid = new Set();
+        for (const [id, a] of avgById)
+            if (a > t)
+                avoid.add(id);
+        if (avoid.size === 0)
+            continue;
+        const r = solveRouteAvoiding(net, [start, target], avoid);
+        if (r && r.stretchIds.length)
+            add(r, polylineLengthM(r.points));
     }
-    out.sort((a, b) => a.lengthM - b.lengthM); // Dauer aufsteigend (v1-Default)
-    return out.slice(0, Math.max(1, max));
+    // Band: Spitzenlast ≤ Comfort + bandStages Stufen; sonst die am wenigsten belebte behalten.
+    const capStage = stageOf(comfort, scale) + bandStages;
+    let band = all.filter((s) => s.stage <= capStage);
+    if (band.length === 0)
+        band = [all.reduce((m, s) => (s.peakLoad < m.peakLoad ? s : m), all[0])];
+    band.sort((a, b) => a.lengthM - b.lengthM);
+    return band.slice(0, Math.max(1, max));
 }
 // Luftlinie (m) zwischen zwei [lat,lng] — für die „nächstes Kinship-POI"-Wahl.
 function haversineM([lat1, lng1], [lat2, lng2]) {
