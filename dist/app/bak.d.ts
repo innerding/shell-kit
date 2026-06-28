@@ -33,6 +33,14 @@ export declare function solveRouteAvoiding(net: SegmentedNet, waypoints: LatLng[
  */
 export declare function solveRouteComfort(net: SegmentedNet, waypoints: LatLng[], dimmedStretchIds: Set<string>, maxRatio?: number): Route | null;
 /**
+ * Comfort-RUNDE (ann_onboarding): Hin- und Rückweg als Schleife Start→Ziel→Start, wobei der
+ * Rückweg den Hinweg MEIDET (keine Strecken-Doppelung) — beide Beine comfort-geroutet
+ * (`solveRouteComfort`). Gibt es keinen anderen Rückweg (Stichweg-Gipfel), fällt es bewusst auf
+ * den comfortablen Retrace zurück, statt „keine Runde" zu liefern. Null nur, wenn schon der
+ * Hinweg unmöglich ist.
+ */
+export declare function solveRoundComfort(net: SegmentedNet, start: LatLng, target: LatLng, dimmedStretchIds: Set<string>, maxRatio?: number): Route | null;
+/**
  * BAK-Stufe 2 — Engpass-Suche: routet jedes Bein (POI→POI) einzeln und summiert
  * die Länge des ausgedimmten Netzes je Bein. Liefert das Ziel-Waypoint-Index des
  * am stärksten belebten Beins (= der POI, dessen Zuweg klemmt) — damit die Shell
