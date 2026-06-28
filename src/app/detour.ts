@@ -77,3 +77,48 @@ export function detourPicks(
   out.sort((a, b) => a.deltaM - b.deltaM);                        // kürzester komfortabler Umweg zuerst
   return out.slice(0, Math.max(1, limit));
 }
+
+// ── Routen-Vorschlagsystem (ann_onboarding, v1) ───────────────────────────────
+// Ein angetipptes Ziel → ein FÄCHER von Routen dorthin: die direkte (schnellste,
+// evtl. belebte) + die gestaffelt ruhigeren Varianten (über detourPicks). Jede mit
+// Länge, Spitzen-Last und Comfort-Stufe. Nach LÄNGE sortiert (kürzeste zuerst).
+// Comfort ist hier ANKER (Filter der Umwege), nicht Verbot: die direkte Route
+// bleibt immer als erster Vorschlag erhalten.
+// v2 (offen): Cross-Ziel-Alternativen („erste-3-Durations"), Runde, Substitution.
+export interface RouteSuggestion {
+  route: Route;        // {stretchIds, points, legs}
+  lengthM: number;     // Gesamtlänge (m)
+  peakLoad: number;    // 0..1, höchste Ø-Last auf der Route
+  stage: number;       // stageOf(peakLoad) — Comfort-Stufe (sehr ruhig…voll)
+  deltaM: number;      // Mehrweg ggü. der direkten Route (≥ 0)
+}
+
+export function routeSuggestions(
+  net: SegmentedNet,
+  start: LatLng,
+  target: LatLng,
+  avgById: Map<string, number>,
+  scale: ScaleSpec,
+  comfort: number,
+  max = 6,
+): RouteSuggestion[] {
+  const direct = solveRoute(net, [start, target]);
+  if (!direct) return [];
+  const directLen = polylineLengthM(direct.points);
+  const directPeak = peakLoadOf(direct.stretchIds, avgById);
+  const out: RouteSuggestion[] = [{
+    route: direct, lengthM: directLen, peakLoad: directPeak, stage: stageOf(directPeak, scale), deltaM: 0,
+  }];
+  const seen = new Set<string>([direct.stretchIds.join(',')]);   // direkte Route ist schon drin
+  for (const d of detourPicks(net, [start, target], avgById, scale, comfort, max)) {
+    const sig = d.stretchIds.join(',');
+    if (seen.has(sig)) continue;
+    seen.add(sig);
+    out.push({
+      route: { stretchIds: d.stretchIds, points: d.points, legs: d.legs },
+      lengthM: directLen + d.deltaM, peakLoad: d.peakLoad, stage: d.stage, deltaM: d.deltaM,
+    });
+  }
+  out.sort((a, b) => a.lengthM - b.lengthM);                      // Dauer aufsteigend (v1-Default)
+  return out.slice(0, Math.max(1, max));
+}
