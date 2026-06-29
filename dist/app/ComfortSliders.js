@@ -56,7 +56,7 @@ function readable(hex) {
     const r = parseInt(n.slice(0, 2), 16), g = parseInt(n.slice(2, 4), 16), b = parseInt(n.slice(4, 6), 16);
     return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#14223e' : '#fff';
 }
-export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, gradient, loadLevel, manifest, cascade, activeIdx, activeColor }) {
+export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, gradient, loadLevel, manifest, cascade, activeIdx, activeColor, strokeBlink }) {
     const trackRef = useRef(null);
     const dragging = useRef(false);
     const collapseTimer = useRef(null);
@@ -79,7 +79,7 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
     return (_jsxs("div", { style: { position: 'relative', width: expanded ? W_EXP : W_COL, height: 155, flexShrink: 0, transition: 'width 0.22s ease', userSelect: 'none', WebkitUserSelect: 'none' }, children: [_jsxs("div", { ref: trackRef, style: { position: 'absolute', left: expanded ? L_GAP_EXP : L_GAP_COL, top: 0, bottom: 0, width: STRIP_W, overflow: 'hidden', transition: 'left 0.22s ease', pointerEvents: 'none' }, children: [_jsx("div", { style: { position: 'absolute', inset: 0, borderRadius: 3, background: gradient } }), _jsx("div", { style: { position: 'absolute', inset: 1, borderRadius: 2, background: gradient } }), loadLevel != null && loadLevel < 0.999 && (
                     // Sofortfix: nur ein 3px-Band am RECHTEN Rand (linker Rand nach rechts gerückt)
                     // — die volle Mesh-Farbe bleibt links sichtbar; der Bleach deutet den Pegel an.
-                    _jsx("div", { style: { position: 'absolute', left: STRIP_W - 4, right: 1, top: 1, bottom: insetBottom(loadLevel), borderRadius: 1, background: 'rgba(255,255,255,0.62)' } })), maxValue < 0.99 && (_jsx("div", { style: { position: 'absolute', left: 0, right: 0, bottom: insetBottom(maxValue), height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' } }))] }), (() => {
+                    _jsx("div", { style: { position: 'absolute', left: STRIP_W - 4, right: 1, top: 1, bottom: insetBottom(loadLevel), borderRadius: 1, background: 'rgba(255,255,255,0.62)' } })), maxValue < 0.99 && (_jsx("div", { style: { position: 'absolute', left: 0, right: 0, bottom: insetBottom(maxValue), height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' } }))] }), strokeBlink && _jsx("style", { children: '@keyframes ckStrokeBlink{0%,49.9%{opacity:1}50%,100%{opacity:0}}' }), (() => {
                 const sLineW = (STRIP_W + 12) * 0.9; // ×0.9 der Breite
                 const sLeft = (expanded ? L_GAP_EXP : L_GAP_COL) - (sLineW - STRIP_W) / 2;
                 return (_jsx("div", { style: {
@@ -87,6 +87,7 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
                         bottom: insetBottom(linePos), height: expanded ? 3 : 2, background: '#fff', borderRadius: 999,
                         boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 3, pointerEvents: 'none',
                         transition: 'left 0.22s ease',
+                        animation: strokeBlink ? 'ckStrokeBlink 1s step-end infinite' : undefined,
                     } }));
             })(), manifest && manifest.length > 0 && (_jsx("div", { "aria-hidden": true, style: {
                     position: 'absolute', top: '50%', right: W_EXP - L_GAP_EXP + 10, transform: 'translateY(-50%)',

@@ -23,8 +23,11 @@ export interface StripProps {
      *  (`activeColor`) statt weiß gezeichnet (Rückmeldung des gewählten Levels). */
     activeIdx?: number;
     activeColor?: string;
+    /** Lässt den verschiebbaren Stroke HART blinken (An/Aus, kein Fade) — z. B. als
+     *  Aufforderung am Master-Schauglas, einen Basis-Wert festzulegen. */
+    strokeBlink?: boolean;
 }
-export declare function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, gradient, loadLevel, manifest, cascade, activeIdx, activeColor }: StripProps): import("react").JSX.Element;
+export declare function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, gradient, loadLevel, manifest, cascade, activeIdx, activeColor, strokeBlink }: StripProps): import("react").JSX.Element;
 interface Props {
     movementValue: number;
     stayValue: number;

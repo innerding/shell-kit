@@ -67,6 +67,9 @@ export interface StripProps {
    *  (`activeColor`) statt weiß gezeichnet (Rückmeldung des gewählten Levels). */
   activeIdx?: number;
   activeColor?: string;
+  /** Lässt den verschiebbaren Stroke HART blinken (An/Aus, kein Fade) — z. B. als
+   *  Aufforderung am Master-Schauglas, einen Basis-Wert festzulegen. */
+  strokeBlink?: boolean;
 }
 
 // Lesbare Textfarbe auf einer Farb-Box (einfache Luminanz).
@@ -77,7 +80,7 @@ function readable(hex: string): string {
   return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#14223e' : '#fff';
 }
 
-export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, gradient, loadLevel, manifest, cascade, activeIdx, activeColor }: StripProps) {
+export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, gradient, loadLevel, manifest, cascade, activeIdx, activeColor, strokeBlink }: StripProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -121,6 +124,7 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
       {/* Verschiebbarer Stroke — AUSSERHALB des (geclippten) Tracks, damit er mit seinen
           Rounded Caps links und rechts über das Schauglas übersteht. Breite ×0.9
           (Breitenausdehnung schmaler); Dicke unverändert (3/2 px). */}
+      {strokeBlink && <style>{'@keyframes ckStrokeBlink{0%,49.9%{opacity:1}50%,100%{opacity:0}}'}</style>}
       {(() => {
         const sLineW = (STRIP_W + 12) * 0.9;                          // ×0.9 der Breite
         const sLeft = (expanded ? L_GAP_EXP : L_GAP_COL) - (sLineW - STRIP_W) / 2;
@@ -130,6 +134,7 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
             bottom: insetBottom(linePos), height: expanded ? 3 : 2, background: '#fff', borderRadius: 999,
             boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 3, pointerEvents: 'none',
             transition: 'left 0.22s ease',
+            animation: strokeBlink ? 'ckStrokeBlink 1s step-end infinite' : undefined,
           }} />
         );
       })()}
