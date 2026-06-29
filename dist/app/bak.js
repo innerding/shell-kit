@@ -382,6 +382,83 @@ export function solveRoundComfort(net, start, target, dimmedStretchIds, maxRatio
         return null;
     return joinRoutes(outward, back);
 }
+export function solveManualRoute(net, start, anchors, dimmedStretchIds = new Set(), maxBridgeM = 100, maxRatio = 2) {
+    const g = buildRouteGraph(net, dimmedStretchIds);
+    const startNode = nearestNode(g, start);
+    if (!startNode || anchors.length === 0)
+        return { route: null, outside: anchors.map((a) => a.id) };
+    // Strecken-Endpunkte je id (für die Stretch-Anker: Einfahrt = näheres Ende).
+    const ends = new Map();
+    for (const s of net.stretches) {
+        const pts = s.points;
+        if (pts.length < 2)
+            continue;
+        ends.set(s.id, { a: nodeKey(pts[0]), b: nodeKey(pts[pts.length - 1]) });
+    }
+    const edgeBetween = (from, stretchId) => (g.adj.get(from) ?? []).find((e) => e.stretchId === stretchId) ?? null;
+    // Brücke cur→to per Comfort-Pfad; [] wenn schon dort; null wenn unerreichbar.
+    const bridge = (from, to) => from === to ? [] : solveLegComfort(g, from, to, maxRatio);
+    let cur = startNode;
+    const points = [];
+    const stretchIds = [];
+    const legs = [];
+    const outside = [];
+    for (const anc of anchors) {
+        if (anc.kind === 'poi') {
+            const node = nearestNode(g, anc.point);
+            if (!node) {
+                outside.push(anc.id);
+                continue;
+            }
+            if (node === cur)
+                continue; // POI sitzt schon auf dem Pfad-Ende
+            const br = bridge(cur, node);
+            if (!br || legMetrics(br).lenM > maxBridgeM) {
+                outside.push(anc.id);
+                continue;
+            }
+            for (const e of br)
+                appendEdge(points, stretchIds, legs, e);
+            cur = node;
+        }
+        else {
+            const e2 = ends.get(anc.id);
+            if (!e2) {
+                outside.push(anc.id);
+                continue;
+            }
+            // Beste Einfahrt: kürzere Brücke zu einem der beiden Enden, im Budget.
+            let best = null;
+            for (const enter of [e2.a, e2.b]) {
+                const br = bridge(cur, enter);
+                if (!br)
+                    continue;
+                const blen = legMetrics(br).lenM;
+                if (blen > maxBridgeM)
+                    continue;
+                if (!best || blen < legMetrics(best.br).lenM)
+                    best = { br, enter };
+            }
+            if (!best) {
+                outside.push(anc.id);
+                continue;
+            }
+            for (const e of best.br)
+                appendEdge(points, stretchIds, legs, e);
+            cur = best.enter;
+            const se = edgeBetween(cur, anc.id); // die gewählte Strecke selbst durchlaufen
+            if (!se) {
+                outside.push(anc.id);
+                continue;
+            }
+            appendEdge(points, stretchIds, legs, se);
+            cur = se.to;
+        }
+    }
+    if (stretchIds.length === 0)
+        return { route: null, outside };
+    return { route: { stretchIds, points, legs }, outside };
+}
 /**
  * ALLE belebten Beine (Ziel-Index + ausgedimmte Länge), absteigend nach Schwere
  * sortiert — für die Manege (Sammelkarte bei Überlast: mehrere Engpässe auf einmal).

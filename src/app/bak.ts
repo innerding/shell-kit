@@ -390,6 +390,87 @@ export function solveRoundComfort(
   return joinRoutes(outward, back);
 }
 
+// ── Manuell-Modus: Strecken/POIs → geordneter Pfad mit kurzer Auto-Brücke ───────
+// Modell: docs/auto_manuell_routenmodell.md. Anker (Strecken ODER POIs) in AUSWAHL-
+// reihenfolge werden zu EINEM geordneten Pfad ab `start` verkettet. Zwischen dem
+// aktuellen Pfad-Ende und dem nächsten Anker baut die Engine eine **Auto-Brücke** per
+// kürzestem Comfort-Pfad — aber NUR bis `maxBridgeM` (Default 100 m). Anker, die nicht
+// im Brücken-Budget liegen (oder unerreichbar sind), kommen NICHT in den Pfad und werden
+// in `outside` gemeldet (UI zeigt sie bei Play als „außerhalb deiner Route").
+export type ManualAnchor =
+  | { kind: 'poi'; id: string; point: LatLng }
+  | { kind: 'stretch'; id: string };
+
+export interface ManualRouteResult {
+  route: Route | null;   // geordnete Polylinie (oder null, wenn nichts anbrückbar)
+  outside: string[];     // Anker-ids, die nicht in den Pfad gebrückt werden konnten
+}
+
+export function solveManualRoute(
+  net: SegmentedNet,
+  start: LatLng,
+  anchors: ManualAnchor[],
+  dimmedStretchIds: Set<string> = new Set(),
+  maxBridgeM = 100,
+  maxRatio = 2,
+): ManualRouteResult {
+  const g = buildRouteGraph(net, dimmedStretchIds);
+  const startNode = nearestNode(g, start);
+  if (!startNode || anchors.length === 0) return { route: null, outside: anchors.map((a) => a.id) };
+
+  // Strecken-Endpunkte je id (für die Stretch-Anker: Einfahrt = näheres Ende).
+  const ends = new Map<string, { a: string; b: string }>();
+  for (const s of net.stretches) {
+    const pts = s.points as LatLng[];
+    if (pts.length < 2) continue;
+    ends.set(s.id, { a: nodeKey(pts[0]), b: nodeKey(pts[pts.length - 1]) });
+  }
+  const edgeBetween = (from: string, stretchId: string): Edge | null =>
+    (g.adj.get(from) ?? []).find((e) => e.stretchId === stretchId) ?? null;
+  // Brücke cur→to per Comfort-Pfad; [] wenn schon dort; null wenn unerreichbar.
+  const bridge = (from: string, to: string): Edge[] | null =>
+    from === to ? [] : solveLegComfort(g, from, to, maxRatio);
+
+  let cur = startNode;
+  const points: LatLng[] = [];
+  const stretchIds: string[] = [];
+  const legs: RouteLeg[] = [];
+  const outside: string[] = [];
+
+  for (const anc of anchors) {
+    if (anc.kind === 'poi') {
+      const node = nearestNode(g, anc.point);
+      if (!node) { outside.push(anc.id); continue; }
+      if (node === cur) continue;   // POI sitzt schon auf dem Pfad-Ende
+      const br = bridge(cur, node);
+      if (!br || legMetrics(br).lenM > maxBridgeM) { outside.push(anc.id); continue; }
+      for (const e of br) appendEdge(points, stretchIds, legs, e);
+      cur = node;
+    } else {
+      const e2 = ends.get(anc.id);
+      if (!e2) { outside.push(anc.id); continue; }
+      // Beste Einfahrt: kürzere Brücke zu einem der beiden Enden, im Budget.
+      let best: { br: Edge[]; enter: string } | null = null;
+      for (const enter of [e2.a, e2.b]) {
+        const br = bridge(cur, enter);
+        if (!br) continue;
+        const blen = legMetrics(br).lenM;
+        if (blen > maxBridgeM) continue;
+        if (!best || blen < legMetrics(best.br).lenM) best = { br, enter };
+      }
+      if (!best) { outside.push(anc.id); continue; }
+      for (const e of best.br) appendEdge(points, stretchIds, legs, e);
+      cur = best.enter;
+      const se = edgeBetween(cur, anc.id);   // die gewählte Strecke selbst durchlaufen
+      if (!se) { outside.push(anc.id); continue; }
+      appendEdge(points, stretchIds, legs, se);
+      cur = se.to;
+    }
+  }
+  if (stretchIds.length === 0) return { route: null, outside };
+  return { route: { stretchIds, points, legs }, outside };
+}
+
 /**
  * BAK-Stufe 2 — Engpass-Suche: routet jedes Bein (POI→POI) einzeln und summiert
  * die Länge des ausgedimmten Netzes je Bein. Liefert das Ziel-Waypoint-Index des

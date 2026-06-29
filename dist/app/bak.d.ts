@@ -41,6 +41,19 @@ export declare function solveRouteComfort(net: SegmentedNet, waypoints: LatLng[]
  * unmöglich ist. (Regel: docs/karussell_auswahlregeln.md.)
  */
 export declare function solveRoundComfort(net: SegmentedNet, start: LatLng, target: LatLng, dimmedStretchIds: Set<string>, maxRatio?: number, maxOverlap?: number): Route | null;
+export type ManualAnchor = {
+    kind: 'poi';
+    id: string;
+    point: LatLng;
+} | {
+    kind: 'stretch';
+    id: string;
+};
+export interface ManualRouteResult {
+    route: Route | null;
+    outside: string[];
+}
+export declare function solveManualRoute(net: SegmentedNet, start: LatLng, anchors: ManualAnchor[], dimmedStretchIds?: Set<string>, maxBridgeM?: number, maxRatio?: number): ManualRouteResult;
 /**
  * BAK-Stufe 2 — Engpass-Suche: routet jedes Bein (POI→POI) einzeln und summiert
  * die Länge des ausgedimmten Netzes je Bein. Liefert das Ziel-Waypoint-Index des
