@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { colorAt, stageOf } from './scale';
 // Stufen-Band-MITTEN (Load 0..1) je Stufe 1..n — robust für borders ODER Spreizung
 // (per Sampling). Dort sitzt das jeweilige Kaskaden-Wort auf Schauglas-Höhe.
-function bandCenters(scale, n) {
+export function bandCenters(scale, n) {
     const lo = new Array(n + 1).fill(2), hi = new Array(n + 1).fill(-1);
     const STEPS = 240;
     for (let i = 0; i <= STEPS; i++) {
@@ -56,7 +56,7 @@ function readable(hex) {
     const r = parseInt(n.slice(0, 2), 16), g = parseInt(n.slice(2, 4), 16), b = parseInt(n.slice(4, 6), 16);
     return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#14223e' : '#fff';
 }
-function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, gradient, loadLevel, manifest, cascade }) {
+export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, gradient, loadLevel, manifest, cascade, activeIdx, activeColor }) {
     const trackRef = useRef(null);
     const dragging = useRef(false);
     const collapseTimer = useRef(null);
@@ -85,13 +85,21 @@ function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, grad
                     opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease',
                     color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
                     font: '800 19px/1.16 Polarstern, system-ui,sans-serif', letterSpacing: '0.01em',
-                }, children: manifest.map((line, i) => _jsx("div", { children: line }, i)) })), cascade && cascade.map((c, i) => c.word ? (_jsx("span", { "aria-hidden": true, style: {
-                    position: 'absolute', left: L_GAP_EXP + STRIP_W + 6, bottom: insetBottom(c.pos), transform: 'translateY(50%)',
-                    whiteSpace: 'nowrap', pointerEvents: 'none',
-                    opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease',
-                    color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
-                    font: '700 14.5px/1 Polarstern, system-ui,sans-serif', letterSpacing: '0.02em',
-                }, children: c.word }, i)) : null), !expanded && (_jsx("div", { onPointerDown: () => { onExpandChange(true); scheduleCollapse(); }, style: { position: 'absolute', inset: 0, cursor: 'pointer', touchAction: 'none' } })), expanded && (_jsxs(_Fragment, { children: [_jsx("div", { onPointerDown: (e) => { dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); readPosition(e.clientY); }, onPointerMove: (e) => { if (dragging.current)
+                }, children: manifest.map((line, i) => _jsx("div", { children: line }, i)) })), cascade && cascade.map((c, i) => {
+                if (!c.word)
+                    return null;
+                const on = activeIdx === i && !!activeColor;
+                return (_jsx("span", { "aria-hidden": true, style: {
+                        position: 'absolute', left: L_GAP_EXP + STRIP_W + 6, bottom: insetBottom(c.pos), transform: 'translateY(50%)',
+                        whiteSpace: 'nowrap', pointerEvents: 'none',
+                        opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease, color 0.18s ease',
+                        color: on ? activeColor : '#fff',
+                        textShadow: on
+                            ? '0 1px 2px rgba(0,0,0,0.85), 0 0 3px rgba(0,0,0,0.7), 0 0 1px rgba(255,255,255,0.6)'
+                            : '0 1px 2px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
+                        font: `${on ? 800 : 700} 14.5px/1 Polarstern, system-ui,sans-serif`, letterSpacing: '0.02em',
+                    }, children: c.word }, i));
+            }), !expanded && (_jsx("div", { onPointerDown: () => { onExpandChange(true); scheduleCollapse(); }, style: { position: 'absolute', inset: 0, cursor: 'pointer', touchAction: 'none' } })), expanded && (_jsxs(_Fragment, { children: [_jsx("div", { onPointerDown: (e) => { dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); readPosition(e.clientY); }, onPointerMove: (e) => { if (dragging.current)
                             readPosition(e.clientY); }, onPointerUp: () => { dragging.current = false; }, style: { position: 'absolute', left: 0, top: 0, bottom: 0, width: L_GAP_EXP + STRIP_W + RIGHT_GAP, cursor: 'ns-resize', touchAction: 'none' } }), _jsx("div", { onPointerDown: () => onExpandChange(false), style: { position: 'absolute', right: 0, top: 0, bottom: 0, width: COL_W, cursor: 'pointer', touchAction: 'none' } })] }))] }));
 }
 export default function ComfortSliders({ movementValue, stayValue, stayMaxValue, onMovementChange, onStayChange, step2Active = false, scale, loadLevel, stayLoadLevel, labelOf, stayManifest, movementManifest, onMovementExpandChange, onStayExpandChange }) {
@@ -104,7 +112,12 @@ export default function ComfortSliders({ movementValue, stayValue, stayMaxValue,
     const cascade = (labelOf && scale)
         ? bandCenters(scale, scale.stops.length).map((pos) => ({ word: labelOf(pos).word, pos }))
         : undefined;
+    // Eingestellte Stufe je Slider → Kaskaden-Wort in der Stufenfarbe (Index = Stufe−1).
+    const activeOf = (v) => scale ? Math.max(0, stageOf(v, scale) - 1) : undefined;
+    const movActive = activeOf(movementValue), stayActive = activeOf(stayValue);
+    const movColor = labelOf ? labelOf(movementValue).color : undefined;
+    const stayColor = labelOf ? labelOf(stayValue).color : undefined;
     // Beide Slider permanent; jeder klappt unabhängig auf. Reihenfolge: RAST OBEN, WEG UNTEN
     // (die POI-/Rast-Hinweise sitzen oben, der Rast-Slider gehört daneben).
-    return (_jsxs("div", { style: { position: 'absolute', right: 0, top: 62, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, zIndex: 600 }, children: [step2Active && (_jsx(SliderStrip, { value: stayValue, maxValue: stayMaxValue, onChange: onStayChange, expanded: stayExpanded, onExpandChange: setStay, manifest: stayManifest, cascade: cascade, gradient: gradient, loadLevel: stayLoadLevel })), _jsx(SliderStrip, { value: movementValue, maxValue: 1, onChange: onMovementChange, expanded: movExpanded, onExpandChange: setMov, manifest: movementManifest, cascade: cascade, gradient: gradient, loadLevel: loadLevel })] }));
+    return (_jsxs("div", { style: { position: 'absolute', right: 0, top: 62, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, zIndex: 600 }, children: [step2Active && (_jsx(SliderStrip, { value: stayValue, maxValue: stayMaxValue, onChange: onStayChange, expanded: stayExpanded, onExpandChange: setStay, manifest: stayManifest, cascade: cascade, activeIdx: stayActive, activeColor: stayColor, gradient: gradient, loadLevel: stayLoadLevel })), _jsx(SliderStrip, { value: movementValue, maxValue: 1, onChange: onMovementChange, expanded: movExpanded, onExpandChange: setMov, manifest: movementManifest, cascade: cascade, activeIdx: movActive, activeColor: movColor, gradient: gradient, loadLevel: loadLevel })] }));
 }

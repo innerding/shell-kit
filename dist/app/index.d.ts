@@ -1,4 +1,4 @@
-export { default as ComfortSliders } from './ComfortSliders';
+export { default as ComfortSliders, SliderStrip as ComfortGlass, bandCenters, type StripProps as ComfortGlassProps } from './ComfortSliders';
 export { default as RouteComfortBanner } from './RouteComfortBanner';
 export { default as ComfortDiode } from './ComfortDiode';
 export { default as WarnTriangle } from './WarnTriangle';

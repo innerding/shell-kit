@@ -1,5 +1,5 @@
 // shell-kit/app — die per-Rep-Shell (reist im Shell-Paket).
-export { default as ComfortSliders } from './ComfortSliders';
+export { default as ComfortSliders, SliderStrip as ComfortGlass, bandCenters, type StripProps as ComfortGlassProps } from './ComfortSliders';
 export { default as RouteComfortBanner } from './RouteComfortBanner';  // bak-test-Banner
 export { default as ComfortDiode } from './ComfortDiode';   // Last-Diode (Comfort-Wort, pulst)
 export { default as WarnTriangle } from './WarnTriangle';   // Achtung-Wasserzeichen (über Comfort)

@@ -1,4 +1,30 @@
 import { type ScaleSpec } from './scale';
+export declare function bandCenters(scale: ScaleSpec, n: number): number[];
+export interface StripProps {
+    value: number;
+    maxValue: number;
+    onChange: (v: number) => void;
+    expanded: boolean;
+    onExpandChange: (expanded: boolean) => void;
+    gradient: string;
+    /** Aktueller Last-Pegel des GANZEN Netzes (0..1). Darüber wird der Gradient
+     *  ausgeblichen (milchig) — das Schauglas zeigt nur die Last, die da ist. Der
+     *  volle Gradient bleibt als 1px-Stroke ringsum sichtbar (Skala-Referenz). */
+    loadLevel?: number;
+    /** LINKS, dominant, weiß+Schatten, vertikal zentriert — das Manifest des Sliders
+     *  (z. B. „Comfort/von/Stationen." bzw. „Geh/Deinen/Weg."), zeilenweise. */
+    manifest?: string[];
+    /** RECHTS, weiß+Schatten, je Wort auf seiner Schauglas-Höhe (Stufen-Band-Mitte). */
+    cascade?: {
+        word: string;
+        pos: number;
+    }[];
+    /** Index in `cascade` der EINGESTELLTEN Stufe — dieses Wort wird in der Stufenfarbe
+     *  (`activeColor`) statt weiß gezeichnet (Rückmeldung des gewählten Levels). */
+    activeIdx?: number;
+    activeColor?: string;
+}
+export declare function SliderStrip({ value, maxValue, onChange, expanded, onExpandChange, gradient, loadLevel, manifest, cascade, activeIdx, activeColor }: StripProps): import("react").JSX.Element;
 interface Props {
     movementValue: number;
     stayValue: number;
