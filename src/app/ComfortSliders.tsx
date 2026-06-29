@@ -119,13 +119,20 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
       </div>
 
       {/* Verschiebbarer Stroke — AUSSERHALB des (geclippten) Tracks, damit er mit seinen
-          Rounded Caps links und rechts über das Schauglas übersteht. */}
-      <div style={{
-        position: 'absolute', left: (expanded ? L_GAP_EXP : L_GAP_COL) - 6, width: STRIP_W + 12,
-        bottom: insetBottom(linePos), height: expanded ? 2.7 : 1.8, background: '#fff', borderRadius: 999,
-        boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 3, pointerEvents: 'none',
-        transition: 'left 0.22s ease',
-      }} />
+          Rounded Caps links und rechts über das Schauglas übersteht. Breite ×0.9
+          (Breitenausdehnung schmaler); Dicke unverändert (3/2 px). */}
+      {(() => {
+        const sLineW = (STRIP_W + 12) * 0.9;                          // ×0.9 der Breite
+        const sLeft = (expanded ? L_GAP_EXP : L_GAP_COL) - (sLineW - STRIP_W) / 2;
+        return (
+          <div style={{
+            position: 'absolute', left: sLeft, width: sLineW,
+            bottom: insetBottom(linePos), height: expanded ? 3 : 2, background: '#fff', borderRadius: 999,
+            boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 3, pointerEvents: 'none',
+            transition: 'left 0.22s ease',
+          }} />
+        );
+      })()}
 
       {/* MANIFEST links vom Schauglas — dominant, weiß+Schatten, vertikal zentriert,
           zeilenweise (z. B. „Comfort/von/Stationen."). Blendet beim Ausfahren ein. */}
@@ -156,11 +163,9 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
             // Box hinter dem aktiven Wort wirkt. Das eingestellte Wort wird nur eingefärbt
             // und leicht (×1.25) vergrößert.
             textShadow: '0 1px 2px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
-            // Aktives Wort: NUR Farbwechsel + Großschreibung — KEINE Vergrößerung
-            // (Normalgröße 14.5, gleiches Gewicht wie die übrigen Wörter).
+            // Aktives Wort: NUR Farbwechsel — sonst exakt wie die übrigen Wörter
+            // (Normalgröße 14.5, Gewicht 700, KEINE Vergrößerung, KEINE Großschreibung).
             font: `700 14.5px/1 Polarstern, system-ui,sans-serif`, letterSpacing: '0.02em',
-            textTransform: on ? 'uppercase' : 'none',
-            transformOrigin: 'left center',
           }}>{c.word}</span>
         );
       })}

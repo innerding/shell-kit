@@ -79,12 +79,16 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
     return (_jsxs("div", { style: { position: 'relative', width: expanded ? W_EXP : W_COL, height: 155, flexShrink: 0, transition: 'width 0.22s ease', userSelect: 'none', WebkitUserSelect: 'none' }, children: [_jsxs("div", { ref: trackRef, style: { position: 'absolute', left: expanded ? L_GAP_EXP : L_GAP_COL, top: 0, bottom: 0, width: STRIP_W, overflow: 'hidden', transition: 'left 0.22s ease', pointerEvents: 'none' }, children: [_jsx("div", { style: { position: 'absolute', inset: 0, borderRadius: 3, background: gradient } }), _jsx("div", { style: { position: 'absolute', inset: 1, borderRadius: 2, background: gradient } }), loadLevel != null && loadLevel < 0.999 && (
                     // Sofortfix: nur ein 3px-Band am RECHTEN Rand (linker Rand nach rechts gerückt)
                     // — die volle Mesh-Farbe bleibt links sichtbar; der Bleach deutet den Pegel an.
-                    _jsx("div", { style: { position: 'absolute', left: STRIP_W - 4, right: 1, top: 1, bottom: insetBottom(loadLevel), borderRadius: 1, background: 'rgba(255,255,255,0.62)' } })), maxValue < 0.99 && (_jsx("div", { style: { position: 'absolute', left: 0, right: 0, bottom: insetBottom(maxValue), height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' } }))] }), _jsx("div", { style: {
-                    position: 'absolute', left: (expanded ? L_GAP_EXP : L_GAP_COL) - 6, width: STRIP_W + 12,
-                    bottom: insetBottom(linePos), height: expanded ? 2.7 : 1.8, background: '#fff', borderRadius: 999,
-                    boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 3, pointerEvents: 'none',
-                    transition: 'left 0.22s ease',
-                } }), manifest && manifest.length > 0 && (_jsx("div", { "aria-hidden": true, style: {
+                    _jsx("div", { style: { position: 'absolute', left: STRIP_W - 4, right: 1, top: 1, bottom: insetBottom(loadLevel), borderRadius: 1, background: 'rgba(255,255,255,0.62)' } })), maxValue < 0.99 && (_jsx("div", { style: { position: 'absolute', left: 0, right: 0, bottom: insetBottom(maxValue), height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' } }))] }), (() => {
+                const sLineW = (STRIP_W + 12) * 0.9; // ×0.9 der Breite
+                const sLeft = (expanded ? L_GAP_EXP : L_GAP_COL) - (sLineW - STRIP_W) / 2;
+                return (_jsx("div", { style: {
+                        position: 'absolute', left: sLeft, width: sLineW,
+                        bottom: insetBottom(linePos), height: expanded ? 3 : 2, background: '#fff', borderRadius: 999,
+                        boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 3, pointerEvents: 'none',
+                        transition: 'left 0.22s ease',
+                    } }));
+            })(), manifest && manifest.length > 0 && (_jsx("div", { "aria-hidden": true, style: {
                     position: 'absolute', top: '50%', right: W_EXP - L_GAP_EXP + 10, transform: 'translateY(-50%)',
                     textAlign: 'center', whiteSpace: 'nowrap', pointerEvents: 'none',
                     opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease',
@@ -103,11 +107,9 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
                         // Box hinter dem aktiven Wort wirkt. Das eingestellte Wort wird nur eingefärbt
                         // und leicht (×1.25) vergrößert.
                         textShadow: '0 1px 2px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
-                        // Aktives Wort: NUR Farbwechsel + Großschreibung — KEINE Vergrößerung
-                        // (Normalgröße 14.5, gleiches Gewicht wie die übrigen Wörter).
+                        // Aktives Wort: NUR Farbwechsel — sonst exakt wie die übrigen Wörter
+                        // (Normalgröße 14.5, Gewicht 700, KEINE Vergrößerung, KEINE Großschreibung).
                         font: `700 14.5px/1 Polarstern, system-ui,sans-serif`, letterSpacing: '0.02em',
-                        textTransform: on ? 'uppercase' : 'none',
-                        transformOrigin: 'left center',
                     }, children: c.word }, i));
             }), !expanded && (_jsx("div", { onPointerDown: () => { onExpandChange(true); scheduleCollapse(); }, style: { position: 'absolute', inset: 0, cursor: 'pointer', touchAction: 'none' } })), expanded && (_jsxs(_Fragment, { children: [_jsx("div", { onPointerDown: (e) => { dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); readPosition(e.clientY); }, onPointerMove: (e) => { if (dragging.current)
                             readPosition(e.clientY); }, onPointerUp: () => { dragging.current = false; }, style: { position: 'absolute', left: 0, top: 0, bottom: 0, width: L_GAP_EXP + STRIP_W + RIGHT_GAP, cursor: 'ns-resize', touchAction: 'none' } }), _jsx("div", { onPointerDown: () => onExpandChange(false), style: { position: 'absolute', right: 0, top: 0, bottom: 0, width: COL_W, cursor: 'pointer', touchAction: 'none' } })] }))] }));
