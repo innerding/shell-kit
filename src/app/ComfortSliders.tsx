@@ -156,7 +156,9 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
             // Box hinter dem aktiven Wort wirkt. Das eingestellte Wort wird nur eingefärbt
             // und leicht (×1.25) vergrößert.
             textShadow: '0 1px 2px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
-            font: `${on ? 800 : 700} ${on ? 18 : 14.5}px/1 Polarstern, system-ui,sans-serif`, letterSpacing: '0.02em',
+            // Aktives Wort: NUR ×1.25 der Normalgröße (14.5) + Großschreibung + Farbe.
+            // Kein zusätzliches Fett (gleiches Gewicht wie die übrigen Wörter).
+            font: `700 ${on ? 14.5 * 1.25 : 14.5}px/1 Polarstern, system-ui,sans-serif`, letterSpacing: '0.02em',
             textTransform: on ? 'uppercase' : 'none',
             transformOrigin: 'left center',
           }}>{c.word}</span>
