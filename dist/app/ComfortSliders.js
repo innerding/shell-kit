@@ -81,7 +81,7 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
                     // — die volle Mesh-Farbe bleibt links sichtbar; der Bleach deutet den Pegel an.
                     _jsx("div", { style: { position: 'absolute', left: STRIP_W - 4, right: 1, top: 1, bottom: insetBottom(loadLevel), borderRadius: 1, background: 'rgba(255,255,255,0.62)' } })), maxValue < 0.99 && (_jsx("div", { style: { position: 'absolute', left: 0, right: 0, bottom: insetBottom(maxValue), height: 1, borderTop: '1px dashed rgba(255,255,255,0.4)' } }))] }), _jsx("div", { style: {
                     position: 'absolute', left: (expanded ? L_GAP_EXP : L_GAP_COL) - 6, width: STRIP_W + 12,
-                    bottom: insetBottom(linePos), height: expanded ? 3 : 2, background: '#fff', borderRadius: 999,
+                    bottom: insetBottom(linePos), height: expanded ? 2.7 : 1.8, background: '#fff', borderRadius: 999,
                     boxShadow: '0 0 6px 1px rgba(255,255,255,0.9)', zIndex: 3, pointerEvents: 'none',
                     transition: 'left 0.22s ease',
                 } }), manifest && manifest.length > 0 && (_jsx("div", { "aria-hidden": true, style: {
@@ -103,9 +103,9 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
                         // Box hinter dem aktiven Wort wirkt. Das eingestellte Wort wird nur eingefärbt
                         // und leicht (×1.25) vergrößert.
                         textShadow: '0 1px 2px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
-                        // Aktives Wort: NUR ×1.25 der Normalgröße (14.5) + Großschreibung + Farbe.
-                        // Kein zusätzliches Fett (gleiches Gewicht wie die übrigen Wörter).
-                        font: `700 ${on ? 14.5 * 1.25 : 14.5}px/1 Polarstern, system-ui,sans-serif`, letterSpacing: '0.02em',
+                        // Aktives Wort: NUR Farbwechsel + Großschreibung — KEINE Vergrößerung
+                        // (Normalgröße 14.5, gleiches Gewicht wie die übrigen Wörter).
+                        font: `700 14.5px/1 Polarstern, system-ui,sans-serif`, letterSpacing: '0.02em',
                         textTransform: on ? 'uppercase' : 'none',
                         transformOrigin: 'left center',
                     }, children: c.word }, i));
