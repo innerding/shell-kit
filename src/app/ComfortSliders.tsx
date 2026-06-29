@@ -144,10 +144,12 @@ export function SliderStrip({ value, maxValue, onChange, expanded, onExpandChang
             whiteSpace: 'nowrap', pointerEvents: 'none',
             opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease, color 0.18s ease',
             color: on ? activeColor : '#fff',
-            textShadow: on
-              ? '0 1px 2px rgba(0,0,0,0.85), 0 0 3px rgba(0,0,0,0.7), 0 0 1px rgba(255,255,255,0.6)'
-              : '0 1px 2px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
-            font: `${on ? 800 : 700} 14.5px/1 Polarstern, system-ui,sans-serif`, letterSpacing: '0.02em',
+            // Gleicher (normaler) Text-Schatten für alle — KEIN dunkler Halo, der wie eine
+            // Box hinter dem aktiven Wort wirkt. Das eingestellte Wort wird nur eingefärbt
+            // und leicht (×1.25) vergrößert.
+            textShadow: '0 1px 2px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.5)',
+            font: `${on ? 800 : 700} ${on ? 18 : 14.5}px/1 Polarstern, system-ui,sans-serif`, letterSpacing: '0.02em',
+            transformOrigin: 'left center',
           }}>{c.word}</span>
         );
       })}
