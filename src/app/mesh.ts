@@ -53,14 +53,12 @@ export function renderColorMesh(
   }
 
   // Pass 1: weißer Rand (Unterlage) — nur für sichtbare, nicht gedimmte Segmente.
+  // EINE Polylinie je Strecke (statt je Segment): einfarbig → optisch identisch,
+  // aber ~10× weniger SVG-Knoten. lineJoin:round hält die Knicke sauber.
   for (const s of net.stretches) {
-    if (hidden(s.id) || dimmed(s.id) || corridor(s)) continue;
-    for (let i = 0; i < s.points.length - 1; i++) {
-      L.polyline(
-        [s.points[i], s.points[i + 1]] as L.LatLngExpression[],
-        { color: '#ffffff', weight: weight + 2, opacity: 1, lineCap: 'round' },
-      ).addTo(layer);
-    }
+    if (hidden(s.id) || dimmed(s.id) || corridor(s) || s.points.length < 2) continue;
+    L.polyline(s.points as L.LatLngExpression[],
+      { color: '#ffffff', weight: weight + 2, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(layer);
   }
 
   // Pass 2: Last-Farbe oben drauf; statische Sackgassen ausgelassen. Über Comfort
@@ -72,18 +70,25 @@ export function renderColorMesh(
     const segCount = s.points.length - 1;
     const isHidden = hidden(s.id);
     const isDimmed = dimmed(s.id);
+    // Farbe je Segment bestimmen — idx läuft IMMER mit (auch bei hidden), damit die
+    // loads[]-Zuordnung exakt erhalten bleibt.
+    const segColor: string[] = [];
     for (let i = 0; i < segCount; i++) {
       const load = loads[idx++] ?? 0;
-      if (isHidden) continue;
-      L.polyline(
-        [s.points[i], s.points[i + 1]] as L.LatLngExpression[],
-        {
-          color:   isDimmed ? '#c2c9d2' : colorAt(load, scale),
-          weight:  isDimmed ? 2 : weight,
-          opacity: isDimmed ? 0.55 : 1,
-          lineCap: 'round',
-        },
-      ).addTo(layer);
+      segColor.push(isDimmed ? '#c2c9d2' : colorAt(load, scale));
+    }
+    if (isHidden || segCount < 1) continue;
+    const w = isDimmed ? 2 : weight;
+    const op = isDimmed ? 0.55 : 1;
+    // Run-Length: aufeinanderfolgende gleichfarbige Segmente = EINE Polylinie
+    // (gleiche Farbe/Breite → optisch identisch, deutlich weniger Knoten).
+    let runStart = 0;
+    for (let i = 0; i < segCount; i++) {
+      if (i === segCount - 1 || segColor[i + 1] !== segColor[i]) {
+        L.polyline(s.points.slice(runStart, i + 2) as L.LatLngExpression[],
+          { color: segColor[i], weight: w, opacity: op, lineCap: 'round', lineJoin: 'round' }).addTo(layer);
+        runStart = i + 1;
+      }
     }
   }
 }
