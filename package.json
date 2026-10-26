@@ -23,6 +23,10 @@
     "./route": {
       "types": "./dist/route.d.ts",
       "import": "./dist/route.js"
+    },
+    "./anthem": {
+      "types": "./dist/app/anthem.d.ts",
+      "import": "./dist/app/anthem.js"
     }
   },
   "files": [
@@ -34,6 +38,10 @@
   "peerDependencies": {
     "leaflet": ">=1.9",
     "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "leaflet": { "optional": true },
+    "react": { "optional": true }
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.12",
