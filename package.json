@@ -27,6 +27,10 @@
     "./anthem": {
       "types": "./dist/app/anthem.d.ts",
       "import": "./dist/app/anthem.js"
+    },
+    "./scale": {
+      "types": "./dist/app/scale.d.ts",
+      "import": "./dist/app/scale.js"
     }
   },
   "files": [
