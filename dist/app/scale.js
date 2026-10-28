@@ -191,12 +191,13 @@ export function loadForPos(pos, s, useWrap = false) {
     return entspreize(base, s.spreizung);
 }
 // Generelle Default-Skala = 6 Stufen, passend zur systemweiten Comfort-Sprache
-// (still·ruhig·moderat·flüssig·belebt·voll) und zur Alarm-Logik (stageTop). Farben
-// aus dem bestehenden 7-Farb-Comfort-Verlauf destilliert (grün→rot, ohne Magenta),
-// damit Mesh, Schauglas und Fallback dieselbe Farbwelt sprechen. Borders gleichmäßig
-// (jedes Sechstel) — neutraler Default, per-Rep via Bundle überschreibbar.
+// (still·ruhig·moderat·flüssig·belebt·voll) und zur Alarm-Logik (stageTop). Borders gleichmäßig
+// (jedes Sechstel) — per-Rep via Bundle überschreibbar.
+// ⚠ DIE FARBWELT (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131, sein „4. ja, bau es"): die sechs Blautöne,
+// mit denen die alte Ziel-App ausgespielt war (rep-lichtenberg, hellblau → violett), ersetzen das frühere Grün → Rot, das nie
+// gewählt war. Als Hex, weil Farbwähler und die Skala in o-o-o-o.app nur Hex lesen.
 export const DEFAULT_SCALE = {
-    stops: ['#2ecc40', '#a8e63c', '#f1c40f', '#ffaa00', '#ff5500', '#ff0044'],
+    stops: ['#8adafe', '#4fa6fe', '#1372ff', '#184ede', '#3d33ad', '#61177c'],
     borders: [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6],
     spreizung: { mitte: 0.5, oben: 0.5, unten: 0.5 },
     verjuengung: { unten: 0, oben: 0 },
