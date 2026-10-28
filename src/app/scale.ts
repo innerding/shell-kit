@@ -240,12 +240,13 @@ export function loadForPos(pos: number, s: ScaleSpec, useWrap = false): number {
 // Generelle Default-Skala = 6 Stufen, passend zur systemweiten Comfort-Sprache
 // (still·ruhig·moderat·flüssig·belebt·voll) und zur Alarm-Logik (stageTop). Borders gleichmäßig
 // (jedes Sechstel) — per-Rep via Bundle überschreibbar.
-// ⚠ DIE FARBWELT (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131, sein „4. ja, bau es"): die sechs Blautöne,
-// mit denen die alte Ziel-App ausgespielt war (rep-lichtenberg, hellblau → violett), ersetzen das frühere Grün → Rot, das nie
-// gewählt war. Als Hex, weil Farbwähler und die Skala in o-o-o-o.app nur Hex lesen.
+// ⚠ DIE FARBWELT (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131): blau statt des früheren Grün → Rot, das
+// nie gewählt war. Eingestellt sind vier Farben zu je einem Viertel, zurückgerechnet aus den sechs Blautönen der alten
+// Ziel-App (je die Farbe an der Mitte eines Viertels); gerechnet wird mit den sechs Feldern daraus (sechsFelder). Sein „1. ja"
+// auf das Bild. Als Hex, weil Farbwähler und die Skala in o-o-o-o.app nur Hex lesen.
 export const DEFAULT_SCALE: ScaleSpec = {
-  stops: ['#8adafe', '#4fa6fe', '#1372ff', '#184ede', '#3d33ad', '#61177c'],
-  borders: [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6],
+  stops: ['#7bcdfe', '#227fff', '#2147d2', '#581e88'],
+  borders: [1 / 4, 2 / 4, 3 / 4],
   spreizung: { mitte: 0.5, oben: 0.5, unten: 0.5 },
   verjuengung: { unten: 0, oben: 0 },
 };

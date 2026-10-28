@@ -6,7 +6,7 @@
 // weißen Rand (verschwinden NICHT, zappeln NICHT — das Zappeln gehört an die
 // aktive ROUTE, nicht ans Netz). Provisorisch (ann_132-Korrektur).
 import L from 'leaflet';
-import { colorAt, DEFAULT_SCALE, type ScaleSpec } from './scale';
+import { colorAt, DEFAULT_SCALE, sechsFelder, type ScaleSpec } from './scale';
 import { stretchAverages, type SegmentedNet } from './anthem';
 
 export function renderColorMesh(
@@ -26,7 +26,7 @@ export function renderColorMesh(
 ): void {
   layer.clearLayers();
   const weight = opts.weight ?? 4;
-  const scale = opts.scale ?? DEFAULT_SCALE;
+  const scale = opts.scale ?? sechsFelder(DEFAULT_SCALE);   // die Vorgabe als sechs Felder (o-o-o-o.app Blatt 131)
   const hidden = (id: string) => opts.hiddenStretchIds?.has(id) ?? false;
   const dimmed = (id: string) => !hidden(id) && (opts.dimmedStretchIds?.has(id) ?? false);
   const corridor = (s: { inBoundary?: boolean }) => s.inBoundary === false;

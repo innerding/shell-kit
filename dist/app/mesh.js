@@ -6,11 +6,11 @@
 // weißen Rand (verschwinden NICHT, zappeln NICHT — das Zappeln gehört an die
 // aktive ROUTE, nicht ans Netz). Provisorisch (ann_132-Korrektur).
 import L from 'leaflet';
-import { colorAt, DEFAULT_SCALE } from './scale';
+import { colorAt, DEFAULT_SCALE, sechsFelder } from './scale';
 export function renderColorMesh(layer, net, loads, opts = {}) {
     layer.clearLayers();
     const weight = opts.weight ?? 4;
-    const scale = opts.scale ?? DEFAULT_SCALE;
+    const scale = opts.scale ?? sechsFelder(DEFAULT_SCALE); // die Vorgabe als sechs Felder (o-o-o-o.app Blatt 131)
     const hidden = (id) => opts.hiddenStretchIds?.has(id) ?? false;
     const dimmed = (id) => !hidden(id) && (opts.dimmedStretchIds?.has(id) ?? false);
     const corridor = (s) => s.inBoundary === false;
