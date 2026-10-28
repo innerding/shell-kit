@@ -139,7 +139,11 @@ export function clusternStufen(mitglieder: readonly Mitglied[], stufen: readonly
     if (!hier.length) continue;
     const sammelt = !st.offen && st.stern;
     const ballungen = sammelt ? verschmelzen(hier.map((t) => ({ x: t.x, y: t.y, mitglieder: [t] })), SCHLUCKEN) : hier.map((t) => ({ x: t.x, y: t.y, mitglieder: [t] }));
-    const viele = sammelt ? ballungen.filter((b) => b.mitglieder.length >= 2) : [];
+    // ⚠ AUCH EIN EINZELNER GEHT AN DEN FIXSTERN (28.10.2026, o-o-o-o.app Blatt 131, sein „1. ja 2. ja, bau es"): Kommt eine
+    // Ballung — das Zeichen einer Tochter oder ein Punkt — dem Fixstern dieser Stufe näher als ein Icon, sammelt sie ein, auch
+    // allein. Sonst stand bei einem Haus mit nur einer Ausdehnung das Haus nie am Fixstern seines Initials (Blatt 125, SINN).
+    const amStern = (b: Ballung<Teil>): boolean => Boolean(st.stern) && Math.hypot(b.x - st.stern!.x, b.y - st.stern!.y) < SCHLUCKEN;
+    const viele = sammelt ? ballungen.filter((b) => b.mitglieder.length >= 2 || amStern(b)) : [];
     if (viele.length && st.stern) {
       const darin = viele.flatMap((b) => b.mitglieder);
       const tokens = darin.flatMap((t) => t.tokens);
