@@ -41,6 +41,14 @@ export declare function stageOf(load: number, s: ScaleSpec): number;
  *  Oberste Stufe → 1. Borders-Modell: die nächste Grenze; Spreizung: Display-Grenze
  *  stage/n zurück in Last (entspreize). */
 export declare function stageTop(load: number, s: ScaleSpec): number;
+/**
+ * ── SECHS FELDER (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131, sein „1. ja 2. ja 3. ja, bau Teil A") ──
+ * Eingestellt werden 2 bis 6 Farbfelder und ihre Stösse; gerechnet wird immer mit sechs festen Feldern. Geteilt wird jeweils
+ * das Feld, dessen Teile gerade am grössten sind, bei Gleichstand das obere, und zwar in gleiche Teile; die Stösse bleiben
+ * Grenzen. Jedes Feld bekommt die Farbe des Verlaufs von Feldmitte zu Feldmitte an seiner eigenen Mitte — ein ungeteiltes
+ * Feld also genau seine Farbe, die neuen Felder neue Farben. Anders als resampleScale werden die Felder nicht gleich gross.
+ */
+export declare function sechsFelder(s: Pick<ScaleSpec, 'stops' | 'borders'> & Partial<ScaleSpec>, n?: number): ScaleSpec;
 /** Coloursample — das Farb-Pendant zu resampleNet (Wegnetz). Schneidet den
  *  AUTORIERTEN (stetigen) Gradienten in n GLEICH große Last-Felder und gibt jedem
  *  die treffendste Farbe = die Gradient-Farbe in der Feld-MITTE ((i+0.5)/n). Ergebnis
