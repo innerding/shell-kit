@@ -66,11 +66,14 @@ export declare function feldWeg(s: Einstellung, i: number): Einstellung;
 /** Die Felder als Hintergrund: als Verlauf von Mitte zu Mitte, oder hart. Von unten nach oben. */
 export declare function saeulenHintergrund(e: Einstellung, mitVerlauf: boolean): string;
 /**
- * ── SECHS FELDER (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131, sein „1. ja 2. ja 3. ja, bau Teil A") ──
- * Eingestellt werden 2 bis 6 Farbfelder und ihre Stösse; gerechnet wird immer mit sechs festen Feldern. Geteilt wird jeweils
- * das Feld, dessen Teile gerade am grössten sind, bei Gleichstand das obere, und zwar in gleiche Teile; die Stösse bleiben
- * Grenzen. Jedes Feld bekommt die Farbe des Verlaufs von Feldmitte zu Feldmitte an seiner eigenen Mitte — ein ungeteiltes
- * Feld also genau seine Farbe, die neuen Felder neue Farben. Anders als resampleScale werden die Felder nicht gleich gross.
+ * ── SECHS FELDER (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131, sein „ja, bau es" auf den Vorgang) ──
+ * Eingestellt werden 2 bis 6 Farbfelder und ihre Stösse; gerechnet wird immer mit sechs gleich hohen Feldern. Der Vorgang:
+ *   1. der gedachte Verlauf: jede Farbe an der Mitte ihres Feldes, dazwischen gleitend; unter der untersten und über der
+ *      obersten Mitte bleibt die Farbe stehen (nichts geraten);
+ *   2. die Höhe in sechs gleiche Teile;
+ *   3. jedes Feld bekommt die Durchschnittsfarbe des Verlaufs in seinem Abschnitt — die beste Näherung an den Verlauf;
+ *   4. bleibt der Verlauf über zwei ganze Sechstel gleich, werden die beiden gleich; jede andere Farbe läge weiter weg.
+ * Sind es schon sechs gleich hohe Felder, bleiben sie, wie sie sind: Sie sind die sechs Felder.
  */
 export declare function sechsFelder(s: Pick<ScaleSpec, 'stops' | 'borders'> & Partial<ScaleSpec>, n?: number): ScaleSpec;
 /** Coloursample — das Farb-Pendant zu resampleNet (Wegnetz). Schneidet den
