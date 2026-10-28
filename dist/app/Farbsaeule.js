@@ -8,7 +8,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // Rechnungen aus ./scale (stossSetzen, feldDazu, feldWeg), dieselben, die o-o-o-o.app nimmt. Kein Mittelfeld, keine
 // Kopplung, kein Umsortieren.
 import { useEffect, useRef, useState } from 'react';
-import { colorAtBorders, feldDazu, feldWeg, sechsFelder, stossSetzen, FELDER_MAX } from './scale';
+import { feldDazu, feldWeg, saeulenHintergrund, sechsFelder, stossSetzen, FELDER_MAX } from './scale';
 const HOEHE = 220;
 function toHex(c) {
     const s = c.trim();
@@ -22,19 +22,6 @@ function toHex(c) {
         return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
     }
     return '#888888';
-}
-/** Die Felder als Hintergrund: als Verlauf von Mitte zu Mitte, oder hart. Von unten nach oben. */
-export function saeulenHintergrund(e, mitVerlauf) {
-    if (mitVerlauf) {
-        const teile = [];
-        for (let i = 0; i <= 40; i++) {
-            const t = i / 40;
-            teile.push(`${colorAtBorders(t, e.stops, e.borders)} ${(t * 100).toFixed(1)}%`);
-        }
-        return `linear-gradient(to top, ${teile.join(', ')})`;
-    }
-    const g = [0, ...e.borders, 1];
-    return `linear-gradient(to top, ${e.stops.map((c, i) => `${c} ${(g[i] * 100).toFixed(2)}% ${(g[i + 1] * 100).toFixed(2)}%`).join(', ')})`;
 }
 export default function Farbsaeule({ einstellung, onChange, onReset, resetLabel, mitVerlauf = true }) {
     const [zug, setZug] = useState(null);

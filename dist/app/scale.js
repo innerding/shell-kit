@@ -194,6 +194,19 @@ export function feldWeg(s, i) {
     const borders = s.borders.filter((_, k) => k !== (i === 0 ? 0 : i - 1));
     return { stops, borders };
 }
+/** Die Felder als Hintergrund: als Verlauf von Mitte zu Mitte, oder hart. Von unten nach oben. */
+export function saeulenHintergrund(e, mitVerlauf) {
+    if (mitVerlauf) {
+        const teile = [];
+        for (let i = 0; i <= 40; i++) {
+            const t = i / 40;
+            teile.push(`${colorAtBorders(t, e.stops, e.borders)} ${(t * 100).toFixed(1)}%`);
+        }
+        return `linear-gradient(to top, ${teile.join(', ')})`;
+    }
+    const g = [0, ...e.borders, 1];
+    return `linear-gradient(to top, ${e.stops.map((c, i) => `${c} ${(g[i] * 100).toFixed(2)}% ${(g[i + 1] * 100).toFixed(2)}%`).join(', ')})`;
+}
 /**
  * ── SECHS FELDER (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131, sein „1. ja 2. ja 3. ja, bau Teil A") ──
  * Eingestellt werden 2 bis 6 Farbfelder und ihre Stösse; gerechnet wird immer mit sechs festen Feldern. Geteilt wird jeweils

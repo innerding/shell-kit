@@ -1,6 +1,4 @@
 import { type Einstellung } from './scale';
-/** Die Felder als Hintergrund: als Verlauf von Mitte zu Mitte, oder hart. Von unten nach oben. */
-export declare function saeulenHintergrund(e: Einstellung, mitVerlauf: boolean): string;
 export default function Farbsaeule({ einstellung, onChange, onReset, resetLabel, mitVerlauf }: {
     einstellung: Einstellung;
     onChange: (e: Einstellung) => void;

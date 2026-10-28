@@ -11,7 +11,7 @@ export * from './dock';
 export * from './roadArrow';
 export { default as CrossingRose } from './CrossingRoseGlyph';
 export { default as PoiDetailCard } from './PoiDetailCard';
-export { default as Farbsaeule, saeulenHintergrund } from './Farbsaeule';
+export { default as Farbsaeule } from './Farbsaeule';
 export * from './geometry';
 export * from './decorations';
 export * from './render';
