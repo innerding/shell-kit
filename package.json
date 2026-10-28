@@ -31,6 +31,10 @@
     "./scale": {
       "types": "./dist/app/scale.d.ts",
       "import": "./dist/app/scale.js"
+    },
+    "./clustern": {
+      "types": "./dist/clustern.d.ts",
+      "import": "./dist/clustern.js"
     }
   },
   "files": [
