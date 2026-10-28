@@ -181,6 +181,51 @@ export function stageTop(load: number, s: ScaleSpec): number {
 }
 
 /**
+ * ── DIE GRIFFE DER SÄULE (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131, Teil B, sein „bau es") ──
+ * Eine Einstellung sind 2 bis 6 Farben, unten wenig Last, oben viel, und ihre Stösse. Diese drei Griffe sind die eine Wahrheit
+ * für die Säule in der Ziel-App und in o-o-o-o.app; keiner setzt die anderen Stösse zurück.
+ *   stossSetzen — ein Stoss bewegt sich nur zwischen seinen Nachbarn, jedes Feld bleibt mindestens FELD_MIN hoch;
+ *   feldDazu    — ein neues Feld oben, es nimmt die obere Hälfte des obersten Feldes und hat zunächst dessen Farbe;
+ *   feldWeg     — das Feld darunter übernimmt die Höhe, beim untersten das Feld darüber.
+ */
+export interface Einstellung {
+  stops: string[];
+  borders: number[];
+}
+export const FELD_MIN = 0.02;
+export const FELDER_MAX = 6;
+
+/** Die Einstellung mit gültigen Stössen; fehlen sie, gleich verteilt. */
+export function einstellungAus(s: { stops: string[]; borders?: number[] }): Einstellung {
+  const stops = s.stops.slice(0, FELDER_MAX);
+  const ok = s.borders && s.borders.length === stops.length - 1 && s.borders.every((b, i, a) => b > 0 && b < 1 && (i === 0 || b > a[i - 1]));
+  return { stops, borders: ok ? [...s.borders!] : Array.from({ length: stops.length - 1 }, (_, i) => (i + 1) / stops.length) };
+}
+
+export function stossSetzen(s: Einstellung, i: number, wert: number): Einstellung {
+  const unten = i === 0 ? 0 : s.borders[i - 1];
+  const oben = i === s.borders.length - 1 ? 1 : s.borders[i + 1];
+  const b = [...s.borders];
+  b[i] = clamp(wert, unten + FELD_MIN, oben - FELD_MIN);
+  return { stops: [...s.stops], borders: b };
+}
+
+export function feldDazu(s: Einstellung): Einstellung {
+  if (s.stops.length >= FELDER_MAX) return s;
+  const n = s.stops.length;
+  const lo = n === 1 ? 0 : s.borders[n - 2];
+  return { stops: [...s.stops, s.stops[n - 1]], borders: [...s.borders, (lo + 1) / 2] };
+}
+
+export function feldWeg(s: Einstellung, i: number): Einstellung {
+  if (s.stops.length <= 2 || i < 0 || i >= s.stops.length) return s;
+  const stops = s.stops.filter((_, k) => k !== i);
+  // Das Feld darunter wächst nach oben: der Stoss über dem weggenommenen fällt weg; beim untersten der darüber.
+  const borders = s.borders.filter((_, k) => k !== (i === 0 ? 0 : i - 1));
+  return { stops, borders };
+}
+
+/**
  * ── SECHS FELDER (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131, sein „1. ja 2. ja 3. ja, bau Teil A") ──
  * Eingestellt werden 2 bis 6 Farbfelder und ihre Stösse; gerechnet wird immer mit sechs festen Feldern. Geteilt wird jeweils
  * das Feld, dessen Teile gerade am grössten sind, bei Gleichstand das obere, und zwar in gleiche Teile; die Stösse bleiben

@@ -42,6 +42,28 @@ export declare function stageOf(load: number, s: ScaleSpec): number;
  *  stage/n zurück in Last (entspreize). */
 export declare function stageTop(load: number, s: ScaleSpec): number;
 /**
+ * ── DIE GRIFFE DER SÄULE (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131, Teil B, sein „bau es") ──
+ * Eine Einstellung sind 2 bis 6 Farben, unten wenig Last, oben viel, und ihre Stösse. Diese drei Griffe sind die eine Wahrheit
+ * für die Säule in der Ziel-App und in o-o-o-o.app; keiner setzt die anderen Stösse zurück.
+ *   stossSetzen — ein Stoss bewegt sich nur zwischen seinen Nachbarn, jedes Feld bleibt mindestens FELD_MIN hoch;
+ *   feldDazu    — ein neues Feld oben, es nimmt die obere Hälfte des obersten Feldes und hat zunächst dessen Farbe;
+ *   feldWeg     — das Feld darunter übernimmt die Höhe, beim untersten das Feld darüber.
+ */
+export interface Einstellung {
+    stops: string[];
+    borders: number[];
+}
+export declare const FELD_MIN = 0.02;
+export declare const FELDER_MAX = 6;
+/** Die Einstellung mit gültigen Stössen; fehlen sie, gleich verteilt. */
+export declare function einstellungAus(s: {
+    stops: string[];
+    borders?: number[];
+}): Einstellung;
+export declare function stossSetzen(s: Einstellung, i: number, wert: number): Einstellung;
+export declare function feldDazu(s: Einstellung): Einstellung;
+export declare function feldWeg(s: Einstellung, i: number): Einstellung;
+/**
  * ── SECHS FELDER (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131, sein „1. ja 2. ja 3. ja, bau Teil A") ──
  * Eingestellt werden 2 bis 6 Farbfelder und ihre Stösse; gerechnet wird immer mit sechs festen Feldern. Geteilt wird jeweils
  * das Feld, dessen Teile gerade am grössten sind, bei Gleichstand das obere, und zwar in gleiche Teile; die Stösse bleiben

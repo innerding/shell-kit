@@ -164,6 +164,36 @@ export function stageTop(load, s) {
         return s.borders[stage - 1];
     return entspreize(stage / n, s.spreizung);
 }
+export const FELD_MIN = 0.02;
+export const FELDER_MAX = 6;
+/** Die Einstellung mit gültigen Stössen; fehlen sie, gleich verteilt. */
+export function einstellungAus(s) {
+    const stops = s.stops.slice(0, FELDER_MAX);
+    const ok = s.borders && s.borders.length === stops.length - 1 && s.borders.every((b, i, a) => b > 0 && b < 1 && (i === 0 || b > a[i - 1]));
+    return { stops, borders: ok ? [...s.borders] : Array.from({ length: stops.length - 1 }, (_, i) => (i + 1) / stops.length) };
+}
+export function stossSetzen(s, i, wert) {
+    const unten = i === 0 ? 0 : s.borders[i - 1];
+    const oben = i === s.borders.length - 1 ? 1 : s.borders[i + 1];
+    const b = [...s.borders];
+    b[i] = clamp(wert, unten + FELD_MIN, oben - FELD_MIN);
+    return { stops: [...s.stops], borders: b };
+}
+export function feldDazu(s) {
+    if (s.stops.length >= FELDER_MAX)
+        return s;
+    const n = s.stops.length;
+    const lo = n === 1 ? 0 : s.borders[n - 2];
+    return { stops: [...s.stops, s.stops[n - 1]], borders: [...s.borders, (lo + 1) / 2] };
+}
+export function feldWeg(s, i) {
+    if (s.stops.length <= 2 || i < 0 || i >= s.stops.length)
+        return s;
+    const stops = s.stops.filter((_, k) => k !== i);
+    // Das Feld darunter wächst nach oben: der Stoss über dem weggenommenen fällt weg; beim untersten der darüber.
+    const borders = s.borders.filter((_, k) => k !== (i === 0 ? 0 : i - 1));
+    return { stops, borders };
+}
 /**
  * ── SECHS FELDER (28.10.2026, o-o-o-o.app bauhuette/border-mesh-point Blatt 131, sein „1. ja 2. ja 3. ja, bau Teil A") ──
  * Eingestellt werden 2 bis 6 Farbfelder und ihre Stösse; gerechnet wird immer mit sechs festen Feldern. Geteilt wird jeweils
