@@ -85,7 +85,9 @@ export default function ClockDock({
   return (
     <div style={{
       position: 'fixed', left: 0, right: 0,
-      bottom: `calc(env(safe-area-inset-bottom) + ${cgap}px)`,
+      // --sa-bottom: setzt ihn eine Shell, die ihren eigenen Rahmen über dem Streifen zieht (SCIM4, 28.10.2026, o-o-o-o.app
+      // Blatt 131), rechnet die Uhr in diesem Rahmen; sonst wie bisher mit dem Abstand des Geräts.
+      bottom: `calc(var(--sa-bottom, env(safe-area-inset-bottom)) + ${cgap}px)`,
       zIndex: 760,
       display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: cgap,
     }}>

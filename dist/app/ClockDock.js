@@ -33,7 +33,9 @@ export default function ClockDock({ mainValue, mainDirection, mainEmphasis = 'qu
     // Volle Breite + zentriert: Play sitzt in der SCHIRM-Mitte, Uhr bündig rechts, links spiegelt.
     return (_jsxs("div", { style: {
             position: 'fixed', left: 0, right: 0,
-            bottom: `calc(env(safe-area-inset-bottom) + ${cgap}px)`,
+            // --sa-bottom: setzt ihn eine Shell, die ihren eigenen Rahmen über dem Streifen zieht (SCIM4, 28.10.2026, o-o-o-o.app
+            // Blatt 131), rechnet die Uhr in diesem Rahmen; sonst wie bisher mit dem Abstand des Geräts.
+            bottom: `calc(var(--sa-bottom, env(safe-area-inset-bottom)) + ${cgap}px)`,
             zIndex: 760,
             display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: cgap,
         }, children: [_jsx("style", { children: '@keyframes clockDockPlayBlink{0%,100%{opacity:1}50%{opacity:0}}' }), _jsx("div", { style: { width: leftW, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }, children: left?.(height) }), _jsx(PlayBox, { running: running, onToggle: onToggle, size: height, face: playTheme.face, blink: blink, locate: locate }), _jsx(FlapClock, { value: mainValue, direction: mainDirection, emphasis: mainEmphasis, height: clockH, tint: clockTint ?? tint })] }));
